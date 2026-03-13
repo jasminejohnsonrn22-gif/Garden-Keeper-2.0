@@ -325,6 +325,51 @@
     .germ-grid { grid-template-columns:1fr; }
   }
 
+  /* ── Location view ── */
+  .location-filter-row { display:flex; align-items:center; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+  .location-grid-section { margin-bottom:32px; }
+  .location-section-head { display:flex; align-items:center; gap:10px; margin-bottom:12px; padding-bottom:8px; border-bottom:2px solid var(--rule); }
+  .location-icon { font-size:20px; }
+  .location-name { font-family:var(--font-display); font-size:18px; font-weight:600; color:var(--ink); }
+  .location-count { font-size:13px; color:var(--ink-faint); font-style:italic; }
+
+  /* ── Multi-select ── */
+  .select-bar { display:none; background:var(--forest); color:#d8eacc; padding:10px 16px; border-radius:8px; margin-bottom:14px; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+  .select-bar.show { display:flex; }
+  .select-bar-left { display:flex; align-items:center; gap:10px; font-size:14px; }
+  .select-bar-actions { display:flex; gap:8px; }
+  .select-bar-btn { background:rgba(255,255,255,0.12); border:none; color:#d8eacc; border-radius:5px; padding:6px 14px; font-family:var(--font-body); font-size:13px; font-weight:600; cursor:pointer; transition:background 0.18s; white-space:nowrap; }
+  .select-bar-btn:hover { background:rgba(255,255,255,0.22); }
+  .select-bar-btn.danger { background:rgba(192,57,43,0.35); }
+  .select-bar-btn.danger:hover { background:rgba(192,57,43,0.55); }
+  .plant-card.selected { outline:3px solid var(--green); outline-offset:2px; }
+  .list-row.selected { outline:2px solid var(--green); outline-offset:1px; }
+  .select-checkbox { width:20px; height:20px; border-radius:4px; border:2px solid var(--rule); background:white; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.15s; cursor:pointer; }
+  .select-checkbox.checked { background:var(--green); border-color:var(--green); color:white; font-size:12px; }
+  .multiselect-toggle { background:transparent; border:1.5px solid var(--rule); border-radius:5px; padding:6px 12px; font-family:var(--font-body); font-size:13px; color:var(--ink-soft); cursor:pointer; transition:all 0.18s; white-space:nowrap; }
+  .multiselect-toggle:hover, .multiselect-toggle.active { border-color:var(--green); color:var(--green); }
+
+  /* ── Recategorize / bulk modal ── */
+  .bulk-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:400; display:none; align-items:flex-end; justify-content:center; }
+  .bulk-modal-overlay.open { display:flex; }
+  .bulk-modal { background:var(--parchment); border-radius:16px 16px 0 0; width:100%; max-width:480px; padding:24px; animation:fadeUp 0.28s cubic-bezier(0.22,1,0.36,1) both; max-height:80vh; overflow-y:auto; }
+  .bulk-modal-title { font-family:var(--font-display); font-size:17px; font-weight:600; color:var(--ink); margin-bottom:16px; }
+  .bulk-cat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px; }
+  .bulk-cat-btn { background:white; border:1.5px solid var(--rule); border-radius:8px; padding:12px 8px; cursor:pointer; text-align:center; transition:all 0.18s; }
+  .bulk-cat-btn:hover, .bulk-cat-btn.active { border-color:var(--green); background:rgba(61,131,97,0.06); }
+  .bulk-cat-icon { font-size:22px; margin-bottom:4px; }
+  .bulk-cat-name { font-size:12px; color:var(--ink-mid); font-weight:500; }
+  .bulk-loc-list { display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+  .bulk-loc-btn { background:white; border:1.5px solid var(--rule); border-radius:8px; padding:11px 16px; cursor:pointer; text-align:left; font-family:var(--font-body); font-size:14px; color:var(--ink); display:flex; align-items:center; gap:10px; transition:all 0.18s; }
+  .bulk-loc-btn:hover, .bulk-loc-btn.active { border-color:var(--green); background:rgba(61,131,97,0.06); }
+  .bulk-modal-actions { display:flex; gap:10px; }
+
+  /* ── Humidity chip ── */
+  .humidity-badge { border-radius:3px; padding:2px 7px; font-size:11px; font-weight:600; font-family:var(--font-body); }
+
+  /* ── Location/light chip on card ── */
+  .card-location { font-size:11px; color:var(--ink-faint); margin-top:2px; font-style:italic; display:flex; align-items:center; gap:4px; }
+
   /* ── Push notification panel ── */
   .push-panel { background: white; border: 1.5px solid var(--card-border); border-radius: 10px; padding: 24px 28px; margin-bottom: 24px; }
   .push-panel-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
@@ -348,6 +393,53 @@
   .push-howto ol { padding-left: 18px; }
   .push-howto li { font-size: 13px; color: var(--ink-mid); line-height: 1.7; }
   .push-howto li strong { color: var(--ink); font-weight: 600; }
+
+
+  /* ── Location view ── */
+  .location-group { margin-bottom:28px; }
+  .location-group-head { display:flex; align-items:center; gap:10px; margin-bottom:14px; padding-bottom:8px; border-bottom:2px solid var(--rule); }
+  .location-group-icon { font-size:20px; line-height:1; }
+  .location-group-name { font-family:var(--font-display); font-size:18px; font-weight:600; color:var(--ink); }
+  .location-group-count { background:var(--parchment-dark); color:var(--ink-soft); border-radius:100px; padding:2px 10px; font-size:12px; font-weight:600; }
+
+  /* ── Multi-select mode ── */
+  .plant-card.selectable { cursor:pointer; }
+  .plant-card.selected { outline:3px solid var(--green); outline-offset:2px; box-shadow:0 0 0 5px rgba(61,131,97,0.18) !important; }
+  .list-row.selected { background:rgba(61,131,97,0.08); outline:2px solid var(--green); outline-offset:-2px; }
+  .select-checkbox { width:22px; height:22px; border-radius:50%; border:2px solid var(--rule); background:white; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.18s; font-size:13px; }
+  .selected .select-checkbox { background:var(--green); border-color:var(--green); color:white; }
+  .multi-bar { position:fixed; bottom:0; left:0; right:0; background:var(--forest); z-index:160; padding:14px 20px calc(14px + env(safe-area-inset-bottom)); display:none; align-items:center; justify-content:space-between; gap:12px; border-top:2px solid rgba(127,176,105,0.3); animation:slideUp 0.24s cubic-bezier(0.22,1,0.36,1) both; }
+  .multi-bar.show { display:flex; }
+  @keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
+  .multi-bar-info { color:#d8eacc; font-size:14px; font-weight:600; }
+  .multi-bar-actions { display:flex; gap:8px; }
+  .multi-bar-btn { background:rgba(255,255,255,0.1); border:1.5px solid rgba(255,255,255,0.2); color:#d8eacc; border-radius:6px; padding:8px 14px; font-family:var(--font-body); font-size:13px; font-weight:600; cursor:pointer; transition:all 0.18s; }
+  .multi-bar-btn:hover { background:rgba(255,255,255,0.18); }
+  .multi-bar-btn.danger { border-color:rgba(192,57,43,0.5); color:#f08080; }
+  .multi-bar-btn.danger:hover { background:rgba(192,57,43,0.2); }
+  .select-toggle-btn { background:transparent; border:1.5px solid var(--rule); color:var(--ink-soft); border-radius:6px; padding:7px 12px; font-family:var(--font-body); font-size:13px; cursor:pointer; transition:all 0.18s; display:flex; align-items:center; gap:5px; }
+  .select-toggle-btn:hover { border-color:var(--green); color:var(--green); }
+  .select-toggle-btn.active { border-color:var(--green); color:var(--green); background:rgba(61,131,97,0.07); }
+
+  /* ── Recategorize modal ── */
+  .recat-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:500; display:none; align-items:center; justify-content:center; backdrop-filter:blur(3px); padding:20px; }
+  .recat-modal-overlay.open { display:flex; }
+  .recat-modal { background:var(--parchment); border-radius:14px; width:100%; max-width:380px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.3); animation:fadeUp 0.28s cubic-bezier(0.22,1,0.36,1) both; }
+  .recat-modal-head { background:var(--forest); padding:18px 22px; display:flex; align-items:center; justify-content:space-between; }
+  .recat-modal-title { font-family:var(--font-display); color:#d8eacc; font-size:16px; font-weight:600; }
+  .recat-modal-close { background:transparent; border:none; color:#8a9e7a; font-size:20px; cursor:pointer; line-height:1; }
+  .recat-modal-body { padding:22px; display:flex; flex-direction:column; gap:10px; }
+  .recat-option { display:flex; align-items:center; gap:12px; padding:14px 16px; border-radius:8px; border:1.5px solid var(--card-border); cursor:pointer; background:white; transition:all 0.18s; }
+  .recat-option:hover { border-color:var(--green); background:rgba(61,131,97,0.04); }
+  .recat-option-icon { font-size:22px; line-height:1; }
+  .recat-option-label { font-family:var(--font-display); font-size:15px; font-weight:600; color:var(--ink); }
+  .recat-option-count { margin-left:auto; font-size:12px; color:var(--ink-faint); }
+
+  /* ── Location badge on cards ── */
+  .card-location { font-size:11px; color:var(--ink-faint); margin-top:3px; display:flex; align-items:center; gap:3px; }
+
+  /* view toggle: add location mode */
+  .vt-btn[data-mode="location"] { }
 
   #toast { position: fixed; top: 24px; right: 24px; z-index: 9999; background: #2d5a3d; color: var(--parchment); padding: 13px 22px; border-radius: 6px; box-shadow: 0 8px 32px rgba(40,30,20,0.25); font-size: 14px; letter-spacing: 0.3px; animation: toastIn 0.3s cubic-bezier(0.22,1,0.36,1) both; display: none; }
   #toast.warn { background: #8b5e2a; }
@@ -487,6 +579,7 @@
     <nav>
       <button class="nav-btn active" data-view="dashboard"><span class="nav-icon">⬡</span> My Garden</button>
       <button class="nav-btn" data-view="alerts"><span class="nav-icon">◇</span> Alerts <span class="nav-badge" id="nav-badge" style="display:none"></span></button>
+      <button class="nav-btn" data-view="locations"><span class="nav-icon">⌂</span> Locations</button>
       <button class="nav-btn" data-view="discover"><span class="nav-icon">✦</span> Discover</button>
     </nav>
   </div>
@@ -502,6 +595,10 @@
     <span class="mob-icon">◇</span>
     <span>Alerts</span>
     <span class="mob-nav-badge" id="mob-badge"></span>
+  </button>
+  <button class="mob-nav-btn" data-view="locations">
+    <span class="mob-icon">⌂</span>
+    <span>Locations</span>
   </button>
   <button class="mob-nav-btn" data-view="discover">
     <span class="mob-icon">✦</span>
@@ -552,11 +649,22 @@
           <button class="vt-btn" data-mode="list" title="List">☰</button>
           <button class="vt-btn" data-mode="chart" title="Chart">◎</button>
         </div>
+        <button class="multiselect-toggle" id="multiselect-toggle" onclick="toggleMultiSelect()">Select</button>
         <button class="btn-primary" onclick="navigateTo('discover')">+ Add Plants</button>
       </div>
     </div>
     <hr class="rule">
     <div class="filters" id="dash-filters"></div>
+    <div class="select-bar" id="select-bar">
+      <div class="select-bar-left">
+        <span id="select-count">Select plants</span>
+      </div>
+      <div class="select-bar-actions">
+        <button class="select-bar-btn" id="btn-bulk-reloc" style="display:none" onclick="showBulkRelocate()">⌂ Move</button>
+        <button class="select-bar-btn" id="btn-bulk-recat" style="display:none" onclick="showBulkRecategorize()">↺ Recategorize</button>
+        <button class="select-bar-btn danger" id="btn-bulk-delete" style="display:none" onclick="bulkDelete()">🗑 Delete</button>
+      </div>
+    </div>
     <div id="dash-content"></div>
   </div>
 
@@ -678,13 +786,38 @@
               <option value="Hard">Hard</option>
             </select>
           </div>
+          <div class="form-field">
+            <label class="form-label">Location</label>
+            <select class="form-select" id="cf-location">
+              <option value="">No location</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Humidity needs</label>
+            <select class="form-select" id="cf-humidity">
+              <option value="Low">Low (under 40%)</option>
+              <option value="Medium" selected>Medium (40–60%)</option>
+              <option value="High">High (60%+)</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Light source</label>
+            <select class="form-select" id="cf-light">
+              <option value="Natural Sun">☀️ Natural Sun</option>
+              <option value="Grow Light">💡 Grow Light</option>
+              <option value="Both">☀️💡 Both</option>
+            </select>
+          </div>
           <div class="form-field full">
             <label class="form-label">Care notes</label>
             <textarea class="form-textarea" id="cf-notes" placeholder="Any tips or reminders for this plant..." maxlength="200"></textarea>
           </div>
-          <div class="form-field full">
-            <label class="form-label">Pick an emoji</label>
+          <div class="form-field full" id="cf-emoji-field">
+            <label class="form-label">Pick an emoji <span style="font-size:11px;color:var(--ink-faint)">(or leave blank for none)</span></label>
             <div class="emoji-grid" id="cf-emoji-grid"></div>
+            <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;color:var(--ink-soft);cursor:pointer">
+              <input type="checkbox" id="cf-no-emoji" style="width:16px;height:16px"> No emoji
+            </label>
           </div>
         </div>
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
@@ -698,11 +831,35 @@
     <div id="discover-content" class="discover-grid"></div>
   </div>
 
+  <div id="view-locations" class="view">
+    <div class="section-head">
+      <div>
+        <h1 class="section-title display">Locations</h1>
+        <p class="section-sub">Plants by room &amp; spot</p>
+      </div>
+      <button class="btn-primary" onclick="showManageLocationsModal()">⚙ Manage</button>
+    </div>
+    <hr class="rule">
+    <div id="locations-content"></div>
+  </div>
+
   <div id="view-detail" class="view">
     <button class="btn-ghost" style="margin-bottom:20px" onclick="navigateTo('dashboard')">← Back to Garden</button>
     <div id="detail-content"></div>
   </div>
 </main>
+
+<!-- Bulk action modal -->
+<div class="bulk-modal-overlay" id="bulk-modal-overlay">
+  <div class="bulk-modal">
+    <div class="bulk-modal-title display" id="bulk-modal-title">Recategorize plants</div>
+    <div id="bulk-modal-body"></div>
+    <div class="bulk-modal-actions">
+      <button class="btn-ghost" id="bulk-modal-cancel" style="flex:1">Cancel</button>
+      <button class="btn-primary" id="bulk-modal-confirm" style="flex:1">Apply</button>
+    </div>
+  </div>
+</div>
 
 <!-- Photo upload modal -->
 <div class="photo-modal-overlay" id="photo-modal-overlay">
@@ -896,6 +1053,7 @@ function renderView(v) {
   if      (v==="dashboard") renderDashboard();
   else if (v==="alerts")    { renderAlerts(); initPushPanel(); }
   else if (v==="discover")  renderDiscover();
+  else if (v==="locations") renderLocations();
   else if (v==="detail")    renderDetail();
 }
 
@@ -921,6 +1079,10 @@ function renderDashboard() {
     btn.classList.toggle("active", btn.dataset.mode === dashViewMode);
     btn.onclick = () => { dashViewMode = btn.dataset.mode; saveMeta({dashFilter, dashViewMode}); renderDashboard(); };
   });
+  // Sync multi-select toggle button
+  const msBtn = document.getElementById("multiselect-toggle");
+  if (msBtn) msBtn.classList.toggle("active", multiSelectMode);
+  updateSelectBar();
 
   const filtered = dashFilter==="all" ? myPlants : myPlants.filter(p=>p.category===dashFilter);
   const content = document.getElementById("dash-content");
@@ -955,14 +1117,14 @@ function renderGridView(filtered, content) {
       <div class="card-top-bar" style="background:${urg.color};opacity:${topU==="ok"?0.4:1}"></div>
       <div class="card-body">
         <div class="card-header">
-          <span class="card-emoji">${plant.emoji}</span>
+          ${plant.emoji ? `<span class="card-emoji">${plant.emoji}</span>` : `<span class="card-emoji" style="font-size:22px;opacity:0.25">🌿</span>`}
           <div class="card-badges">
             <span class="urgency-badge" style="background:${urg.bg};color:${urg.color}">${urg.label}</span><br>
             <span class="cat-badge" style="background:${meta.light};color:${meta.accent}">${meta.icon} ${meta.label}</span>
           </div>
         </div>
         <div class="card-name display">${plant.name}</div>
-        <div class="card-sunlight">☀️ ${plant.sunlight}</div>
+        <div class="card-sunlight">${plant.light==="Grow Light"?"💡":plant.light==="Both"?"☀️💡":"☀️"} ${plant.sunlight}${plant.humidity?" · 💧 "+plant.humidity:""}${plant.location?` <span class="card-location">⌂ ${plant.location}</span>`:""}</div>
         <div class="care-grid">
           ${[{icon:"💧",label:"Water",days:wDays,u:wU},{icon:"🌾",label:"Feed",days:fDays,u:fU}].map(item=>{
             const u=URGENCY[item.u];
@@ -970,7 +1132,19 @@ function renderGridView(filtered, content) {
           }).join("")}
         </div>
       </div>`;
-    card.addEventListener("click", () => navigateTo("detail", plant.id));
+    card.dataset.plantId = plant.id;
+    if (multiSelectMode) {
+      card.classList.toggle("selected", selectedPlantIds.has(plant.id));
+      const cb = document.createElement("div");
+      cb.className = "select-checkbox" + (selectedPlantIds.has(plant.id) ? " checked" : "");
+      cb.textContent = selectedPlantIds.has(plant.id) ? "✓" : "";
+      cb.style.cssText = "position:absolute;top:10px;left:10px;z-index:2";
+      card.style.position = "relative";
+      card.appendChild(cb);
+      card.addEventListener("click", () => togglePlantSelect(plant.id));
+    } else {
+      card.addEventListener("click", () => navigateTo("detail", plant.id));
+    }
     grid.appendChild(card);
   });
   content.appendChild(grid);
@@ -992,17 +1166,28 @@ function renderListView(filtered, content) {
     row.style.animationFillMode = "both";
     row.innerHTML = `
       <div class="list-accent" style="background:${urg.color};opacity:${topU==="ok"?0.4:1}"></div>
-      <span class="list-emoji">${plant.emoji}</span>
+      <span class="list-emoji">${plant.emoji || "🌿"}</span>
       <div class="list-main">
         <div class="list-name">${plant.name}</div>
-        <div class="list-meta">${meta.icon} ${meta.label} · ☀️ ${plant.sunlight} · ${plant.difficulty}</div>
+        <div class="list-meta">${meta.icon} ${meta.label} · ☀️ ${plant.sunlight} · ${plant.difficulty}${plant.location?" · ⌂ "+plant.location:""}${plant.humidity?" · 💧 "+plant.humidity:""}</div>
       </div>
       <div class="list-badges">
         <span class="list-pill" style="background:${urg.bg};color:${urg.color}">${urg.label}</span>
         <span class="list-pill" style="background:rgba(79,163,214,0.1);color:#3476a0">💧 ${wDays<=0?"Now!":wDays+"d"}</span>
         <span class="list-pill" style="background:rgba(127,176,105,0.1);color:#3d8361">🌾 ${fDays<=0?"Now!":fDays+"d"}</span>
       </div>`;
-    row.addEventListener("click", () => navigateTo("detail", plant.id));
+    row.dataset.plantId = plant.id;
+    if (multiSelectMode) {
+      row.classList.toggle("selected", selectedPlantIds.has(plant.id));
+      const cb = document.createElement("div");
+      cb.className = "select-checkbox" + (selectedPlantIds.has(plant.id) ? " checked" : "");
+      cb.textContent = selectedPlantIds.has(plant.id) ? "✓" : "";
+      cb.style.cssText = "margin-right:4px;flex-shrink:0";
+      row.insertBefore(cb, row.firstChild);
+      row.addEventListener("click", () => togglePlantSelect(plant.id));
+    } else {
+      row.addEventListener("click", () => navigateTo("detail", plant.id));
+    }
     list.appendChild(row);
   });
   content.appendChild(list);
@@ -1298,7 +1483,11 @@ function renderDetail() {
               <h2 class="detail-title display">${plant.name}</h2>
               <div class="detail-meta">
                 <span class="cat-badge" style="background:${meta.light};color:${meta.accent};padding:4px 12px;font-size:13px">${meta.icon} ${meta.label}</span>
-                <span style="color:#8a7a60;font-size:14px;font-style:italic">☀️ ${plant.sunlight} · ${plant.difficulty}</span>
+                <span style="color:#8a7a60;font-size:14px;font-style:italic">
+                  ${plant.light==="Grow Light"?"💡":plant.light==="Both"?"☀️💡":"☀️"} ${plant.sunlight} · ${plant.difficulty}
+                  ${plant.humidity?" · 💧 "+plant.humidity+"  humidity":""}
+                  ${plant.location?" · ⌂ "+(getLocationMeta(plant.location).icon+" "+getLocationMeta(plant.location).name):""}
+                </span>
               </div>
             </div>
           </div>
@@ -1433,6 +1622,7 @@ let selectedEmoji = "🌿";
 let customNextId = Math.max(1000, ...myPlants.filter(p=>p.custom).map(p=>p.id+1), 1000);
 
 function initCustomForm() {
+  populateLocationSelect("cf-location", "");
   const grid = document.getElementById("cf-emoji-grid");
   if (!grid || grid.children.length > 0) return;
   PLANT_EMOJIS.forEach(em => {
@@ -1469,6 +1659,10 @@ function resetForm() {
   const cat = document.getElementById("cf-category"); if(cat) cat.value = "";
   const sun = document.getElementById("cf-sun"); if(sun) sun.value = "Full Sun";
   const diff = document.getElementById("cf-diff"); if(diff) diff.value = "Easy";
+  const loc = document.getElementById("cf-location"); if(loc) loc.value = "";
+  const hum = document.getElementById("cf-humidity"); if(hum) hum.value = "Medium";
+  const lig = document.getElementById("cf-light"); if(lig) lig.value = "Natural Sun";
+  const noE = document.getElementById("cf-no-emoji"); if(noE) noE.checked = false;
   selectedEmoji = "🌿";
   const grid = document.getElementById("cf-emoji-grid");
   if (grid) grid.querySelectorAll(".emoji-btn").forEach(b => b.classList.toggle("selected", b.textContent === "🌿"));
@@ -1490,6 +1684,10 @@ function submitCustomPlant() {
   const sun   = document.getElementById("cf-sun").value;
   const diff  = document.getElementById("cf-diff").value;
   const notes = document.getElementById("cf-notes").value.trim() || "A custom plant in your garden.";
+  const location = document.getElementById("cf-location")?.value || "";
+  const humidity = document.getElementById("cf-humidity")?.value || "Medium";
+  const light    = document.getElementById("cf-light")?.value || "Natural Sun";
+  const noEmoji  = document.getElementById("cf-no-emoji")?.checked;
 
   const showErr = (id, show) => document.getElementById(id).classList.toggle("show", show);
 
@@ -1503,9 +1701,10 @@ function submitCustomPlant() {
   const now = new Date().toISOString();
   const plant = {
     id: customNextId++,
-    name, category:cat, emoji:selectedEmoji,
+    name, category:cat, emoji: noEmoji ? "" : selectedEmoji,
     waterDays:water, fertilizeDays:fert,
     sunlight:sun, difficulty:diff, notes,
+    location, humidity, light,
     custom: true,
     addedDate:now, lastWatered:now, lastFertilized:now
   };
@@ -1521,6 +1720,363 @@ function submitCustomPlant() {
 
 
 
+
+
+// ══════════════════════════════════════════════════════
+// LOCATIONS SYSTEM
+// ══════════════════════════════════════════════════════
+
+const LOCATIONS_KEY = "gardenkeeper_locations";
+
+const DEFAULT_LOCATIONS = [
+  { id:"living-room",  name:"Living Room",  icon:"🛋️" },
+  { id:"bedroom",      name:"Bedroom",      icon:"🛏️" },
+  { id:"kitchen",      name:"Kitchen",      icon:"🍳" },
+  { id:"bathroom",     name:"Bathroom",     icon:"🚿" },
+  { id:"office",       name:"Office",       icon:"💻" },
+  { id:"balcony",      name:"Balcony",      icon:"🌇" },
+  { id:"garden",       name:"Garden",       icon:"🌳" },
+  { id:"greenhouse",   name:"Greenhouse",   icon:"🏡" },
+];
+
+function loadLocations() {
+  try {
+    const s = localStorage.getItem(LOCATIONS_KEY);
+    return s ? JSON.parse(s) : [...DEFAULT_LOCATIONS];
+  } catch { return [...DEFAULT_LOCATIONS]; }
+}
+function saveLocations() {
+  try { localStorage.setItem(LOCATIONS_KEY, JSON.stringify(userLocations)); } catch {}
+}
+
+let userLocations = loadLocations();
+
+function getLocationMeta(locId) {
+  return userLocations.find(l => l.id === locId) || { name: locId, icon:"📍" };
+}
+
+function populateLocationSelect(selectId, currentValue) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  sel.innerHTML = `<option value="">No location</option>`;
+  userLocations.forEach(loc => {
+    const opt = document.createElement("option");
+    opt.value = loc.id;
+    opt.textContent = loc.icon + " " + loc.name;
+    if (loc.id === currentValue) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function renderLocations() {
+  const content = document.getElementById("locations-content");
+  if (!content) return;
+  content.innerHTML = "";
+
+  const grouped = {};
+  const unplaced = [];
+  myPlants.forEach(p => {
+    if (p.location) {
+      if (!grouped[p.location]) grouped[p.location] = [];
+      grouped[p.location].push(p);
+    } else {
+      unplaced.push(p);
+    }
+  });
+
+  if (myPlants.length === 0) {
+    content.innerHTML = `<div class="empty-state"><div class="empty-emoji">⌂</div><p class="empty-title display">No plants yet</p><p class="empty-sub">Add plants and assign them to locations to see them here.</p><button class="btn-primary" onclick="navigateTo('discover')">Browse Plants →</button></div>`;
+    return;
+  }
+
+  // Plants with locations
+  userLocations.forEach(loc => {
+    const plants = grouped[loc.id] || [];
+    if (plants.length === 0) return;
+    const section = document.createElement("div");
+    section.className = "location-grid-section";
+    section.innerHTML = `
+      <div class="location-section-head">
+        <span class="location-icon">${loc.icon}</span>
+        <span class="location-name">${loc.name}</span>
+        <span class="location-count">${plants.length} plant${plants.length!==1?"s":""}</span>
+      </div>`;
+    const grid = document.createElement("div");
+    grid.className = "plant-grid";
+    plants.forEach(plant => {
+      const wDays = getDaysUntil(plant.lastWatered, plant.waterDays);
+      const fDays = getDaysUntil(plant.lastFertilized, plant.fertilizeDays);
+      const uList = [getUrgency(wDays), getUrgency(fDays)];
+      const topU = uList.includes("overdue")?"overdue":uList.includes("today")?"today":uList.includes("soon")?"soon":"ok";
+      const urg = URGENCY[topU], meta = CAT_META[plant.category];
+      const card = document.createElement("div");
+      card.className = "plant-card";
+      card.innerHTML = `
+        <div class="card-top-bar" style="background:${urg.color};opacity:${topU==="ok"?0.4:1}"></div>
+        <div class="card-body">
+          <div class="card-header">
+            <span class="card-emoji">${plant.emoji || "🌿"}</span>
+            <div class="card-badges">
+              <span class="urgency-badge" style="background:${urg.bg};color:${urg.color}">${urg.label}</span><br>
+              <span class="cat-badge" style="background:${meta.light};color:${meta.accent}">${meta.icon} ${meta.label}</span>
+            </div>
+          </div>
+          <div class="card-name display">${plant.name}</div>
+          <div class="card-sunlight">☀️ ${plant.sunlight}</div>
+          <div class="care-grid">
+            ${[{icon:"💧",label:"Water",days:wDays,u:getUrgency(wDays)},{icon:"🌾",label:"Feed",days:fDays,u:getUrgency(fDays)}].map(item=>{
+              const u=URGENCY[item.u];
+              return `<div class="care-box" style="background:${u.bg};border-color:${u.color}22"><div class="care-icon">${item.icon}</div><div class="care-days" style="color:${u.color}">${item.days<=0?"Now!":item.days+"d"}</div><div class="care-label">${item.label}</div></div>`;
+            }).join("")}
+          </div>
+        </div>`;
+      card.addEventListener("click", () => navigateTo("detail", plant.id));
+      grid.appendChild(card);
+    });
+    section.appendChild(grid);
+    content.appendChild(section);
+  });
+
+  // Unplaced plants
+  if (unplaced.length > 0) {
+    const section = document.createElement("div");
+    section.className = "location-grid-section";
+    section.innerHTML = `
+      <div class="location-section-head">
+        <span class="location-icon">📍</span>
+        <span class="location-name">No Location</span>
+        <span class="location-count">${unplaced.length} plant${unplaced.length!==1?"s":""}</span>
+      </div>`;
+    const grid = document.createElement("div");
+    grid.className = "plant-grid";
+    unplaced.forEach(plant => {
+      const wDays = getDaysUntil(plant.lastWatered, plant.waterDays);
+      const fDays = getDaysUntil(plant.lastFertilized, plant.fertilizeDays);
+      const uList = [getUrgency(wDays), getUrgency(fDays)];
+      const topU = uList.includes("overdue")?"overdue":uList.includes("today")?"today":uList.includes("soon")?"soon":"ok";
+      const urg = URGENCY[topU], meta = CAT_META[plant.category];
+      const card = document.createElement("div");
+      card.className = "plant-card";
+      card.innerHTML = `
+        <div class="card-top-bar" style="background:${urg.color};opacity:${topU==="ok"?0.4:1}"></div>
+        <div class="card-body">
+          <div class="card-header">
+            <span class="card-emoji">${plant.emoji || "🌿"}</span>
+            <div class="card-badges">
+              <span class="urgency-badge" style="background:${urg.bg};color:${urg.color}">${urg.label}</span><br>
+              <span class="cat-badge" style="background:${meta.light};color:${meta.accent}">${meta.icon} ${meta.label}</span>
+            </div>
+          </div>
+          <div class="card-name display">${plant.name}</div>
+          <div class="card-sunlight">☀️ ${plant.sunlight}</div>
+        </div>`;
+      card.addEventListener("click", () => navigateTo("detail", plant.id));
+      grid.appendChild(card);
+    });
+    section.appendChild(grid);
+    content.appendChild(section);
+  }
+}
+
+function showManageLocationsModal() {
+  const overlay = document.getElementById("bulk-modal-overlay");
+  const title = document.getElementById("bulk-modal-title");
+  const body = document.getElementById("bulk-modal-body");
+  const cancelBtn = document.getElementById("bulk-modal-cancel");
+  const confirmBtn = document.getElementById("bulk-modal-confirm");
+
+  title.textContent = "Manage Locations";
+  confirmBtn.style.display = "none";
+  cancelBtn.textContent = "Done";
+
+  body.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px" id="loc-manage-list"></div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <input class="form-input" id="new-loc-name" placeholder="New location name…" maxlength="30" style="flex:1">
+      <button class="btn-primary" id="new-loc-add" style="padding:8px 14px;font-size:13px">+ Add</button>
+    </div>`;
+
+  const renderLocList = () => {
+    const list = document.getElementById("loc-manage-list");
+    if (!list) return;
+    list.innerHTML = "";
+    userLocations.forEach(loc => {
+      const row = document.createElement("div");
+      row.style.cssText = "display:flex;align-items:center;gap:8px;background:white;border:1.5px solid var(--rule);border-radius:7px;padding:8px 12px;";
+      row.innerHTML = `
+        <span style="font-size:18px">${loc.icon}</span>
+        <span style="flex:1;font-size:14px;color:var(--ink)">${loc.name}</span>
+        <button style="background:transparent;border:none;color:var(--ink-faint);cursor:pointer;font-size:16px;padding:2px 6px;" data-del="${loc.id}">✕</button>`;
+      row.querySelector("[data-del]").addEventListener("click", () => {
+        if (myPlants.some(p => p.location === loc.id)) {
+          if (!confirm(`Remove "${loc.name}"? Plants assigned here will become unlocated.`)) return;
+          myPlants = myPlants.map(p => p.location === loc.id ? { ...p, location:"" } : p);
+          savePlants();
+        }
+        userLocations = userLocations.filter(l => l.id !== loc.id);
+        saveLocations();
+        renderLocList();
+      });
+      list.appendChild(row);
+    });
+  };
+  renderLocList();
+
+  document.getElementById("new-loc-add").addEventListener("click", () => {
+    const name = document.getElementById("new-loc-name").value.trim();
+    if (!name) return;
+    const icons = ["🌿","🪟","🚪","🌸","⬛","🏠","🌿","🌱"];
+    const icon = icons[userLocations.length % icons.length];
+    const id = name.toLowerCase().replace(/\s+/g,"-").replace(/[^a-z0-9-]/g,"") + "-" + Date.now();
+    userLocations.push({ id, name, icon });
+    saveLocations();
+    document.getElementById("new-loc-name").value = "";
+    renderLocList();
+  });
+
+  cancelBtn.onclick = () => overlay.classList.remove("open");
+  overlay.classList.add("open");
+  overlay.onclick = e => { if (e.target === overlay) overlay.classList.remove("open"); };
+}
+
+// ══════════════════════════════════════════════════════
+// MULTI-SELECT SYSTEM
+// ══════════════════════════════════════════════════════
+
+let multiSelectMode = false;
+let selectedPlantIds = new Set();
+
+function toggleMultiSelect() {
+  multiSelectMode = !multiSelectMode;
+  selectedPlantIds.clear();
+  renderDashboard();
+}
+
+function togglePlantSelect(plantId) {
+  if (selectedPlantIds.has(plantId)) selectedPlantIds.delete(plantId);
+  else selectedPlantIds.add(plantId);
+  updateSelectBar();
+  // update visual
+  document.querySelectorAll("[data-plant-id]").forEach(el => {
+    el.classList.toggle("selected", selectedPlantIds.has(parseInt(el.dataset.plantId)));
+    const cb = el.querySelector(".select-checkbox");
+    if (cb) cb.classList.toggle("checked", selectedPlantIds.has(parseInt(el.dataset.plantId)));
+    if (cb) cb.textContent = selectedPlantIds.has(parseInt(el.dataset.plantId)) ? "✓" : "";
+  });
+}
+
+function updateSelectBar() {
+  const bar = document.getElementById("select-bar");
+  if (!bar) return;
+  const n = selectedPlantIds.size;
+  bar.classList.toggle("show", multiSelectMode);
+  document.getElementById("select-count").textContent = n === 0 ? "Select plants" : `${n} selected`;
+  document.getElementById("btn-bulk-delete").style.display = n > 0 ? "" : "none";
+  document.getElementById("btn-bulk-recat").style.display = n > 0 ? "" : "none";
+  document.getElementById("btn-bulk-reloc").style.display = n > 0 ? "" : "none";
+}
+
+function bulkDelete() {
+  if (selectedPlantIds.size === 0) return;
+  if (!confirm(`Delete ${selectedPlantIds.size} plant${selectedPlantIds.size!==1?"s":""}? This cannot be undone.`)) return;
+  myPlants = myPlants.filter(p => !selectedPlantIds.has(p.id));
+  savePlants();
+  selectedPlantIds.clear();
+  multiSelectMode = false;
+  showToast("Plants removed 🗑");
+  renderDashboard();
+}
+
+function showBulkRecategorize() {
+  if (selectedPlantIds.size === 0) return;
+  const overlay = document.getElementById("bulk-modal-overlay");
+  const title = document.getElementById("bulk-modal-title");
+  const body = document.getElementById("bulk-modal-body");
+  const cancelBtn = document.getElementById("bulk-modal-cancel");
+  const confirmBtn = document.getElementById("bulk-modal-confirm");
+
+  title.textContent = `Recategorize ${selectedPlantIds.size} plant${selectedPlantIds.size!==1?"s":""}`;
+  cancelBtn.textContent = "Cancel";
+  confirmBtn.style.display = "";
+  confirmBtn.textContent = "Apply";
+
+  let chosenCat = null;
+  body.innerHTML = `<div class="bulk-cat-grid">${
+    [
+      {id:"houseplant",label:"Houseplant",icon:"🏠"},
+      {id:"flower",label:"Flower",icon:"🌸"},
+      {id:"vegetable",label:"Vegetable",icon:"🥬"}
+    ].map(c => `<div class="bulk-cat-btn" data-cat="${c.id}"><div class="bulk-cat-icon">${c.icon}</div><div class="bulk-cat-name">${c.label}</div></div>`).join("")
+  }</div>`;
+
+  body.querySelectorAll(".bulk-cat-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      body.querySelectorAll(".bulk-cat-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      chosenCat = btn.dataset.cat;
+    });
+  });
+
+  cancelBtn.onclick = () => overlay.classList.remove("open");
+  confirmBtn.onclick = () => {
+    if (!chosenCat) { showToast("Pick a category first","warn"); return; }
+    myPlants = myPlants.map(p => selectedPlantIds.has(p.id) ? {...p, category: chosenCat} : p);
+    savePlants();
+    selectedPlantIds.clear();
+    multiSelectMode = false;
+    overlay.classList.remove("open");
+    showToast("Plants recategorized ✓");
+    renderDashboard();
+  };
+  overlay.classList.add("open");
+  overlay.onclick = e => { if (e.target === overlay) overlay.classList.remove("open"); };
+}
+
+function showBulkRelocate() {
+  if (selectedPlantIds.size === 0) return;
+  const overlay = document.getElementById("bulk-modal-overlay");
+  const title = document.getElementById("bulk-modal-title");
+  const body = document.getElementById("bulk-modal-body");
+  const cancelBtn = document.getElementById("bulk-modal-cancel");
+  const confirmBtn = document.getElementById("bulk-modal-confirm");
+
+  title.textContent = `Move ${selectedPlantIds.size} plant${selectedPlantIds.size!==1?"s":""}`;
+  cancelBtn.textContent = "Cancel";
+  confirmBtn.style.display = "";
+  confirmBtn.textContent = "Move";
+
+  let chosenLoc = null;
+  body.innerHTML = `<div class="bulk-loc-list">${
+    [{id:"",name:"No location",icon:"📍"}, ...userLocations].map(l =>
+      `<div class="bulk-loc-btn" data-loc="${l.id}"><span>${l.icon}</span><span>${l.name}</span></div>`
+    ).join("")
+  }</div>`;
+
+  body.querySelectorAll(".bulk-loc-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      body.querySelectorAll(".bulk-loc-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      chosenLoc = btn.dataset.loc;
+    });
+  });
+
+  cancelBtn.onclick = () => overlay.classList.remove("open");
+  confirmBtn.onclick = () => {
+    if (chosenLoc === null) { showToast("Pick a location first","warn"); return; }
+    myPlants = myPlants.map(p => selectedPlantIds.has(p.id) ? {...p, location: chosenLoc} : p);
+    savePlants();
+    selectedPlantIds.clear();
+    multiSelectMode = false;
+    overlay.classList.remove("open");
+    showToast("Plants moved ✓");
+    renderDashboard();
+  };
+  overlay.classList.add("open");
+  overlay.onclick = e => { if (e.target === overlay) overlay.classList.remove("open"); };
+}
+// ══════════════════════════════════════════════════════
+// END LOCATIONS + MULTI-SELECT
+// ══════════════════════════════════════════════════════
 
 // ══════════════════════════════════════════════════════
 // GERMINATION & PROPAGATION SYSTEM
