@@ -1,0 +1,2647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Garden Keeper">
+<meta name="theme-color" content="#2d3d2e">
+<meta name="description" content="Your personal botanical journal — track watering, feeding, growth and photos.">
+<title>Garden Keeper</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="apple-touch-startup-image" href="/icons/icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&family=Lato:wght@300;400;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=Nunito:wght@300;400;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --parchment: #f5f0e8;
+    --parchment-dark: #ede8df;
+    --forest: #2d3d2e;
+    --green: #3d8361;
+    --green-light: #7fb069;
+    --ink: #2d3d2e;
+    --ink-mid: #5a4f3e;
+    --ink-soft: #8a7a60;
+    --ink-faint: #b0a08a;
+    --rule: #d4c9b5;
+    --card-border: #e8e2d8;
+    --font-body: 'Crimson Pro', Georgia, serif;
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-ui: 'Crimson Pro', Georgia, serif;
+  }
+
+  html { font-size: 16px; }
+  body { font-family: var(--font-body); background: var(--parchment); color: var(--ink); min-height: 100vh; min-height: -webkit-fill-available; }
+  html { height: -webkit-fill-available; }
+  .display { font-family: var(--font-display); }
+  button, input, select, textarea { font-family: var(--font-ui); }
+
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: var(--parchment-dark); }
+  ::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 3px; }
+
+  @keyframes fadeUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes toastIn { from { opacity:0; transform:translateX(60px) scale(0.92); } to { opacity:1; transform:translateX(0) scale(1); } }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 0 rgba(192,57,43,0.4); } 50% { box-shadow:0 0 0 6px rgba(192,57,43,0); } }
+
+  .page-enter { animation: fadeUp 0.42s cubic-bezier(0.22,1,0.36,1) both; }
+
+  #header { background: var(--forest); position: sticky; top: 0; z-index: 100; border-bottom: 3px solid var(--green-light); padding-top: env(safe-area-inset-top); }
+  .header-inner { max-width: 1020px; margin: 0 auto; padding: 0 28px; display: flex; align-items: center; justify-content: space-between; height: 64px; }
+  .logo-wrap { display: flex; align-items: center; gap: 14px; }
+  .logo-emoji { font-size: 26px; line-height: 1; }
+  .logo-title { color: #d8eacc; font-size: 19px; font-weight: 700; letter-spacing: 0.5px; line-height: 1; }
+  .logo-sub { color: var(--green-light); font-size: 12px; letter-spacing: 1.5px; margin-top: 2px; font-style: italic; }
+
+  nav { display: flex; align-items: center; gap: 4px; }
+  .nav-btn { background: transparent; border: none; color: #8a9e7a; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-family: var(--font-body); font-size: 14px; letter-spacing: 0.3px; display: flex; align-items: center; gap: 7px; transition: all 0.2s; }
+  .nav-btn:hover { color: #d8eacc; background: rgba(127,176,105,0.18); }
+  .nav-btn.active { color: #d8eacc; background: rgba(127,176,105,0.18); font-weight: 600; }
+  .nav-badge { background: #c0392b; color: white; border-radius: 50%; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; animation: pulse 2s infinite; }
+  .nav-icon { font-size: 11px; opacity: 0.7; }
+
+  main { max-width: 1020px; margin: 0 auto; padding: 32px 28px 60px; }
+
+  .section-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 12px; }
+  .section-title { font-family: var(--font-display); color: var(--ink); font-size: 30px; font-weight: 700; line-height: 1; }
+  .section-sub { color: var(--ink-soft); font-size: 15px; margin-top: 6px; font-style: italic; }
+  hr.rule { border: none; border-top: 1px solid var(--rule); margin: 20px 0; }
+
+  .btn-primary { background: var(--green); color: var(--parchment); border: none; border-radius: 4px; padding: 11px 24px; font-family: var(--font-body); font-size: 15px; font-weight: 600; letter-spacing: 0.5px; cursor: pointer; transition: all 0.2s; }
+  .btn-primary:hover { background: #2d6248; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(61,131,97,0.35); }
+  .btn-ghost { background: transparent; color: var(--ink-soft); border: 1.5px solid var(--rule); border-radius: 4px; padding: 9px 18px; font-family: var(--font-body); font-size: 14px; cursor: pointer; transition: all 0.2s; }
+  .btn-ghost:hover { border-color: var(--green); color: var(--green); }
+  .btn-danger { background: transparent; color: #c0392b; border: 1.5px solid rgba(192,57,43,0.25); border-radius: 4px; padding: 8px 16px; font-family: var(--font-body); font-size: 13px; cursor: pointer; transition: all 0.2s; }
+  .btn-danger:hover { background: rgba(192,57,43,0.06); border-color: #c0392b; }
+
+  .filters { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+  .chip { background: white; border: 1.5px solid var(--rule); color: var(--ink-mid); padding: 6px 16px; border-radius: 100px; font-family: var(--font-body); font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 7px; transition: all 0.2s; user-select: none; }
+  .chip:hover { border-color: var(--green); color: var(--green); }
+  .chip.active { background: var(--forest); border-color: var(--forest); color: #d8eacc; font-weight: 600; }
+  .chip-count { background: var(--parchment-dark); color: var(--ink-soft); border-radius: 100px; padding: 1px 8px; font-size: 11px; font-weight: 600; }
+  .chip.active .chip-count { background: rgba(255,255,255,0.15); color: #d8eacc; }
+
+  .plant-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 18px; }
+  .discover-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 18px; }
+
+  .plant-card { background: white; border-radius: 10px; border: 1.5px solid var(--card-border); box-shadow: 0 2px 12px rgba(60,40,20,0.07); overflow: hidden; cursor: pointer; transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.28s ease; }
+  .plant-card:hover { transform: translateY(-5px) rotate(-0.4deg); box-shadow: 0 16px 48px rgba(60,40,20,0.15) !important; }
+  .plant-card.owned { opacity: 0.7; cursor: default; }
+  .plant-card.owned:hover { transform: none; box-shadow: 0 2px 12px rgba(60,40,20,0.07) !important; }
+  .card-top-bar { height: 4px; }
+  .card-body { padding: 18px 20px 20px; }
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+  .card-emoji { font-size: 42px; line-height: 1; }
+  .card-badges { text-align: right; }
+  .card-name { font-family: var(--font-display); color: var(--ink); font-size: 19px; font-weight: 600; margin-bottom: 4px; line-height: 1.2; }
+  .card-sunlight { color: var(--ink-faint); font-size: 13px; margin-bottom: 16px; font-style: italic; }
+
+  .urgency-badge { display: inline-block; border-radius: 4px; padding: 3px 10px; font-size: 11px; font-weight: 700; font-family: var(--font-body); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 5px; }
+  .cat-badge { border-radius: 3px; padding: 2px 7px; font-family: var(--font-body); font-weight: 600; font-size: 11px; }
+
+  .care-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .care-box { border-radius: 7px; padding: 10px 12px; border: 1px solid transparent; }
+  .care-icon { font-size: 16px; margin-bottom: 4px; }
+  .care-days { font-family: var(--font-display); font-size: 17px; font-weight: 600; line-height: 1; }
+  .care-label { font-size: 11px; color: var(--ink-faint); margin-top: 2px; }
+
+  .empty-state { text-align: center; padding: 80px 20px; background: white; border-radius: 12px; border: 1.5px dashed var(--rule); }
+  .empty-emoji { font-size: 56px; }
+  .empty-title { font-family: var(--font-display); color: var(--ink-soft); font-size: 20px; margin: 16px 0 8px; font-style: italic; }
+  .empty-sub { color: var(--ink-faint); font-size: 15px; margin-bottom: 24px; }
+
+  .alert-list { display: flex; flex-direction: column; gap: 12px; }
+  .alert-row { background: white; border: 1.5px solid var(--card-border); border-radius: 10px; padding: 18px 22px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; box-shadow: 0 2px 8px rgba(60,40,20,0.05); }
+  .alert-left { display: flex; align-items: center; gap: 16px; }
+  .alert-emoji { font-size: 36px; line-height: 1; }
+  .alert-name { font-family: var(--font-display); color: var(--ink); font-size: 17px; font-weight: 600; margin-bottom: 5px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .alert-task { font-size: 15px; font-weight: 600; }
+  .alert-right { display: flex; gap: 8px; }
+
+  .reminder-block { margin-top: 32px; background: white; border: 1.5px solid var(--rule); border-radius: 10px; padding: 24px 28px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+  .reminder-title { font-family: var(--font-display); color: var(--ink); font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+  .reminder-sub { color: var(--ink-soft); font-size: 14px; font-style: italic; }
+
+  .discover-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .tag { border-radius: 3px; padding: 3px 9px; font-family: var(--font-body); font-size: 12px; }
+  .tag-water { background: rgba(79,163,214,0.1); color: #3476a0; }
+  .tag-feed  { background: rgba(127,176,105,0.1); color: var(--green); }
+  .tag-sun   { background: var(--parchment-dark); color: var(--ink-soft); }
+  .card-notes { color: var(--ink-soft); font-size: 13px; margin-bottom: 18px; line-height: 1.65; font-style: italic; border-left: 2px solid var(--rule); padding-left: 10px; }
+  .difficulty-badge { background: var(--parchment-dark); color: var(--ink-soft); border-radius: 3px; padding: 2px 8px; font-family: var(--font-body); font-size: 11px; }
+
+  .detail-card { background: white; border: 1.5px solid var(--card-border); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(60,40,20,0.08); }
+  .detail-top-bar { height: 6px; }
+  .detail-body { padding: 28px 32px; }
+  .detail-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+  .detail-hero { display: flex; align-items: center; gap: 20px; }
+  .detail-emoji { font-size: 64px; line-height: 1; }
+  .detail-title { font-family: var(--font-display); color: var(--ink); font-size: 32px; font-weight: 700; margin-bottom: 8px; line-height: 1; }
+  .detail-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .detail-notes { background: #f9f7f4; border: 1px solid var(--card-border); border-radius: 8px; padding: 16px 20px; margin-bottom: 28px; color: var(--ink-mid); font-size: 15px; line-height: 1.75; font-style: italic; }
+  .care-section-title { font-family: var(--font-display); color: var(--ink); font-size: 16px; margin-bottom: 16px; letter-spacing: 0.5px; }
+  .detail-care-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+  .detail-care-box { border-radius: 10px; padding: 20px 22px; border: 1.5px solid transparent; transition: transform 0.2s; }
+  .detail-care-box:hover { transform: scale(1.02); }
+  .detail-care-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .detail-care-label { font-family: var(--font-display); color: var(--ink); font-size: 15px; }
+  .detail-care-days { font-family: var(--font-display); font-size: 34px; font-weight: 700; line-height: 1; margin-bottom: 4px; }
+  .detail-care-interval { color: var(--ink-soft); font-size: 13px; margin-bottom: 16px; font-style: italic; }
+
+  .custom-form-wrap { background: white; border: 1.5px solid var(--card-border); border-radius: 12px; overflow: hidden; margin-bottom: 32px; }
+  .custom-form-header { background: var(--forest); padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+  .custom-form-header-title { color: #d8eacc; font-family: var(--font-display); font-size: 17px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+  .custom-form-header-sub { color: rgba(216,234,204,0.6); font-size: 13px; font-style: italic; }
+  .custom-form-chevron { color: #7fb069; font-size: 18px; transition: transform 0.3s; }
+  .custom-form-chevron.open { transform: rotate(180deg); }
+  .custom-form-body { padding: 24px; border-top: 1px solid var(--card-border); display: none; }
+  .custom-form-body.open { display: block; animation: fadeUp 0.3s ease both; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .form-field { display: flex; flex-direction: column; gap: 6px; }
+  .form-field.full { grid-column: 1 / -1; }
+  .form-label { font-family: var(--font-display); color: var(--ink-mid); font-size: 13px; font-weight: 600; letter-spacing: 0.3px; }
+  .form-input { background: var(--parchment); border: 1.5px solid var(--rule); border-radius: 6px; padding: 9px 12px; font-family: var(--font-body); font-size: 14px; color: var(--ink); transition: border-color 0.2s; outline: none; width: 100%; }
+  .form-input:focus { border-color: var(--green); }
+  .form-select { background: var(--parchment); border: 1.5px solid var(--rule); border-radius: 6px; padding: 9px 12px; font-family: var(--font-body); font-size: 14px; color: var(--ink); outline: none; width: 100%; cursor: pointer; transition: border-color 0.2s; }
+  .form-select:focus { border-color: var(--green); }
+  .form-textarea { background: var(--parchment); border: 1.5px solid var(--rule); border-radius: 6px; padding: 9px 12px; font-family: var(--font-body); font-size: 14px; color: var(--ink); outline: none; width: 100%; resize: vertical; min-height: 72px; transition: border-color 0.2s; }
+  .form-textarea:focus { border-color: var(--green); }
+  .emoji-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; }
+  .emoji-btn { background: var(--parchment); border: 1.5px solid var(--rule); border-radius: 6px; padding: 7px; font-size: 20px; cursor: pointer; text-align: center; transition: all 0.15s; line-height: 1; }
+  .emoji-btn:hover { border-color: var(--green); background: white; transform: scale(1.1); }
+  .emoji-btn.selected { border-color: var(--green); background: rgba(61,131,97,0.08); box-shadow: 0 0 0 2px rgba(61,131,97,0.2); }
+  .form-error { color: #c0392b; font-size: 13px; font-style: italic; margin-top: 4px; display: none; }
+  .form-error.show { display: block; }
+  .custom-badge { background: rgba(61,131,97,0.1); color: var(--green); border-radius: 3px; padding: 2px 7px; font-family: var(--font-body); font-weight: 600; font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; }
+
+
+  /* ── Journal / Photos ── */
+  .journal-strip { display:flex; gap:10px; overflow-x:auto; padding-bottom:8px; margin-bottom:8px; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; }
+  .journal-strip::-webkit-scrollbar { height:4px; }
+  .journal-strip-thumb { position:relative; flex-shrink:0; width:110px; height:110px; border-radius:8px; overflow:hidden; cursor:pointer; scroll-snap-align:start; border:2px solid var(--card-border); transition:transform 0.2s, box-shadow 0.2s; }
+  .journal-strip-thumb:hover { transform:scale(1.04); box-shadow:0 6px 20px rgba(0,0,0,0.18); }
+  .journal-strip-thumb img { width:100%; height:100%; object-fit:cover; }
+  .journal-strip-thumb .thumb-date { position:absolute; bottom:0; left:0; right:0; background:linear-gradient(transparent,rgba(0,0,0,0.65)); color:white; font-size:10px; padding:14px 6px 5px; font-style:italic; }
+  .journal-add-btn { flex-shrink:0; width:110px; height:110px; border-radius:8px; border:2px dashed var(--rule); background:var(--parchment); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; cursor:pointer; color:var(--ink-soft); font-size:12px; transition:all 0.2s; scroll-snap-align:start; }
+  .journal-add-btn:hover { border-color:var(--green); color:var(--green); background:rgba(61,131,97,0.04); }
+  .journal-add-icon { font-size:24px; line-height:1; }
+
+  .journal-section { margin-top:28px; }
+  .journal-section-title { font-family:var(--font-display); font-size:16px; color:var(--ink); margin-bottom:14px; letter-spacing:0.3px; display:flex; align-items:center; justify-content:space-between; }
+
+  /* photo upload modal */
+  .photo-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:400; display:none; align-items:center; justify-content:center; backdrop-filter:blur(3px); padding:20px; }
+  .photo-modal-overlay.open { display:flex; }
+  .photo-modal { background:var(--parchment); border-radius:14px; width:100%; max-width:460px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.3); animation:fadeUp 0.3s cubic-bezier(0.22,1,0.36,1) both; }
+  .photo-modal-head { background:var(--forest); padding:18px 22px; display:flex; align-items:center; justify-content:space-between; }
+  .photo-modal-title { font-family:var(--font-display); color:#d8eacc; font-size:16px; font-weight:600; }
+  .photo-modal-close { background:transparent; border:none; color:#8a9e7a; font-size:20px; cursor:pointer; padding:2px 6px; line-height:1; border-radius:4px; }
+  .photo-modal-close:hover { color:#d8eacc; }
+  .photo-modal-body { padding:22px; display:flex; flex-direction:column; gap:16px; }
+  .photo-drop-zone { border:2px dashed var(--rule); border-radius:10px; padding:32px 20px; text-align:center; cursor:pointer; transition:all 0.2s; background:var(--parchment-dark); position:relative; }
+  .photo-drop-zone:hover, .photo-drop-zone.dragover { border-color:var(--green); background:rgba(61,131,97,0.05); }
+  .photo-drop-zone input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+  .photo-drop-icon { font-size:32px; margin-bottom:8px; }
+  .photo-drop-text { font-size:14px; color:var(--ink-soft); }
+  .photo-drop-text strong { color:var(--green); }
+  .photo-preview-wrap { position:relative; border-radius:10px; overflow:hidden; max-height:220px; display:none; }
+  .photo-preview-wrap img { width:100%; max-height:220px; object-fit:cover; border-radius:10px; display:block; }
+  .photo-preview-clear { position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.5); color:white; border:none; border-radius:50%; width:26px; height:26px; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .photo-modal-field label { display:block; font-family:var(--font-display); font-size:12px; color:var(--ink-soft); font-weight:600; letter-spacing:0.5px; text-transform:uppercase; margin-bottom:6px; }
+  .photo-tag-row { display:flex; gap:6px; flex-wrap:wrap; }
+  .photo-tag-chip { background:var(--parchment-dark); border:1.5px solid var(--rule); border-radius:100px; padding:5px 13px; font-size:12px; cursor:pointer; transition:all 0.15s; color:var(--ink-mid); }
+  .photo-tag-chip:hover { border-color:var(--green); color:var(--green); }
+  .photo-tag-chip.active { background:var(--forest); border-color:var(--forest); color:#d8eacc; }
+  .photo-modal-actions { display:flex; gap:10px; justify-content:flex-end; }
+
+  /* lightbox */
+  .lightbox { position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:500; display:none; align-items:center; justify-content:center; flex-direction:column; gap:0; }
+  .lightbox.open { display:flex; }
+  .lightbox-img-wrap { position:relative; max-width:90vw; max-height:75vh; }
+  .lightbox-img-wrap img { max-width:90vw; max-height:75vh; object-fit:contain; border-radius:6px; display:block; }
+  .lightbox-info { background:rgba(0,0,0,0.7); color:white; padding:12px 20px; width:100%; max-width:90vw; border-radius:0 0 6px 6px; }
+  .lightbox-caption { font-size:15px; margin-bottom:4px; font-style:italic; }
+  .lightbox-meta { font-size:12px; color:rgba(255,255,255,0.55); display:flex; gap:12px; }
+  .lightbox-close { position:fixed; top:20px; right:20px; background:rgba(255,255,255,0.12); border:none; color:white; font-size:22px; width:42px; height:42px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.18s; z-index:501; }
+  .lightbox-close:hover { background:rgba(255,255,255,0.22); }
+  .lightbox-nav { position:fixed; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.1); border:none; color:white; font-size:24px; width:46px; height:46px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.18s; z-index:501; }
+  .lightbox-nav:hover { background:rgba(255,255,255,0.2); }
+  .lightbox-prev { left:12px; }
+  .lightbox-next { right:12px; }
+
+  /* journal timeline tab (inside detail view) */
+  .detail-tabs { display:flex; gap:0; border-bottom:2px solid var(--rule); margin-bottom:20px; }
+  .detail-tab { background:transparent; border:none; padding:10px 20px; font-family:var(--font-display); font-size:14px; font-weight:600; color:var(--ink-soft); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; transition:all 0.18s; letter-spacing:0.3px; }
+  .detail-tab.active { color:var(--green); border-bottom-color:var(--green); }
+  .detail-tab-panel { display:none; }
+  .detail-tab-panel.active { display:block; }
+
+  .journal-timeline { display:flex; flex-direction:column; gap:0; }
+  .journal-entry { display:flex; gap:16px; padding:16px 0; border-bottom:1px solid var(--rule); cursor:pointer; transition:background 0.15s; border-radius:6px; }
+  .journal-entry:hover { background:rgba(61,131,97,0.04); padding-left:8px; }
+  .journal-entry:last-child { border-bottom:none; }
+  .journal-entry-img { width:80px; height:80px; border-radius:8px; object-fit:cover; flex-shrink:0; border:1.5px solid var(--card-border); }
+  .journal-entry-img-placeholder { width:80px; height:80px; border-radius:8px; background:var(--parchment-dark); display:flex; align-items:center; justify-content:center; font-size:28px; flex-shrink:0; border:1.5px solid var(--card-border); }
+  .journal-entry-body { flex:1; min-width:0; }
+  .journal-entry-date { font-size:12px; color:var(--ink-faint); margin-bottom:4px; }
+  .journal-entry-caption { font-size:15px; color:var(--ink); margin-bottom:6px; line-height:1.4; }
+  .journal-entry-tags { display:flex; gap:5px; flex-wrap:wrap; }
+  .journal-entry-tag { background:var(--parchment-dark); color:var(--ink-soft); border-radius:3px; padding:2px 8px; font-size:11px; font-weight:600; }
+  .journal-entry-del { background:transparent; border:none; color:var(--ink-faint); cursor:pointer; font-size:16px; padding:4px; border-radius:4px; align-self:flex-start; transition:color 0.15s; flex-shrink:0; }
+  .journal-entry-del:hover { color:#c0392b; }
+  .journal-empty { text-align:center; padding:40px 20px; color:var(--ink-soft); font-style:italic; font-size:15px; }
+
+  /* ── Germination / Propagation tab ── */
+  .germ-empty { text-align:center; padding:40px 20px; }
+  .germ-empty-icon { font-size:44px; margin-bottom:12px; }
+  .germ-empty-title { font-family:var(--font-display); font-size:18px; color:var(--ink-soft); margin-bottom:8px; }
+  .germ-empty-sub { font-size:14px; color:var(--ink-faint); margin-bottom:20px; font-style:italic; }
+
+  .germ-form { background:white; border:1.5px solid var(--card-border); border-radius:12px; padding:22px; margin-bottom:20px; }
+  .germ-form-title { font-family:var(--font-display); font-size:16px; color:var(--ink); margin-bottom:16px; font-weight:600; }
+  .germ-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .germ-grid.full { grid-template-columns:1fr; }
+  .germ-field { display:flex; flex-direction:column; gap:5px; }
+  .germ-field.full { grid-column:1/-1; }
+  .germ-label { font-family:var(--font-display); font-size:11px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.6px; }
+  .germ-input { background:var(--parchment); border:1.5px solid var(--rule); border-radius:6px; padding:8px 11px; font-family:var(--font-body); font-size:14px; color:var(--ink); outline:none; transition:border-color 0.2s; }
+  .germ-input:focus { border-color:var(--green); }
+  .germ-select { background:var(--parchment); border:1.5px solid var(--rule); border-radius:6px; padding:8px 11px; font-family:var(--font-body); font-size:14px; color:var(--ink); outline:none; width:100%; cursor:pointer; transition:border-color 0.2s; }
+  .germ-select:focus { border-color:var(--green); }
+  .germ-textarea { background:var(--parchment); border:1.5px solid var(--rule); border-radius:6px; padding:8px 11px; font-family:var(--font-body); font-size:14px; color:var(--ink); outline:none; resize:vertical; min-height:68px; width:100%; transition:border-color 0.2s; }
+  .germ-textarea:focus { border-color:var(--green); }
+  .germ-form-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:16px; }
+
+  .germ-card { background:white; border:1.5px solid var(--card-border); border-radius:12px; overflow:hidden; margin-bottom:16px; }
+  .germ-card-head { padding:16px 20px; border-bottom:1px solid var(--rule); display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+  .germ-card-badge { display:inline-flex; align-items:center; gap:5px; border-radius:5px; padding:4px 10px; font-size:12px; font-weight:700; font-family:var(--font-body); text-transform:uppercase; letter-spacing:0.4px; }
+  .germ-card-method { font-family:var(--font-display); font-size:18px; font-weight:600; color:var(--ink); margin-bottom:4px; }
+  .germ-card-started { font-size:13px; color:var(--ink-soft); font-style:italic; }
+  .germ-card-del { background:transparent; border:none; color:var(--ink-faint); cursor:pointer; font-size:17px; padding:3px 6px; border-radius:4px; transition:color 0.15s; flex-shrink:0; }
+  .germ-card-del:hover { color:#c0392b; }
+
+  .germ-progress-wrap { padding:16px 20px; border-bottom:1px solid var(--rule); }
+  .germ-progress-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; }
+  .germ-progress-label { font-family:var(--font-display); font-size:13px; color:var(--ink-mid); font-weight:600; }
+  .germ-progress-days { font-size:13px; color:var(--ink-soft); font-style:italic; }
+  .germ-progress-track { background:var(--parchment-dark); border-radius:6px; height:12px; overflow:hidden; }
+  .germ-progress-fill { height:100%; border-radius:6px; transition:width 0.6s cubic-bezier(0.34,1.2,0.64,1); }
+  .germ-progress-milestones { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+  .germ-milestone { font-size:11px; color:var(--ink-faint); }
+  .germ-milestone.hit { color:var(--green); font-weight:600; }
+
+  .germ-body { padding:16px 20px; display:flex; flex-direction:column; gap:14px; }
+  .germ-notes-section { }
+  .germ-notes-title { font-family:var(--font-display); font-size:13px; font-weight:600; color:var(--ink-mid); margin-bottom:8px; }
+  .germ-note-list { display:flex; flex-direction:column; gap:8px; }
+  .germ-note-row { display:flex; gap:10px; align-items:flex-start; }
+  .germ-note-dot { width:8px; height:8px; border-radius:50%; background:var(--green); flex-shrink:0; margin-top:6px; }
+  .germ-note-text { font-size:14px; color:var(--ink); line-height:1.5; flex:1; }
+  .germ-note-date { font-size:11px; color:var(--ink-faint); white-space:nowrap; }
+  .germ-note-del { background:transparent; border:none; color:var(--ink-faint); cursor:pointer; font-size:13px; padding:2px 4px; flex-shrink:0; }
+  .germ-note-del:hover { color:#c0392b; }
+  .germ-add-note { display:flex; gap:8px; margin-top:8px; }
+  .germ-add-note input { flex:1; background:var(--parchment); border:1.5px solid var(--rule); border-radius:6px; padding:7px 10px; font-family:var(--font-body); font-size:13px; color:var(--ink); outline:none; transition:border-color 0.2s; }
+  .germ-add-note input:focus { border-color:var(--green); }
+  .germ-add-note button { background:var(--green); color:white; border:none; border-radius:6px; padding:7px 14px; font-family:var(--font-body); font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; transition:background 0.18s; }
+  .germ-add-note button:hover { background:#2d6248; }
+
+  .germ-outcome-row { display:flex; gap:8px; flex-wrap:wrap; padding:14px 20px; border-top:1px solid var(--rule); align-items:center; }
+  .germ-outcome-label { font-size:13px; color:var(--ink-soft); flex-shrink:0; }
+  .germ-outcome-btn { border-radius:5px; padding:5px 14px; font-family:var(--font-body); font-size:13px; font-weight:600; cursor:pointer; border:1.5px solid transparent; transition:all 0.18s; }
+  .germ-outcome-btn.active-success { background:rgba(61,131,97,0.12); color:#2d6248; border-color:#3d8361; }
+  .germ-outcome-btn.active-partial { background:rgba(212,124,15,0.1); color:#a06010; border-color:#d47c0f; }
+  .germ-outcome-btn.active-failed  { background:rgba(192,57,43,0.08); color:#922b1f; border-color:#c0392b; }
+  .germ-outcome-btn:not(.active-success):not(.active-partial):not(.active-failed) { background:var(--parchment-dark); color:var(--ink-soft); border-color:var(--rule); }
+  .germ-outcome-btn:hover { opacity:0.8; }
+
+  @media (max-width:600px) {
+    .germ-grid { grid-template-columns:1fr; }
+  }
+
+  /* ── Push notification panel ── */
+  .push-panel { background: white; border: 1.5px solid var(--card-border); border-radius: 10px; padding: 24px 28px; margin-bottom: 24px; }
+  .push-panel-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+  .push-icon { width: 44px; height: 44px; background: var(--forest); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .push-title { font-family: var(--font-display); color: var(--ink); font-size: 17px; font-weight: 600; margin-bottom: 3px; }
+  .push-sub { color: var(--ink-soft); font-size: 13px; font-style: italic; }
+  .push-status { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-radius: 7px; margin-bottom: 18px; border: 1.5px solid var(--rule); background: var(--parchment); font-size: 14px; }
+  .push-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .push-dot.granted  { background: #3d8361; box-shadow: 0 0 0 3px rgba(61,131,97,0.2); }
+  .push-dot.denied   { background: #c0392b; box-shadow: 0 0 0 3px rgba(192,57,43,0.2); }
+  .push-dot.default  { background: #d47c0f; box-shadow: 0 0 0 3px rgba(212,124,15,0.2); }
+  .push-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .push-schedule { background: var(--parchment); border: 1.5px solid var(--rule); border-radius: 8px; padding: 16px 18px; margin-top: 16px; }
+  .push-schedule-title { font-family: var(--font-display); font-size: 14px; color: var(--ink); margin-bottom: 12px; }
+  .push-time-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .push-time-label { font-size: 13px; color: var(--ink-mid); }
+  .push-time-input { background: white; border: 1.5px solid var(--rule); border-radius: 5px; padding: 6px 10px; font-family: var(--font-body); font-size: 14px; color: var(--ink); outline: none; transition: border-color 0.2s; }
+  .push-time-input:focus { border-color: var(--green); }
+  .push-howto { margin-top: 16px; background: rgba(61,131,97,0.06); border: 1px solid rgba(61,131,97,0.2); border-radius: 7px; padding: 14px 16px; }
+  .push-howto-title { font-family: var(--font-display); font-size: 13px; color: var(--green); font-weight: 600; margin-bottom: 8px; }
+  .push-howto ol { padding-left: 18px; }
+  .push-howto li { font-size: 13px; color: var(--ink-mid); line-height: 1.7; }
+  .push-howto li strong { color: var(--ink); font-weight: 600; }
+
+  #toast { position: fixed; top: 24px; right: 24px; z-index: 9999; background: #2d5a3d; color: var(--parchment); padding: 13px 22px; border-radius: 6px; box-shadow: 0 8px 32px rgba(40,30,20,0.25); font-size: 14px; letter-spacing: 0.3px; animation: toastIn 0.3s cubic-bezier(0.22,1,0.36,1) both; display: none; }
+  #toast.warn { background: #8b5e2a; }
+  #toast.show { display: block; }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+
+  /* ── View toggle ── */
+  .view-toggle { display:flex; gap:4px; background:white; border:1.5px solid var(--rule); border-radius:6px; padding:3px; }
+  .vt-btn { background:transparent; border:none; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:14px; color:var(--ink-soft); transition:all 0.18s; line-height:1; }
+  .vt-btn:hover { color:var(--ink); }
+  .vt-btn.active { background:var(--forest); color:#d8eacc; }
+
+  /* ── List view ── */
+  .plant-list { display:flex; flex-direction:column; gap:10px; }
+  .list-row { background:white; border:1.5px solid var(--card-border); border-radius:10px; overflow:hidden; cursor:pointer; display:flex; align-items:center; gap:0; transition:box-shadow 0.2s, transform 0.2s; }
+  .list-row:hover { transform:translateX(3px); box-shadow:0 4px 18px rgba(60,40,20,0.1); }
+  .list-accent { width:5px; align-self:stretch; flex-shrink:0; }
+  .list-emoji { font-size:28px; padding:14px 16px; flex-shrink:0; line-height:1; }
+  .list-main { flex:1; padding:12px 0; min-width:0; }
+  .list-name { font-family:var(--font-display); font-size:16px; font-weight:600; color:var(--ink); margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .list-meta { font-size:12px; color:var(--ink-faint); font-style:italic; }
+  .list-badges { display:flex; gap:6px; align-items:center; padding:14px 16px; flex-shrink:0; flex-wrap:wrap; justify-content:flex-end; }
+  .list-pill { border-radius:4px; padding:4px 10px; font-family:var(--font-body); font-size:12px; font-weight:700; white-space:nowrap; }
+
+  /* ── Chart view ── */
+  .chart-view { display:flex; flex-direction:column; gap:24px; }
+  .chart-section { background:white; border:1.5px solid var(--card-border); border-radius:10px; padding:22px 24px; }
+  .chart-title { font-family:var(--font-display); font-size:15px; font-weight:600; color:var(--ink); margin-bottom:18px; }
+  .bar-row { display:flex; align-items:center; gap:12px; margin-bottom:10px; cursor:pointer; transition:opacity 0.15s; }
+  .bar-row:hover { opacity:0.8; }
+  .bar-label { width:120px; flex-shrink:0; font-size:13px; color:var(--ink-mid); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; gap:6px; }
+  .bar-track { flex:1; background:var(--parchment-dark); border-radius:4px; height:22px; overflow:hidden; }
+  .bar-fill { height:100%; border-radius:4px; transition:width 0.6s cubic-bezier(0.34,1.2,0.64,1); display:flex; align-items:center; padding-left:8px; }
+  .bar-val { font-size:11px; font-weight:700; color:white; white-space:nowrap; }
+  .bar-days { width:52px; flex-shrink:0; font-size:12px; text-align:right; font-weight:600; }
+
+  .donut-row { display:flex; gap:28px; align-items:center; flex-wrap:wrap; }
+  .donut-wrap { position:relative; width:140px; height:140px; flex-shrink:0; }
+  .donut-wrap svg { width:140px; height:140px; }
+  .donut-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .donut-num { font-family:var(--font-display); font-size:26px; font-weight:700; color:var(--ink); line-height:1; }
+  .donut-label { font-size:11px; color:var(--ink-faint); margin-top:2px; }
+  .legend-list { display:flex; flex-direction:column; gap:8px; }
+  .legend-item { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--ink-mid); cursor:pointer; }
+  .legend-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .legend-name { flex:1; }
+  .legend-count { font-weight:600; color:var(--ink); }
+
+  .health-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; }
+  .health-card { background:var(--parchment); border-radius:8px; padding:14px 16px; cursor:pointer; transition:transform 0.2s; border:1.5px solid var(--card-border); }
+  .health-card:hover { transform:translateY(-2px); }
+  .health-top { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .health-emoji { font-size:22px; line-height:1; }
+  .health-name { font-family:var(--font-display); font-size:14px; font-weight:600; color:var(--ink); }
+  .health-bar-wrap { background:var(--rule); border-radius:3px; height:6px; overflow:hidden; }
+  .health-bar-fill { height:100%; border-radius:3px; transition:width 0.5s ease; }
+  .health-score-row { display:flex; justify-content:space-between; margin-top:6px; font-size:11px; color:var(--ink-faint); }
+
+  /* ── Settings Panel ── */
+  #settings-fab { position:fixed; bottom:24px; right:24px; z-index:200; width:48px; height:48px; border-radius:50%; background:var(--forest); border:none; font-size:20px; cursor:pointer; box-shadow:0 4px 20px rgba(0,0,0,0.2); transition:transform 0.2s, box-shadow 0.2s; display:flex; align-items:center; justify-content:center; color:var(--green-light); }
+  #settings-fab:hover { transform:scale(1.1); box-shadow:0 6px 28px rgba(0,0,0,0.28); }
+  #settings-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:300; display:none; backdrop-filter:blur(2px); }
+  #settings-overlay.open { display:block; }
+  #settings-drawer { position:fixed; right:0; top:0; bottom:0; width:320px; max-width:100vw; background:var(--parchment); z-index:301; box-shadow:-8px 0 40px rgba(0,0,0,0.18); transform:translateX(100%); transition:transform 0.32s cubic-bezier(0.22,1,0.36,1); display:flex; flex-direction:column; overflow:hidden; }
+  #settings-drawer.open { transform:translateX(0); }
+  .settings-head { background:var(--forest); padding:20px 20px 16px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+  .settings-head-title { font-family:var(--font-display); color:#d8eacc; font-size:18px; font-weight:600; }
+  .settings-close { background:transparent; border:none; color:#8a9e7a; font-size:22px; cursor:pointer; padding:2px 6px; border-radius:4px; transition:color 0.2s; line-height:1; }
+  .settings-close:hover { color:#d8eacc; }
+  .settings-body { flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:24px; }
+  .settings-section { }
+  .settings-label { font-family:var(--font-display); font-size:13px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; }
+  .theme-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .theme-swatch { border:2px solid var(--rule); border-radius:8px; padding:10px 6px 8px; cursor:pointer; text-align:center; transition:all 0.18s; }
+  .theme-swatch:hover { border-color:var(--green); transform:translateY(-1px); }
+  .theme-swatch.active { border-color:var(--green); box-shadow:0 0 0 2px rgba(61,131,97,0.25); }
+  .theme-swatch-bar { height:10px; border-radius:3px; margin-bottom:5px; }
+  .theme-swatch-name { font-size:11px; color:var(--ink-mid); font-weight:500; }
+  .font-list { display:flex; flex-direction:column; gap:6px; }
+  .font-opt { background:white; border:1.5px solid var(--rule); border-radius:7px; padding:10px 14px; cursor:pointer; transition:all 0.18s; display:flex; align-items:baseline; gap:8px; }
+  .font-opt:hover { border-color:var(--green); }
+  .font-opt.active { border-color:var(--green); background:rgba(61,131,97,0.06); }
+  .font-opt-name { font-size:13px; color:var(--ink-soft); font-weight:500; }
+  .font-opt-preview { font-size:18px; color:var(--ink); }
+  .settings-footer { padding:16px 20px; border-top:1px solid var(--rule); flex-shrink:0; }
+
+  /* ── Mobile layout ── */
+  @media (max-width: 600px) {
+    #header nav { display:none; }
+    #header .header-inner { height:56px; }
+    #mobile-nav { display:flex; position:fixed; bottom:0; left:0; right:0; background:var(--forest); border-top:2px solid rgba(127,176,105,0.3); z-index:150; height:calc(62px + env(safe-area-inset-bottom)); padding-bottom:env(safe-area-inset-bottom); }
+    .mob-nav-btn { flex:1; background:transparent; border:none; color:#6a8060; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; cursor:pointer; font-family:var(--font-ui); font-size:10px; letter-spacing:0.3px; padding:8px 0; transition:color 0.18s; position:relative; }
+    .mob-nav-btn.active { color:#d8eacc; }
+    .mob-nav-btn .mob-icon { font-size:20px; line-height:1; }
+    .mob-nav-badge { position:absolute; top:6px; right:calc(50% - 14px); background:#c0392b; color:white; border-radius:50%; width:16px; height:16px; display:none; align-items:center; justify-content:center; font-size:9px; font-weight:bold; }
+    .mob-nav-badge.show { display:inline-flex; }
+    main { padding: 20px 14px 90px; }
+    .header-inner { padding: 0 16px; }
+    .detail-care-grid, .plant-grid, .discover-grid { grid-template-columns: 1fr; }
+    .detail-hero { flex-direction: column; align-items: flex-start; }
+    .bar-label { width:80px; }
+    .section-head { flex-direction:column; align-items:flex-start; gap:10px; }
+    .section-head > div:last-child { width:100%; display:flex; gap:8px; justify-content:space-between; }
+    .plant-grid { grid-template-columns: 1fr 1fr; gap:12px; }
+    .plant-card .card-body { padding:12px; }
+    .plant-card .card-emoji { font-size:28px; }
+    .section-title { font-size:24px; }
+    #settings-fab { bottom:76px; }
+    #settings-drawer { width:100vw; top:auto; height:85vh; border-radius:18px 18px 0 0; transform:translateY(100%); right:0; }
+    #settings-drawer.open { transform:translateY(0); }
+    .push-panel { padding:16px; }
+    .view-toggle { }
+    .list-badges { flex-direction:column; gap:4px; align-items:flex-end; }
+    .detail-care-grid { grid-template-columns:1fr 1fr; }
+  }
+  @media (min-width: 601px) {
+    #mobile-nav { display:none; }
+  }
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<header id="header">
+  <div class="header-inner">
+    <div class="logo-wrap">
+      <span class="logo-emoji">🌿</span>
+      <div>
+        <div class="logo-title display">Garden Keeper</div>
+        <div class="logo-sub">Your botanical journal</div>
+      </div>
+    </div>
+    <nav>
+      <button class="nav-btn active" data-view="dashboard"><span class="nav-icon">⬡</span> My Garden</button>
+      <button class="nav-btn" data-view="alerts"><span class="nav-icon">◇</span> Alerts <span class="nav-badge" id="nav-badge" style="display:none"></span></button>
+      <button class="nav-btn" data-view="discover"><span class="nav-icon">✦</span> Discover</button>
+    </nav>
+  </div>
+</header>
+
+<!-- Mobile bottom nav -->
+<nav id="mobile-nav">
+  <button class="mob-nav-btn active" data-view="dashboard">
+    <span class="mob-icon">⬡</span>
+    <span>Garden</span>
+  </button>
+  <button class="mob-nav-btn" data-view="alerts">
+    <span class="mob-icon">◇</span>
+    <span>Alerts</span>
+    <span class="mob-nav-badge" id="mob-badge"></span>
+  </button>
+  <button class="mob-nav-btn" data-view="discover">
+    <span class="mob-icon">✦</span>
+    <span>Discover</span>
+  </button>
+</nav>
+
+<!-- Settings FAB -->
+<button id="settings-fab" title="Appearance settings">⚙</button>
+
+<!-- Settings overlay -->
+<div id="settings-overlay"></div>
+
+<!-- Settings drawer -->
+<div id="settings-drawer">
+  <div class="settings-head">
+    <span class="settings-head-title">Appearance</span>
+    <button class="settings-close" id="settings-close">✕</button>
+  </div>
+  <div class="settings-body">
+
+    <div class="settings-section">
+      <div class="settings-label">Color Theme</div>
+      <div class="theme-grid" id="theme-grid"></div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-label">Font Style</div>
+      <div class="font-list" id="font-list"></div>
+    </div>
+
+  </div>
+  <div class="settings-footer">
+    <button class="btn-ghost" id="settings-reset-appearance" style="width:100%;font-size:13px">Reset to defaults</button>
+  </div>
+</div>
+
+<main>
+  <div id="view-dashboard" class="view active">
+    <div class="section-head">
+      <div>
+        <h1 class="section-title display">My Garden</h1>
+        <p class="section-sub" id="dash-sub"></p>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <div class="view-toggle" id="view-toggle">
+          <button class="vt-btn active" data-mode="grid" title="Grid">⊞</button>
+          <button class="vt-btn" data-mode="list" title="List">☰</button>
+          <button class="vt-btn" data-mode="chart" title="Chart">◎</button>
+        </div>
+        <button class="btn-primary" onclick="navigateTo('discover')">+ Add Plants</button>
+      </div>
+    </div>
+    <hr class="rule">
+    <div class="filters" id="dash-filters"></div>
+    <div id="dash-content"></div>
+  </div>
+
+  <div id="view-alerts" class="view">
+    <div>
+      <h1 class="section-title display">Alerts</h1>
+      <p class="section-sub" id="alerts-sub"></p>
+    </div>
+    <hr class="rule" style="margin-bottom:24px">
+    <div id="alerts-content"></div>
+    <!-- Push notification panel -->
+    <div class="push-panel" id="push-panel">
+      <div class="push-panel-head">
+        <div class="push-icon">🔔</div>
+        <div>
+          <div class="push-title display">Phone Alerts</div>
+          <div class="push-sub">Get notified on your phone when plants need care</div>
+        </div>
+      </div>
+      <div class="push-status" id="push-status-row">
+        <span class="push-dot default" id="push-dot"></span>
+        <span id="push-status-text">Checking notification status…</span>
+      </div>
+      <div class="push-actions">
+        <button class="btn-primary" id="btn-enable-push">Enable phone alerts</button>
+        <button class="btn-ghost" id="btn-test-push" style="display:none">Send test alert</button>
+      </div>
+      <div class="push-schedule" id="push-schedule" style="display:none">
+        <div class="push-schedule-title display">Daily check time</div>
+        <div class="push-time-row">
+          <span class="push-time-label">Send daily plant check at</span>
+          <input class="push-time-input" type="time" id="push-time" value="08:00">
+          <button class="btn-primary" id="btn-save-time" style="padding:7px 16px;font-size:13px">Save</button>
+        </div>
+        <p style="font-size:12px;color:var(--ink-faint);margin-top:8px;font-style:italic">The app will check for due tasks each day and alert you if anything needs attention.</p>
+      </div>
+      <div class="push-howto" id="push-howto" style="display:none">
+        <div class="push-howto-title">📱 To get alerts on your phone</div>
+        <ol>
+          <li>Open this file in your phone browser (Safari on iPhone, Chrome on Android)</li>
+          <li>Tap <strong>Share</strong> → <strong>Add to Home Screen</strong></li>
+          <li>Open the app from your home screen and tap <strong>Enable phone alerts</strong></li>
+          <li>Allow notifications when your browser asks</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="reminder-block">
+      <div>
+        <div class="reminder-title display">Schedule All Reminders</div>
+        <p class="reminder-sub">Set recurring reminders for every plant in your garden.</p>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn-primary" id="btn-set-all">🔔 Set All Reminders</button>
+        <button class="btn-ghost" id="btn-clear-data" style="font-size:13px;color:#c0392b;border-color:rgba(192,57,43,0.3)">Reset garden data</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-discover" class="view">
+    <div class="section-head">
+      <div>
+        <h1 class="section-title display">Discover Plants</h1>
+        <p class="section-sub">Find your next green companion</p>
+      </div>
+    </div>
+    <hr class="rule">
+
+    <div class="custom-form-wrap">
+      <div class="custom-form-header" id="custom-form-toggle">
+        <div>
+          <div class="custom-form-header-title">✦ Add a Custom Plant</div>
+          <div class="custom-form-header-sub">Create your own entry for any plant, herb, or crop</div>
+        </div>
+        <span class="custom-form-chevron" id="custom-form-chevron">&#9662;</span>
+      </div>
+      <div class="custom-form-body" id="custom-form-body">
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="form-label">Plant name *</label>
+            <input class="form-input" id="cf-name" type="text" placeholder="e.g. Fiddle Leaf Fig" maxlength="40">
+            <span class="form-error" id="cf-name-err">Please enter a plant name</span>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Category *</label>
+            <select class="form-select" id="cf-category">
+              <option value="">Choose one...</option>
+              <option value="houseplant">Houseplant</option>
+              <option value="flower">Flower</option>
+              <option value="vegetable">Vegetable / Herb</option>
+            </select>
+            <span class="form-error" id="cf-cat-err">Please choose a category</span>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Water every (days) *</label>
+            <input class="form-input" id="cf-water" type="number" min="1" max="90" placeholder="e.g. 3">
+            <span class="form-error" id="cf-water-err">Enter a number between 1-90</span>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Fertilize every (days) *</label>
+            <input class="form-input" id="cf-fert" type="number" min="1" max="365" placeholder="e.g. 14">
+            <span class="form-error" id="cf-fert-err">Enter a number between 1-365</span>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Sunlight needs</label>
+            <select class="form-select" id="cf-sun">
+              <option value="Full Sun">Full Sun</option>
+              <option value="Partial Shade">Partial Shade</option>
+              <option value="Bright Indirect">Bright Indirect</option>
+              <option value="Low Light">Low Light</option>
+              <option value="Any Light">Any Light</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Difficulty</label>
+            <select class="form-select" id="cf-diff">
+              <option value="Easy">Easy</option>
+              <option value="Medium">Medium</option>
+              <option value="Hard">Hard</option>
+            </select>
+          </div>
+          <div class="form-field full">
+            <label class="form-label">Care notes</label>
+            <textarea class="form-textarea" id="cf-notes" placeholder="Any tips or reminders for this plant..." maxlength="200"></textarea>
+          </div>
+          <div class="form-field full">
+            <label class="form-label">Pick an emoji</label>
+            <div class="emoji-grid" id="cf-emoji-grid"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+          <button class="btn-ghost" id="cf-cancel">Cancel</button>
+          <button class="btn-primary" id="cf-submit">+ Add to Garden</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="filters" id="discover-filters"></div>
+    <div id="discover-content" class="discover-grid"></div>
+  </div>
+
+  <div id="view-detail" class="view">
+    <button class="btn-ghost" style="margin-bottom:20px" onclick="navigateTo('dashboard')">← Back to Garden</button>
+    <div id="detail-content"></div>
+  </div>
+</main>
+
+<!-- Photo upload modal -->
+<div class="photo-modal-overlay" id="photo-modal-overlay">
+  <div class="photo-modal">
+    <div class="photo-modal-head">
+      <span class="photo-modal-title display">Add Journal Photo</span>
+      <button class="photo-modal-close" id="photo-modal-close">✕</button>
+    </div>
+    <div class="photo-modal-body">
+      <div class="photo-drop-zone" id="photo-drop-zone">
+        <input type="file" id="photo-file-input" accept="image/*" capture="environment">
+        <div class="photo-drop-icon">📷</div>
+        <div class="photo-drop-text">Tap to take a photo or <strong>choose from library</strong></div>
+      </div>
+      <div class="photo-preview-wrap" id="photo-preview-wrap">
+        <img id="photo-preview-img" src="" alt="Preview">
+        <button class="photo-preview-clear" id="photo-preview-clear">✕</button>
+      </div>
+      <div class="photo-modal-field">
+        <label>Caption</label>
+        <input class="form-input" id="photo-caption-input" type="text" placeholder="How's it growing? Any notes…" maxlength="120">
+      </div>
+      <div class="photo-modal-field">
+        <label>Tag</label>
+        <div class="photo-tag-row" id="photo-tag-row">
+          <span class="photo-tag-chip active" data-tag="progress">📈 Progress</span>
+          <span class="photo-tag-chip" data-tag="bloom">🌸 Bloom</span>
+          <span class="photo-tag-chip" data-tag="issue">⚠️ Issue</span>
+          <span class="photo-tag-chip" data-tag="harvest">🌾 Harvest</span>
+          <span class="photo-tag-chip" data-tag="repot">🪴 Repot</span>
+          <span class="photo-tag-chip" data-tag="other">📝 Other</span>
+        </div>
+      </div>
+      <div class="photo-modal-actions">
+        <button class="btn-ghost" id="photo-modal-cancel">Cancel</button>
+        <button class="btn-primary" id="photo-modal-save">Save to Journal</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" id="lightbox-close">✕</button>
+  <button class="lightbox-nav lightbox-prev" id="lightbox-prev">‹</button>
+  <button class="lightbox-nav lightbox-next" id="lightbox-next">›</button>
+  <div class="lightbox-img-wrap">
+    <img id="lightbox-img" src="" alt="">
+    <div class="lightbox-info">
+      <div class="lightbox-caption" id="lightbox-caption"></div>
+      <div class="lightbox-meta">
+        <span id="lightbox-date"></span>
+        <span id="lightbox-tag"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const PLANTS = [
+  { id:1,  name:"Basil",       emoji:"🌿", category:"vegetable",  waterDays:2,  fertilizeDays:14, sunlight:"Full Sun",        difficulty:"Easy",   notes:"Keep soil moist. Pinch flowers to encourage leaf growth." },
+  { id:2,  name:"Tomatoes",    emoji:"🍅", category:"vegetable",  waterDays:1,  fertilizeDays:7,  sunlight:"Full Sun",        difficulty:"Medium", notes:"Stake when tall. Water at base to prevent disease." },
+  { id:3,  name:"Lavender",    emoji:"💜", category:"flower",     waterDays:7,  fertilizeDays:30, sunlight:"Full Sun",        difficulty:"Easy",   notes:"Drought tolerant. Excellent for pollinators." },
+  { id:4,  name:"Mint",        emoji:"🌱", category:"vegetable",  waterDays:2,  fertilizeDays:21, sunlight:"Partial Shade",   difficulty:"Easy",   notes:"Grows aggressively. Best kept in containers." },
+  { id:5,  name:"Roses",       emoji:"🌹", category:"flower",     waterDays:3,  fertilizeDays:14, sunlight:"Full Sun",        difficulty:"Hard",   notes:"Prune in early spring. Watch for aphids." },
+  { id:6,  name:"Succulents",  emoji:"🪴", category:"houseplant", waterDays:14, fertilizeDays:60, sunlight:"Bright Indirect", difficulty:"Easy",   notes:"Allow soil to dry completely between waterings." },
+  { id:7,  name:"Pothos",      emoji:"🍃", category:"houseplant", waterDays:7,  fertilizeDays:30, sunlight:"Low Light",       difficulty:"Easy",   notes:"Extremely forgiving. Tolerates low light and irregular watering." },
+  { id:8,  name:"Peace Lily",  emoji:"🌼", category:"houseplant", waterDays:5,  fertilizeDays:21, sunlight:"Low Light",       difficulty:"Easy",   notes:"Droops when thirsty — great self-watering signal. Keep away from pets." },
+  { id:9,  name:"Sunflower",   emoji:"🌻", category:"flower",     waterDays:3,  fertilizeDays:14, sunlight:"Full Sun",        difficulty:"Easy",   notes:"Follow the sun when young. Deep water to encourage strong roots." },
+  { id:10, name:"Lettuce",     emoji:"🥬", category:"vegetable",  waterDays:1,  fertilizeDays:14, sunlight:"Partial Shade",   difficulty:"Easy",   notes:"Harvest outer leaves regularly. Bolt-resistant in cool weather." },
+  { id:11, name:"Orchid",      emoji:"🌸", category:"flower",     waterDays:7,  fertilizeDays:14, sunlight:"Bright Indirect", difficulty:"Hard",   notes:"Water by soaking roots, then drain fully. Needs high humidity." },
+  { id:12, name:"Snake Plant", emoji:"🌵", category:"houseplant", waterDays:14, fertilizeDays:60, sunlight:"Any Light",       difficulty:"Easy",   notes:"Nearly indestructible. Excellent air purifier. Avoid overwatering." },
+];
+
+const CATEGORIES = [
+  { id:"all",        label:"All",         icon:"✦" },
+  { id:"houseplant", label:"Houseplants", icon:"🏠" },
+  { id:"flower",     label:"Flowers",     icon:"🌸" },
+  { id:"vegetable",  label:"Vegetables",  icon:"🥬" },
+];
+
+const CAT_META = {
+  houseplant: { icon:"🏠", label:"Houseplant", accent:"#7fb069", light:"rgba(127,176,105,0.12)" },
+  flower:     { icon:"🌸", label:"Flower",     accent:"#e07a5f", light:"rgba(224,122,95,0.12)"  },
+  vegetable:  { icon:"🥬", label:"Vegetable",  accent:"#3d8361", light:"rgba(61,131,97,0.12)"   },
+};
+
+const URGENCY = {
+  overdue: { color:"#c0392b", bg:"#fdf0ed", label:"Overdue" },
+  today:   { color:"#d47c0f", bg:"#fdf8ed", label:"Today"   },
+  soon:    { color:"#6a7c1a", bg:"#f7f9ed", label:"Soon"    },
+  ok:      { color:"#3d8361", bg:"#edf7f2", label:"OK"      },
+};
+
+const STORAGE_KEY = "gardenkeeper_plants";
+const STORAGE_META_KEY = "gardenkeeper_meta";
+
+const DEFAULT_PLANTS = [
+  { ...PLANTS[0], addedDate:new Date(Date.now()-5*86400000).toISOString(),  lastWatered:new Date(Date.now()-1*86400000).toISOString(),  lastFertilized:new Date(Date.now()-10*86400000).toISOString() },
+  { ...PLANTS[2], addedDate:new Date(Date.now()-20*86400000).toISOString(), lastWatered:new Date(Date.now()-6*86400000).toISOString(),  lastFertilized:new Date(Date.now()-25*86400000).toISOString() },
+  { ...PLANTS[6], addedDate:new Date(Date.now()-30*86400000).toISOString(), lastWatered:new Date(Date.now()-6*86400000).toISOString(),  lastFertilized:new Date(Date.now()-28*86400000).toISOString() },
+];
+
+function loadPlants() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch(e) { console.warn("Could not load saved plants:", e); }
+  return DEFAULT_PLANTS;
+}
+
+function savePlants() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(myPlants)); } catch(e) { console.warn("Could not save plants:", e); }
+}
+
+function loadMeta() {
+  try {
+    const saved = localStorage.getItem(STORAGE_META_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return {};
+}
+
+function saveMeta(meta) {
+  try { localStorage.setItem(STORAGE_META_KEY, JSON.stringify(meta)); } catch(e) {}
+}
+
+let myPlants = loadPlants();
+
+let currentView = "dashboard";
+let selectedPlantId = null;
+const _meta = loadMeta();
+let dashFilter = _meta.dashFilter || "all";
+let discoverFilter = "all";
+let dashViewMode = _meta.dashViewMode || "grid";
+let reminderStatus = {};
+let toastTimer = null;
+
+function getDaysUntil(lastDate, intervalDays) {
+  const next = new Date(new Date(lastDate).getTime() + intervalDays * 86400000);
+  return Math.ceil((next - new Date()) / 86400000);
+}
+function getUrgency(days) {
+  return days <= 0 ? "overdue" : days === 1 ? "today" : days <= 3 ? "soon" : "ok";
+}
+function getNotifications() {
+  const notifs = [];
+  myPlants.forEach(p => {
+    const w = getDaysUntil(p.lastWatered, p.waterDays);
+    const f = getDaysUntil(p.lastFertilized, p.fertilizeDays);
+    if (w <= 1) notifs.push({ plant:p, type:"water",     days:w });
+    if (f <= 3) notifs.push({ plant:p, type:"fertilize", days:f });
+  });
+  return notifs;
+}
+
+function showToast(msg, type="success") {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.className = "show" + (type==="warn" ? " warn" : "");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 3000);
+}
+
+function navigateTo(v, plantId) {
+  currentView = v;
+  if (plantId) selectedPlantId = plantId;
+  document.querySelectorAll(".view").forEach(el => el.classList.remove("active"));
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+  const viewEl = document.getElementById("view-" + v);
+  viewEl.classList.add("active");
+  viewEl.classList.remove("page-enter");
+  void viewEl.offsetWidth;
+  viewEl.classList.add("page-enter");
+  const nb = document.querySelector(`[data-view="${v}"]`);
+  if (nb) nb.classList.add("active");
+  renderView(v);
+  window.scrollTo(0, 0);
+}
+
+function updateNavBadge() {
+  const n = getNotifications().length;
+  const b = document.getElementById("nav-badge");
+  b.textContent = n;
+  b.style.display = n > 0 ? "inline-flex" : "none";
+}
+
+function renderView(v) {
+  updateNavBadge();
+  updateMobileNav(v);
+  if      (v==="dashboard") renderDashboard();
+  else if (v==="alerts")    { renderAlerts(); initPushPanel(); }
+  else if (v==="discover")  renderDiscover();
+  else if (v==="detail")    renderDetail();
+}
+
+function renderFilters(containerId, active, counts, onChange) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = "";
+  CATEGORIES.forEach(cat => {
+    const btn = document.createElement("button");
+    btn.className = "chip" + (active===cat.id ? " active" : "");
+    btn.innerHTML = `<span>${cat.icon}</span> ${cat.label} <span class="chip-count">${counts[cat.id]??0}</span>`;
+    btn.addEventListener("click", () => onChange(cat.id));
+    el.appendChild(btn);
+  });
+}
+
+function renderDashboard() {
+  const counts = { all:myPlants.length, ...Object.fromEntries(CATEGORIES.slice(1).map(c=>[c.id, myPlants.filter(p=>p.category===c.id).length])) };
+  renderFilters("dash-filters", dashFilter, counts, id => { dashFilter=id; saveMeta({dashFilter, dashViewMode}); renderDashboard(); });
+  document.getElementById("dash-sub").textContent = myPlants.length + " " + (myPlants.length===1?"plant":"plants") + " in your care";
+
+  // Wire up view toggle
+  document.querySelectorAll(".vt-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.mode === dashViewMode);
+    btn.onclick = () => { dashViewMode = btn.dataset.mode; saveMeta({dashFilter, dashViewMode}); renderDashboard(); };
+  });
+
+  const filtered = dashFilter==="all" ? myPlants : myPlants.filter(p=>p.category===dashFilter);
+  const content = document.getElementById("dash-content");
+
+  if (filtered.length === 0 && dashViewMode !== "chart") {
+    content.innerHTML = `<div class="empty-state"><div class="empty-emoji">${dashFilter==="all"?"🌱":(CAT_META[dashFilter]?.icon||"🌱")}</div><p class="empty-title display">Your garden awaits</p><p class="empty-sub">Start by adding some plants to tend</p><button class="btn-primary" onclick="discoverFilter='${dashFilter}';navigateTo('discover')">Browse Plants →</button></div>`;
+    return;
+  }
+
+  content.innerHTML = "";
+
+  if (dashViewMode === "grid") renderGridView(filtered, content);
+  else if (dashViewMode === "list") renderListView(filtered, content);
+  else renderChartView(content);
+}
+
+function renderGridView(filtered, content) {
+  const grid = document.createElement("div");
+  grid.className = "plant-grid";
+  filtered.forEach((plant, idx) => {
+    const wDays = getDaysUntil(plant.lastWatered, plant.waterDays);
+    const fDays = getDaysUntil(plant.lastFertilized, plant.fertilizeDays);
+    const wU = getUrgency(wDays), fU = getUrgency(fDays);
+    const uList = [wU,fU];
+    const topU = uList.includes("overdue")?"overdue":uList.includes("today")?"today":uList.includes("soon")?"soon":"ok";
+    const urg = URGENCY[topU], meta = CAT_META[plant.category];
+    const card = document.createElement("div");
+    card.className = "plant-card";
+    card.style.animationDelay = (idx*0.05)+"s";
+    card.style.animationFillMode = "both";
+    card.innerHTML = `
+      <div class="card-top-bar" style="background:${urg.color};opacity:${topU==="ok"?0.4:1}"></div>
+      <div class="card-body">
+        <div class="card-header">
+          <span class="card-emoji">${plant.emoji}</span>
+          <div class="card-badges">
+            <span class="urgency-badge" style="background:${urg.bg};color:${urg.color}">${urg.label}</span><br>
+            <span class="cat-badge" style="background:${meta.light};color:${meta.accent}">${meta.icon} ${meta.label}</span>
+          </div>
+        </div>
+        <div class="card-name display">${plant.name}</div>
+        <div class="card-sunlight">☀️ ${plant.sunlight}</div>
+        <div class="care-grid">
+          ${[{icon:"💧",label:"Water",days:wDays,u:wU},{icon:"🌾",label:"Feed",days:fDays,u:fU}].map(item=>{
+            const u=URGENCY[item.u];
+            return `<div class="care-box" style="background:${u.bg};border-color:${u.color}22"><div class="care-icon">${item.icon}</div><div class="care-days" style="color:${u.color}">${item.days<=0?"Now!":item.days+"d"}</div><div class="care-label">${item.label}</div></div>`;
+          }).join("")}
+        </div>
+      </div>`;
+    card.addEventListener("click", () => navigateTo("detail", plant.id));
+    grid.appendChild(card);
+  });
+  content.appendChild(grid);
+}
+
+function renderListView(filtered, content) {
+  const list = document.createElement("div");
+  list.className = "plant-list";
+  filtered.forEach((plant, idx) => {
+    const wDays = getDaysUntil(plant.lastWatered, plant.waterDays);
+    const fDays = getDaysUntil(plant.lastFertilized, plant.fertilizeDays);
+    const wU = getUrgency(wDays), fU = getUrgency(fDays);
+    const uList = [wU,fU];
+    const topU = uList.includes("overdue")?"overdue":uList.includes("today")?"today":uList.includes("soon")?"soon":"ok";
+    const urg = URGENCY[topU], meta = CAT_META[plant.category];
+    const row = document.createElement("div");
+    row.className = "list-row";
+    row.style.animationDelay = (idx*0.04)+"s";
+    row.style.animationFillMode = "both";
+    row.innerHTML = `
+      <div class="list-accent" style="background:${urg.color};opacity:${topU==="ok"?0.4:1}"></div>
+      <span class="list-emoji">${plant.emoji}</span>
+      <div class="list-main">
+        <div class="list-name">${plant.name}</div>
+        <div class="list-meta">${meta.icon} ${meta.label} · ☀️ ${plant.sunlight} · ${plant.difficulty}</div>
+      </div>
+      <div class="list-badges">
+        <span class="list-pill" style="background:${urg.bg};color:${urg.color}">${urg.label}</span>
+        <span class="list-pill" style="background:rgba(79,163,214,0.1);color:#3476a0">💧 ${wDays<=0?"Now!":wDays+"d"}</span>
+        <span class="list-pill" style="background:rgba(127,176,105,0.1);color:#3d8361">🌾 ${fDays<=0?"Now!":fDays+"d"}</span>
+      </div>`;
+    row.addEventListener("click", () => navigateTo("detail", plant.id));
+    list.appendChild(row);
+  });
+  content.appendChild(list);
+}
+
+function renderChartView(content) {
+  const allPlants = myPlants;
+  if (allPlants.length === 0) {
+    content.innerHTML = `<div class="empty-state"><div class="empty-emoji">🌱</div><p class="empty-title display">Your garden awaits</p><p class="empty-sub">Add some plants to see your garden stats</p><button class="btn-primary" onclick="navigateTo('discover')">Browse Plants →</button></div>`;
+    return;
+  }
+
+  const wrap = document.createElement("div");
+  wrap.className = "chart-view";
+
+  // ── Section 1: Watering schedule (bar chart sorted soonest first) ──
+  const waterSection = document.createElement("div");
+  waterSection.className = "chart-section";
+  const sortedByWater = [...allPlants].sort((a,b) => getDaysUntil(a.lastWatered,a.waterDays) - getDaysUntil(b.lastWatered,b.waterDays));
+  const maxW = Math.max(...sortedByWater.map(p => Math.max(0, getDaysUntil(p.lastWatered,p.waterDays))), 1);
+  waterSection.innerHTML = `<div class="chart-title">💧 Watering schedule — days until next water</div>`;
+  sortedByWater.forEach(plant => {
+    const days = getDaysUntil(plant.lastWatered, plant.waterDays);
+    const urg = URGENCY[getUrgency(days)];
+    const pct = days <= 0 ? 100 : Math.round((days / maxW) * 100);
+    const label = days <= 0 ? "Now!" : days + "d";
+    const row = document.createElement("div");
+    row.className = "bar-row";
+    row.innerHTML = `
+      <div class="bar-label"><span style="font-size:16px">${plant.emoji}</span><span style="overflow:hidden;text-overflow:ellipsis">${plant.name}</span></div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${Math.max(pct,4)}%;background:${urg.color}">
+          ${pct > 18 ? `<span class="bar-val">${label}</span>` : ""}
+        </div>
+      </div>
+      <div class="bar-days" style="color:${urg.color}">${pct <= 18 ? label : ""}</div>`;
+    row.addEventListener("click", () => navigateTo("detail", plant.id));
+    waterSection.appendChild(row);
+  });
+
+  // ── Section 2: Fertilize schedule ──
+  const fertSection = document.createElement("div");
+  fertSection.className = "chart-section";
+  const sortedByFert = [...allPlants].sort((a,b) => getDaysUntil(a.lastFertilized,a.fertilizeDays) - getDaysUntil(b.lastFertilized,b.fertilizeDays));
+  const maxF = Math.max(...sortedByFert.map(p => Math.max(0, getDaysUntil(p.lastFertilized,p.fertilizeDays))), 1);
+  fertSection.innerHTML = `<div class="chart-title">🌾 Fertilizing schedule — days until next feed</div>`;
+  sortedByFert.forEach(plant => {
+    const days = getDaysUntil(plant.lastFertilized, plant.fertilizeDays);
+    const urg = URGENCY[getUrgency(days)];
+    const pct = days <= 0 ? 100 : Math.round((days / maxF) * 100);
+    const label = days <= 0 ? "Now!" : days + "d";
+    const row = document.createElement("div");
+    row.className = "bar-row";
+    row.innerHTML = `
+      <div class="bar-label"><span style="font-size:16px">${plant.emoji}</span><span style="overflow:hidden;text-overflow:ellipsis">${plant.name}</span></div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${Math.max(pct,4)}%;background:${urg.color}">
+          ${pct > 18 ? `<span class="bar-val">${label}</span>` : ""}
+        </div>
+      </div>
+      <div class="bar-days" style="color:${urg.color}">${pct <= 18 ? label : ""}</div>`;
+    row.addEventListener("click", () => navigateTo("detail", plant.id));
+    fertSection.appendChild(row);
+  });
+
+  // ── Section 3: Category breakdown (donut) ──
+  const catSection = document.createElement("div");
+  catSection.className = "chart-section";
+  catSection.innerHTML = `<div class="chart-title">Garden breakdown by category</div>`;
+  const catColors = { houseplant:"#7fb069", flower:"#e07a5f", vegetable:"#3d8361" };
+  const catData = CATEGORIES.slice(1).map(c => ({
+    id:c.id, label:c.label, icon:c.icon,
+    count: allPlants.filter(p=>p.category===c.id).length,
+    color: catColors[c.id]
+  })).filter(c=>c.count>0);
+  const total = allPlants.length;
+
+  // Build SVG donut
+  const r = 52, cx = 70, cy = 70, stroke = 22;
+  const circumference = 2 * Math.PI * r;
+  let offset = 0;
+  const segments = catData.map(c => {
+    const frac = c.count / total;
+    const dash = circumference * frac;
+    const seg = { ...c, dash, gap: circumference - dash, offset };
+    offset += dash;
+    return seg;
+  });
+
+  const svgPaths = segments.map((s,i) => {
+    const rot = (s.offset / circumference) * 360 - 90;
+    return `<circle r="${r}" cx="${cx}" cy="${cy}" fill="none" stroke="${s.color}" stroke-width="${stroke}" stroke-dasharray="${s.dash.toFixed(2)} ${s.gap.toFixed(2)}" stroke-dashoffset="0" transform="rotate(${rot.toFixed(1)} ${cx} ${cy})" />`;
+  }).join("");
+
+  const donutRow = document.createElement("div");
+  donutRow.className = "donut-row";
+  donutRow.innerHTML = `
+    <div class="donut-wrap">
+      <svg viewBox="0 0 140 140">${svgPaths}</svg>
+      <div class="donut-center">
+        <span class="donut-num">${total}</span>
+        <span class="donut-label">plants</span>
+      </div>
+    </div>
+    <div class="legend-list">
+      ${catData.map(c=>`
+        <div class="legend-item" onclick="dashFilter='${c.id}';dashViewMode='grid';renderDashboard()">
+          <span class="legend-dot" style="background:${c.color}"></span>
+          <span class="legend-name">${c.icon} ${c.label}</span>
+          <span class="legend-count">${c.count}</span>
+        </div>`).join("")}
+    </div>`;
+  catSection.appendChild(donutRow);
+
+  // ── Section 4: Garden health scores ──
+  const healthSection = document.createElement("div");
+  healthSection.className = "chart-section";
+  healthSection.innerHTML = `<div class="chart-title">Overall plant health</div>`;
+  const healthGrid = document.createElement("div");
+  healthGrid.className = "health-grid";
+
+  allPlants.forEach(plant => {
+    const wDays = getDaysUntil(plant.lastWatered, plant.waterDays);
+    const fDays = getDaysUntil(plant.lastFertilized, plant.fertilizeDays);
+    // health: 100 = both right on time, decreases as overdue
+    const wScore = wDays <= 0 ? Math.max(0, 50 + wDays*10) : Math.min(100, 50 + Math.min(wDays,5)*10);
+    const fScore = fDays <= 0 ? Math.max(0, 50 + fDays*5)  : Math.min(100, 50 + Math.min(fDays,5)*5);
+    const health = Math.round((wScore + fScore) / 2);
+    const hColor = health >= 75 ? "#3d8361" : health >= 45 ? "#d47c0f" : "#c0392b";
+    const card = document.createElement("div");
+    card.className = "health-card";
+    card.innerHTML = `
+      <div class="health-top">
+        <span class="health-emoji">${plant.emoji}</span>
+        <span class="health-name">${plant.name}</span>
+      </div>
+      <div class="health-bar-wrap">
+        <div class="health-bar-fill" style="width:${health}%;background:${hColor}"></div>
+      </div>
+      <div class="health-score-row">
+        <span>Health score</span>
+        <span style="color:${hColor};font-weight:600">${health}%</span>
+      </div>`;
+    card.addEventListener("click", () => navigateTo("detail", plant.id));
+    healthGrid.appendChild(card);
+  });
+  healthSection.appendChild(healthGrid);
+
+  wrap.appendChild(waterSection);
+  wrap.appendChild(fertSection);
+  wrap.appendChild(catSection);
+  wrap.appendChild(healthSection);
+  content.appendChild(wrap);
+}
+
+function renderAlerts() {
+  const notifs = getNotifications();
+  document.getElementById("alerts-sub").textContent = notifs.length===0
+    ? "All plants are happy and healthy"
+    : notifs.length+" task"+(notifs.length>1?"s":"")+" need your attention";
+
+  const content = document.getElementById("alerts-content");
+  if (notifs.length===0) {
+    content.innerHTML = `<div class="empty-state"><div class="empty-emoji">✿</div><p class="empty-title display" style="color:#3d8361">All caught up!</p><p class="empty-sub">Your plants are thriving. Check back soon.</p></div>`;
+  } else {
+    const list = document.createElement("div");
+    list.className = "alert-list";
+    notifs.forEach(notif => {
+      const urg = URGENCY[getUrgency(notif.days)];
+      const meta = CAT_META[notif.plant.category];
+      const taskKey = `${notif.plant.id}-${notif.type}`;
+      const rs = reminderStatus[taskKey];
+      const row = document.createElement("div");
+      row.className = "alert-row";
+      row.style.borderLeftColor = urg.color;
+      row.style.borderLeftWidth = "4px";
+      row.innerHTML = `
+        <div class="alert-left">
+          <span class="alert-emoji">${notif.plant.emoji}</span>
+          <div>
+            <div class="alert-name"><span class="display">${notif.plant.name}</span><span class="cat-badge" style="background:${meta.light};color:${meta.accent}">${meta.label}</span></div>
+            <div class="alert-task" style="color:${urg.color}">${notif.type==="water"?"💧 Needs watering":"🌾 Needs fertilizing"}<span style="color:#8a7a60;font-weight:400">${notif.days<=0?" — overdue":notif.days===1?" — today":` — in ${notif.days} days`}</span></div>
+          </div>
+        </div>
+        <div class="alert-right">
+          <button class="btn-done" style="background:${urg.color};color:white;border:none;padding:9px 20px;border-radius:5px;cursor:pointer;font-family:var(--font-body);font-size:14px;font-weight:600;letter-spacing:0.3px" data-plant="${notif.plant.id}" data-task="${notif.type}">Done ✓</button>
+          <button class="btn-remind btn-ghost" style="font-size:13px;padding:9px 16px;${rs==='done'?'background:#edf7f2;color:#3d8361;border-color:#3d8361':''}" data-plant-id="${notif.plant.id}" data-task-key="${taskKey}">${rs==="loading"?"⟳":rs==="done"?"✓ Set":"🔔 Remind"}</button>
+        </div>`;
+      list.appendChild(row);
+    });
+    content.innerHTML = "";
+    content.appendChild(list);
+    content.querySelectorAll(".btn-done").forEach(btn => btn.addEventListener("click", () => markDone(parseInt(btn.dataset.plant), btn.dataset.task)));
+    content.querySelectorAll(".btn-remind").forEach(btn => btn.addEventListener("click", () => {
+      const p = myPlants.find(p=>p.id===parseInt(btn.dataset.plantId));
+      if (p) setReminder(p, btn.dataset.taskKey);
+    }));
+  }
+
+  const setAllBtn = document.getElementById("btn-set-all");
+  setAllBtn.textContent = `🔔 Set All (${myPlants.length*2} reminders)`;
+  setAllBtn.onclick = async () => {
+    try {
+      const d = new Date(); d.setHours(8,0,0,0);
+      const reminders = myPlants.flatMap(p=>[
+        { title:`${p.emoji} Water your ${p.name}`, notes:p.notes, dueDate:d.toISOString(), dueDateIncludesTime:true, priority:"medium", recurrence:{ frequency:"daily", interval:p.waterDays, rrule:`FREQ=DAILY;INTERVAL=${p.waterDays}`, humanReadableFrequency:`Every ${p.waterDays} day${p.waterDays>1?"s":""}` }},
+        { title:`${p.emoji} Fertilize your ${p.name}`, notes:p.notes, dueDate:d.toISOString(), dueDateIncludesTime:true, priority:"low", recurrence:{ frequency:"daily", interval:p.fertilizeDays, rrule:`FREQ=DAILY;INTERVAL=${p.fertilizeDays}`, humanReadableFrequency:`Every ${p.fertilizeDays} days` }}
+      ]);
+      if (typeof reminder_create_v0!=="undefined") await reminder_create_v0({ reminderLists:[{ reminders }] });
+      showToast(`🔔 ${reminders.length} reminders scheduled!`);
+    } catch { showToast("Couldn't set reminders","warn"); }
+  };
+
+  const clearBtn = document.getElementById("btn-clear-data");
+  if (clearBtn) {
+    clearBtn.onclick = () => {
+      if (confirm("Reset your garden? This will remove all your plants and care history.")) {
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(STORAGE_META_KEY);
+        myPlants = [...DEFAULT_PLANTS];
+        dashFilter = "all";
+        dashViewMode = "grid";
+        showToast("Garden reset to defaults 🌱");
+        navigateTo("dashboard");
+      }
+    };
+  }
+}
+
+function renderDiscover() {
+  const counts = { all:PLANTS.length, ...Object.fromEntries(CATEGORIES.slice(1).map(c=>[c.id, PLANTS.filter(p=>p.category===c.id).length])) };
+  renderFilters("discover-filters", discoverFilter, counts, id => { discoverFilter=id; renderDiscover(); });
+
+  const filtered = discoverFilter==="all" ? PLANTS : PLANTS.filter(p=>p.category===discoverFilter);
+  const content = document.getElementById("discover-content");
+  content.innerHTML = "";
+
+  filtered.forEach(plant => {
+    const owned = !!myPlants.find(p=>p.id===plant.id);
+    const meta = CAT_META[plant.category];
+    const card = document.createElement("div");
+    card.className = "plant-card" + (owned?" owned":"");
+    card.innerHTML = `
+      <div class="card-top-bar" style="background:${meta.accent};opacity:0.5"></div>
+      <div class="card-body">
+        <div class="card-header">
+          <span style="font-size:44px;line-height:1">${plant.emoji}</span>
+          <div style="text-align:right">
+            <span class="cat-badge" style="background:${meta.light};color:${meta.accent};display:block;margin-bottom:5px">${meta.label}</span>
+            <span class="difficulty-badge">${plant.difficulty}</span>
+          </div>
+        </div>
+        <div class="card-name display">${plant.name}</div>
+        <div class="discover-tags">
+          <span class="tag tag-water">💧 ${plant.waterDays}d</span>
+          <span class="tag tag-feed">🌾 ${plant.fertilizeDays}d</span>
+          <span class="tag tag-sun">☀️ ${plant.sunlight}</span>
+        </div>
+        <p class="card-notes">${plant.notes}</p>
+        <button style="width:100%;background:${owned?"transparent":"#3d8361"};color:${owned?"#b0a08a":"#f5f0e8"};border:${owned?"1.5px solid #d4c9b5":"none"};border-radius:5px;padding:10px;font-family:var(--font-body);font-size:14px;font-weight:600;cursor:${owned?"default":"pointer"};letter-spacing:0.3px;transition:all 0.2s" class="add-btn" data-id="${plant.id}" ${owned?"disabled":""}>
+          ${owned?"✓ In Your Garden":"+ Add to Garden"}
+        </button>
+      </div>`;
+    content.appendChild(card);
+  });
+
+  content.querySelectorAll(".add-btn:not([disabled])").forEach(btn => {
+    btn.addEventListener("click", e => { e.stopPropagation(); const p=PLANTS.find(p=>p.id===parseInt(btn.dataset.id)); if(p) addPlant(p); });
+    btn.addEventListener("mouseenter", () => { btn.style.background="#2d6248"; });
+    btn.addEventListener("mouseleave", () => { btn.style.background="#3d8361"; });
+  });
+}
+
+function renderDetail() {
+  const plant = myPlants.find(p=>p.id===selectedPlantId);
+  if (!plant) { navigateTo("dashboard"); return; }
+
+  const wDays = getDaysUntil(plant.lastWatered, plant.waterDays);
+  const fDays = getDaysUntil(plant.lastFertilized, plant.fertilizeDays);
+  const meta = CAT_META[plant.category];
+  const rKey = `${plant.id}-all`;
+  const rs = reminderStatus[rKey];
+
+  const content = document.getElementById("detail-content");
+  content.innerHTML = `
+    <div class="detail-card">
+      <div class="detail-top-bar" style="background:linear-gradient(90deg,${meta.accent},${meta.accent}88)"></div>
+      <div class="detail-body">
+        <div class="detail-header">
+          <div class="detail-hero">
+            <span class="detail-emoji">${plant.emoji}</span>
+            <div>
+              <h2 class="detail-title display">${plant.name}</h2>
+              <div class="detail-meta">
+                <span class="cat-badge" style="background:${meta.light};color:${meta.accent};padding:4px 12px;font-size:13px">${meta.icon} ${meta.label}</span>
+                <span style="color:#8a7a60;font-size:14px;font-style:italic">☀️ ${plant.sunlight} · ${plant.difficulty}</span>
+              </div>
+            </div>
+          </div>
+          <button class="btn-danger" id="btn-remove">Remove Plant</button>
+        </div>
+        <div class="detail-notes">"${plant.notes}"</div>
+
+        <div class="detail-tabs">
+          <button class="detail-tab active" data-tab="care">🌿 Care</button>
+          <button class="detail-tab" data-tab="grow">🌱 Grow</button>
+          <button class="detail-tab" data-tab="journal">📷 Journal</button>
+        </div>
+
+        <div class="detail-tab-panel active" id="care-tab-panel">
+          <div class="journal-section" style="margin-top:0;margin-bottom:24px">
+            <div class="journal-section-title">
+              <span class="display">Progress Photos</span>
+            </div>
+            <div class="journal-strip" id="journal-photo-strip"></div>
+          </div>
+          <div class="care-section-title display">Care Schedule</div>
+          <div class="detail-care-grid" id="detail-care-grid"></div>
+          <button class="btn-primary" id="btn-set-reminder" style="font-size:15px;padding:13px 28px;background:${rs==='done'?'#3d8361':'#2d3d2e'}">
+            ${rs==="loading"?"Setting reminders…":rs==="done"?"✓ Reminders Set!":"🔔 Set Recurring Reminders for "+plant.name}
+          </button>
+        </div>
+
+        <div class="detail-tab-panel" id="grow-tab-panel">
+          <div id="grow-tab-content"></div>
+        </div>
+
+        <div class="detail-tab-panel" id="journal-tab-panel">
+          <div id="journal-tab-content"></div>
+        </div>
+
+      </div>
+    </div>`;
+
+  // Wire detail tabs
+  document.querySelectorAll(".detail-tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".detail-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".detail-tab-panel").forEach(p => p.classList.remove("active"));
+      tab.classList.add("active");
+      document.getElementById(tab.dataset.tab + "-tab-panel").classList.add("active");
+      if (tab.dataset.tab === "journal") renderJournalTab(plant.id);
+      if (tab.dataset.tab === "grow") renderGrowTab(plant.id);
+    });
+  });
+
+  // Build photo strip
+  const strip = document.getElementById("journal-photo-strip");
+  if (strip) buildPhotoStrip(plant.id, strip);
+
+  // Init modal + lightbox once
+  initPhotoModal();
+  initLightbox();
+
+  const careGrid = document.getElementById("detail-care-grid");
+  [
+    { label:"Watering",    icon:"💧", days:wDays, interval:plant.waterDays,    task:"water"     },
+    { label:"Fertilizing", icon:"🌾", days:fDays, interval:plant.fertilizeDays,task:"fertilize" }
+  ].forEach(item => {
+    const urg = URGENCY[getUrgency(item.days)];
+    const box = document.createElement("div");
+    box.className = "detail-care-box";
+    box.style.background = urg.bg;
+    box.style.borderColor = urg.color+"22";
+    box.innerHTML = `
+      <div class="detail-care-header">
+        <span class="detail-care-label display">${item.icon} ${item.label}</span>
+        <span class="urgency-badge" style="background:${urg.color};color:white">${urg.label}</span>
+      </div>
+      <div class="detail-care-days" style="color:${urg.color}">${item.days<=0?"Now!":item.days+"d"}</div>
+      <div class="detail-care-interval">Every ${item.interval} day${item.interval>1?"s":""}</div>
+      <button style="background:${urg.color};color:white;border:none;padding:9px 18px;border-radius:5px;cursor:pointer;font-family:var(--font-body);font-size:14px;font-weight:600;letter-spacing:0.3px;transition:all 0.2s" class="btn-done-detail" data-task="${item.task}">Mark Done ✓</button>`;
+    careGrid.appendChild(box);
+  });
+
+  careGrid.querySelectorAll(".btn-done-detail").forEach(btn => btn.addEventListener("click", () => markDone(plant.id, btn.dataset.task)));
+  document.getElementById("btn-remove").addEventListener("click", () => removePlant(plant.id));
+  document.getElementById("btn-set-reminder").addEventListener("click", () => setReminder(plant, rKey));
+}
+
+function markDone(plantId, taskType) {
+  const now = new Date().toISOString();
+  myPlants = myPlants.map(p => p.id!==plantId ? p : { ...p, ...(taskType==="water"?{lastWatered:now}:{lastFertilized:now}) });
+  savePlants();
+  showToast("Done! Your plant thanks you 🌱");
+  renderView(currentView);
+}
+
+function addPlant(plant) {
+  if (myPlants.find(p=>p.id===plant.id)) { showToast("Already in your garden!","warn"); return; }
+  const now = new Date().toISOString();
+  myPlants = [...myPlants, { ...plant, addedDate:now, lastWatered:now, lastFertilized:now }];
+  savePlants();
+  showToast(`${plant.emoji} ${plant.name} added!`);
+  navigateTo("dashboard");
+}
+
+function removePlant(plantId) {
+  myPlants = myPlants.filter(p=>p.id!==plantId);
+  savePlants();
+  showToast("Plant removed from garden");
+  navigateTo("dashboard");
+}
+
+async function setReminder(plant, taskKey) {
+  reminderStatus[taskKey] = "loading";
+  renderView(currentView);
+  try {
+    const d = new Date(); d.setHours(8,0,0,0);
+    if (typeof reminder_create_v0!=="undefined") {
+      await reminder_create_v0({ reminderLists:[{ reminders:[
+        { title:`${plant.emoji} Water your ${plant.name}`, notes:plant.notes, dueDate:d.toISOString(), dueDateIncludesTime:true, priority:"medium", recurrence:{ frequency:"daily", interval:plant.waterDays, rrule:`FREQ=DAILY;INTERVAL=${plant.waterDays}`, humanReadableFrequency:`Every ${plant.waterDays} day${plant.waterDays>1?"s":""}` }},
+        { title:`${plant.emoji} Fertilize your ${plant.name}`, notes:plant.notes, dueDate:d.toISOString(), dueDateIncludesTime:true, priority:"low", recurrence:{ frequency:"daily", interval:plant.fertilizeDays, rrule:`FREQ=DAILY;INTERVAL=${plant.fertilizeDays}`, humanReadableFrequency:`Every ${plant.fertilizeDays} days` }}
+      ]}] });
+    }
+    reminderStatus[taskKey] = "done";
+    showToast(`🔔 Reminders set for ${plant.name}!`);
+  } catch {
+    reminderStatus[taskKey] = "error";
+    showToast("Couldn't set reminder","warn");
+  }
+  renderView(currentView);
+}
+
+
+const PLANT_EMOJIS = ["🌿","🌱","🍀","🌾","🌻","🌹","🌸","🌼","💐","🌺","🌷","🌵","🪴","🍃","🍂","🍁","🎋","🎍","🌲","🌳","🌴","🍄","🌰","🥀","💜","🫚","🫛","🥦","🥬","🥒","🫑","🌽","🍅","🍋","🍊","🍇","🍓","🫐","🍑","🍒"];
+let selectedEmoji = "🌿";
+let customNextId = Math.max(1000, ...myPlants.filter(p=>p.custom).map(p=>p.id+1), 1000);
+
+function initCustomForm() {
+  const grid = document.getElementById("cf-emoji-grid");
+  if (!grid || grid.children.length > 0) return;
+  PLANT_EMOJIS.forEach(em => {
+    const btn = document.createElement("button");
+    btn.className = "emoji-btn" + (em === selectedEmoji ? " selected" : "");
+    btn.textContent = em;
+    btn.type = "button";
+    btn.addEventListener("click", () => {
+      selectedEmoji = em;
+      grid.querySelectorAll(".emoji-btn").forEach(b => b.classList.remove("selected"));
+      btn.classList.add("selected");
+    });
+    grid.appendChild(btn);
+  });
+
+  document.getElementById("custom-form-toggle").addEventListener("click", () => {
+    const body = document.getElementById("custom-form-body");
+    const chev = document.getElementById("custom-form-chevron");
+    const open = body.classList.toggle("open");
+    chev.classList.toggle("open", open);
+  });
+
+  document.getElementById("cf-cancel").addEventListener("click", () => {
+    document.getElementById("custom-form-body").classList.remove("open");
+    document.getElementById("custom-form-chevron").classList.remove("open");
+    resetForm();
+  });
+
+  document.getElementById("cf-submit").addEventListener("click", submitCustomPlant);
+}
+
+function resetForm() {
+  ["cf-name","cf-water","cf-fert","cf-notes"].forEach(id => { const el = document.getElementById(id); if(el) el.value = ""; });
+  const cat = document.getElementById("cf-category"); if(cat) cat.value = "";
+  const sun = document.getElementById("cf-sun"); if(sun) sun.value = "Full Sun";
+  const diff = document.getElementById("cf-diff"); if(diff) diff.value = "Easy";
+  selectedEmoji = "🌿";
+  const grid = document.getElementById("cf-emoji-grid");
+  if (grid) grid.querySelectorAll(".emoji-btn").forEach(b => b.classList.toggle("selected", b.textContent === "🌿"));
+  document.querySelectorAll(".form-error").forEach(e => e.classList.remove("show"));
+}
+
+function submitCustomPlant() {
+  let valid = true;
+
+  const nameEl = document.getElementById("cf-name");
+  const catEl  = document.getElementById("cf-category");
+  const wEl    = document.getElementById("cf-water");
+  const fEl    = document.getElementById("cf-fert");
+
+  const name  = nameEl.value.trim();
+  const cat   = catEl.value;
+  const water = parseInt(wEl.value);
+  const fert  = parseInt(fEl.value);
+  const sun   = document.getElementById("cf-sun").value;
+  const diff  = document.getElementById("cf-diff").value;
+  const notes = document.getElementById("cf-notes").value.trim() || "A custom plant in your garden.";
+
+  const showErr = (id, show) => document.getElementById(id).classList.toggle("show", show);
+
+  if (!name)                             { showErr("cf-name-err",  true);  valid = false; } else showErr("cf-name-err",  false);
+  if (!cat)                              { showErr("cf-cat-err",   true);  valid = false; } else showErr("cf-cat-err",   false);
+  if (!water || water < 1 || water > 90){ showErr("cf-water-err", true);  valid = false; } else showErr("cf-water-err", false);
+  if (!fert  || fert  < 1 || fert > 365){ showErr("cf-fert-err",  true);  valid = false; } else showErr("cf-fert-err",  false);
+
+  if (!valid) return;
+
+  const now = new Date().toISOString();
+  const plant = {
+    id: customNextId++,
+    name, category:cat, emoji:selectedEmoji,
+    waterDays:water, fertilizeDays:fert,
+    sunlight:sun, difficulty:diff, notes,
+    custom: true,
+    addedDate:now, lastWatered:now, lastFertilized:now
+  };
+
+  myPlants = [...myPlants, plant];
+  savePlants();
+  showToast(selectedEmoji + " " + name + " added to your garden!");
+  document.getElementById("custom-form-body").classList.remove("open");
+  document.getElementById("custom-form-chevron").classList.remove("open");
+  resetForm();
+  navigateTo("dashboard");
+}
+
+
+
+
+// ══════════════════════════════════════════════════════
+// GERMINATION & PROPAGATION SYSTEM
+// ══════════════════════════════════════════════════════
+
+const GROW_KEY = "gardenkeeper_grow";
+
+// grow = { [plantId]: [ {id, method, startDate, expectedDays, notes:[], outcome, createdAt} ] }
+function loadGrow() {
+  try { const s = localStorage.getItem(GROW_KEY); return s ? JSON.parse(s) : {}; } catch { return {}; }
+}
+function saveGrow() {
+  try { localStorage.setItem(GROW_KEY, JSON.stringify(grow)); } catch(e) { showToast("Storage full", "warn"); }
+}
+
+let grow = loadGrow();
+
+const GROW_METHODS = [
+  { id:"seed",      label:"Seed",          icon:"🌰" },
+  { id:"cutting",   label:"Stem Cutting",  icon:"✂️"  },
+  { id:"leaf",      label:"Leaf Cutting",  icon:"🍃" },
+  { id:"division",  label:"Division",      icon:"🪴" },
+  { id:"layering",  label:"Layering",      icon:"🌿" },
+  { id:"offset",    label:"Offset/Pup",    icon:"🌱" },
+  { id:"bulb",      label:"Bulb",          icon:"🧅" },
+  { id:"graft",     label:"Grafting",      icon:"🔗" },
+];
+
+const OUTCOME_OPTIONS = [
+  { id:"success", label:"✓ Success",  cls:"active-success" },
+  { id:"partial", label:"~ Partial",  cls:"active-partial" },
+  { id:"failed",  label:"✕ Failed",   cls:"active-failed"  },
+];
+
+function getPlantGrow(plantId) {
+  return (grow[plantId] || []).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
+function addGrowEntry(plantId, method, startDate, expectedDays, initialNote) {
+  if (!grow[plantId]) grow[plantId] = [];
+  const entry = {
+    id: Date.now() + Math.random(),
+    method,
+    startDate,
+    expectedDays: parseInt(expectedDays) || null,
+    notes: initialNote ? [{ id: Date.now(), text: initialNote, date: new Date().toISOString() }] : [],
+    outcome: null,
+    createdAt: new Date().toISOString()
+  };
+  grow[plantId].push(entry);
+  saveGrow();
+  return entry;
+}
+
+function deleteGrowEntry(plantId, entryId) {
+  if (!grow[plantId]) return;
+  grow[plantId] = grow[plantId].filter(e => e.id !== entryId);
+  saveGrow();
+}
+
+function addGrowNote(plantId, entryId, text) {
+  const entries = grow[plantId] || [];
+  const entry = entries.find(e => e.id === entryId);
+  if (!entry) return;
+  entry.notes.push({ id: Date.now(), text, date: new Date().toISOString() });
+  saveGrow();
+}
+
+function deleteGrowNote(plantId, entryId, noteId) {
+  const entries = grow[plantId] || [];
+  const entry = entries.find(e => e.id === entryId);
+  if (!entry) return;
+  entry.notes = entry.notes.filter(n => n.id !== noteId);
+  saveGrow();
+}
+
+function setGrowOutcome(plantId, entryId, outcome) {
+  const entries = grow[plantId] || [];
+  const entry = entries.find(e => e.id === entryId);
+  if (!entry) return;
+  entry.outcome = entry.outcome === outcome ? null : outcome; // toggle
+  saveGrow();
+}
+
+// ── Render Grow tab ──────────────────────────────────
+let growFormOpen = false;
+
+function renderGrowTab(plantId) {
+  const container = document.getElementById("grow-tab-content");
+  if (!container) return;
+  container.innerHTML = "";
+
+  const entries = getPlantGrow(plantId);
+
+  // ── Add new entry form ──
+  const formWrap = document.createElement("div");
+  formWrap.className = "germ-form";
+  formWrap.innerHTML = `
+    <div class="germ-form-title display" id="germ-form-toggle" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between">
+      <span>+ Start Germination or Propagation</span>
+      <span id="germ-chevron" style="font-size:12px;transition:transform 0.2s">${growFormOpen ? "▲" : "▼"}</span>
+    </div>
+    <div id="germ-form-body" style="display:${growFormOpen ? "block" : "none"}">
+      <div class="germ-grid" style="margin-top:14px">
+        <div class="germ-field">
+          <label class="germ-label">Method *</label>
+          <select class="germ-select" id="gf-method">
+            <option value="">Choose…</option>
+            ${GROW_METHODS.map(m => `<option value="${m.id}">${m.icon} ${m.label}</option>`).join("")}
+          </select>
+        </div>
+        <div class="germ-field">
+          <label class="germ-label">Start Date *</label>
+          <input class="germ-input" type="date" id="gf-startdate" value="${new Date().toISOString().slice(0,10)}">
+        </div>
+        <div class="germ-field">
+          <label class="germ-label">Expected days</label>
+          <input class="germ-input" type="number" id="gf-days" min="1" max="365" placeholder="e.g. 14">
+        </div>
+        <div class="germ-field">
+          <label class="germ-label">Initial note</label>
+          <input class="germ-input" type="text" id="gf-note" placeholder="Sowed 3 seeds in moist mix…" maxlength="120">
+        </div>
+      </div>
+      <div class="germ-form-actions">
+        <button class="btn-ghost" id="gf-cancel">Cancel</button>
+        <button class="btn-primary" id="gf-submit">🌱 Start Tracking</button>
+      </div>
+    </div>`;
+
+  container.appendChild(formWrap);
+
+  // Toggle
+  document.getElementById("germ-form-toggle").addEventListener("click", () => {
+    growFormOpen = !growFormOpen;
+    document.getElementById("germ-form-body").style.display = growFormOpen ? "block" : "none";
+    document.getElementById("germ-chevron").textContent = growFormOpen ? "▲" : "▼";
+  });
+  document.getElementById("gf-cancel").addEventListener("click", () => {
+    growFormOpen = false;
+    document.getElementById("germ-form-body").style.display = "none";
+    document.getElementById("germ-chevron").textContent = "▼";
+  });
+  document.getElementById("gf-submit").addEventListener("click", () => {
+    const method = document.getElementById("gf-method").value;
+    const startDate = document.getElementById("gf-startdate").value;
+    const days = document.getElementById("gf-days").value;
+    const note = document.getElementById("gf-note").value.trim();
+    if (!method || !startDate) { showToast("Please choose a method and start date", "warn"); return; }
+    addGrowEntry(plantId, method, startDate, days, note);
+    growFormOpen = false;
+    showToast("🌱 Grow entry started!");
+    renderGrowTab(plantId);
+  });
+
+  // ── Empty state ──
+  if (entries.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "germ-empty";
+    empty.innerHTML = `
+      <div class="germ-empty-icon">🌱</div>
+      <div class="germ-empty-title display">Nothing tracked yet</div>
+      <div class="germ-empty-sub">Record germination times, propagation attempts,<br>and note what works for this plant.</div>`;
+    container.appendChild(empty);
+    return;
+  }
+
+  // ── Entry cards ──
+  entries.forEach(entry => {
+    const methodMeta = GROW_METHODS.find(m => m.id === entry.method) || { icon:"🌱", label: entry.method };
+    const start = new Date(entry.startDate);
+    const now = new Date();
+    const daysSince = Math.floor((now - start) / 86400000);
+    const expected = entry.expectedDays;
+    const pct = expected ? Math.min(100, Math.round((daysSince / expected) * 100)) : null;
+    const daysLeft = expected ? expected - daysSince : null;
+    const startStr = start.toLocaleDateString("en-US", { month:"long", day:"numeric", year:"numeric" });
+
+    // Outcome color
+    const outcomeColors = { success:"#3d8361", partial:"#d47c0f", failed:"#c0392b" };
+    const oc = entry.outcome ? outcomeColors[entry.outcome] : "var(--green)";
+    const progressColor = entry.outcome === "failed" ? "#c0392b"
+      : entry.outcome === "success" ? "#3d8361"
+      : pct >= 100 ? "#d47c0f" : "var(--green)";
+
+    const card = document.createElement("div");
+    card.className = "germ-card";
+    card.innerHTML = `
+      <div class="germ-card-head">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <span class="germ-card-badge" style="background:rgba(61,131,97,0.1);color:var(--green)">${methodMeta.icon} ${methodMeta.label}</span>
+            ${entry.outcome ? `<span class="germ-card-badge" style="background:${oc}18;color:${oc}">${OUTCOME_OPTIONS.find(o=>o.id===entry.outcome)?.label||""}</span>` : ""}
+          </div>
+          <div class="germ-card-started">Started ${startStr} · ${daysSince} day${daysSince!==1?"s":""} ago</div>
+        </div>
+        <button class="germ-card-del" data-del="${entry.id}">🗑</button>
+      </div>`;
+
+    // Progress bar (only if expected days set)
+    if (expected) {
+      const progWrap = document.createElement("div");
+      progWrap.className = "germ-progress-wrap";
+      const daysLeftLabel = daysLeft > 0 ? `${daysLeft}d remaining` : daysLeft === 0 ? "Due today!" : `${Math.abs(daysLeft)}d overdue`;
+      progWrap.innerHTML = `
+        <div class="germ-progress-header">
+          <span class="germ-progress-label">Progress toward ${expected}-day target</span>
+          <span class="germ-progress-days">${daysLeftLabel}</span>
+        </div>
+        <div class="germ-progress-track">
+          <div class="germ-progress-fill" style="width:${pct}%;background:${progressColor}"></div>
+        </div>
+        <div class="germ-progress-milestones">
+          ${[25,50,75,100].map(m => {
+            const hit = pct >= m;
+            const d = Math.round(expected * m / 100);
+            return `<span class="germ-milestone${hit?" hit":""}">Day ${d} (${m}%)</span>`;
+          }).join('<span style="color:var(--rule)"> · </span>')}
+        </div>`;
+      card.appendChild(progWrap);
+    }
+
+    // Notes
+    const bodyDiv = document.createElement("div");
+    bodyDiv.className = "germ-body";
+
+    const notesDiv = document.createElement("div");
+    notesDiv.className = "germ-notes-section";
+    notesDiv.innerHTML = `<div class="germ-notes-title">📝 Progress Notes</div>`;
+
+    const noteList = document.createElement("div");
+    noteList.className = "germ-note-list";
+    noteList.id = `germ-notes-${entry.id}`;
+
+    const renderNotes = () => {
+      noteList.innerHTML = "";
+      if (entry.notes.length === 0) {
+        noteList.innerHTML = `<div style="font-size:13px;color:var(--ink-faint);font-style:italic">No notes yet — add your first observation below.</div>`;
+      } else {
+        [...entry.notes].sort((a,b) => new Date(b.date)-new Date(a.date)).forEach(note => {
+          const row = document.createElement("div");
+          row.className = "germ-note-row";
+          const dateStr = new Date(note.date).toLocaleDateString("en-US", {month:"short",day:"numeric",year:"numeric"});
+          row.innerHTML = `
+            <div class="germ-note-dot"></div>
+            <div style="flex:1;min-width:0">
+              <div class="germ-note-text">${note.text}</div>
+              <div class="germ-note-date">${dateStr}</div>
+            </div>
+            <button class="germ-note-del" data-note="${note.id}">✕</button>`;
+          row.querySelector(".germ-note-del").addEventListener("click", () => {
+            deleteGrowNote(plantId, entry.id, note.id);
+            entry.notes = entry.notes.filter(n => n.id !== note.id);
+            renderNotes();
+          });
+          noteList.appendChild(row);
+        });
+      }
+    };
+    renderNotes();
+    notesDiv.appendChild(noteList);
+
+    // Add note input
+    const addNoteRow = document.createElement("div");
+    addNoteRow.className = "germ-add-note";
+    addNoteRow.innerHTML = `
+      <input type="text" placeholder="Add an observation…" maxlength="150">
+      <button>+ Add</button>`;
+    const noteInput = addNoteRow.querySelector("input");
+    const noteBtn = addNoteRow.querySelector("button");
+    const submitNote = () => {
+      const text = noteInput.value.trim();
+      if (!text) return;
+      addGrowNote(plantId, entry.id, text);
+      entry.notes.push({ id: Date.now(), text, date: new Date().toISOString() });
+      noteInput.value = "";
+      renderNotes();
+    };
+    noteBtn.addEventListener("click", submitNote);
+    noteInput.addEventListener("keydown", e => { if (e.key === "Enter") submitNote(); });
+    notesDiv.appendChild(addNoteRow);
+
+    bodyDiv.appendChild(notesDiv);
+    card.appendChild(bodyDiv);
+
+    // Outcome row
+    const outcomeRow = document.createElement("div");
+    outcomeRow.className = "germ-outcome-row";
+    outcomeRow.innerHTML = `<span class="germ-outcome-label">Outcome:</span>`;
+    OUTCOME_OPTIONS.forEach(opt => {
+      const btn = document.createElement("button");
+      btn.className = "germ-outcome-btn" + (entry.outcome === opt.id ? " " + opt.cls : "");
+      btn.textContent = opt.label;
+      btn.addEventListener("click", () => {
+        setGrowOutcome(plantId, entry.id, opt.id);
+        entry.outcome = entry.outcome === opt.id ? null : opt.id;
+        // update button states
+        outcomeRow.querySelectorAll(".germ-outcome-btn").forEach(b => b.className = "germ-outcome-btn");
+        if (entry.outcome) btn.className = "germ-outcome-btn " + opt.cls;
+        // update badge in header
+        const badge = card.querySelector(".germ-card-head");
+        renderGrowTab(plantId); // re-render to update color + badge
+      });
+      outcomeRow.appendChild(btn);
+    });
+    card.appendChild(outcomeRow);
+
+    // Delete entry
+    card.querySelector("[data-del]").addEventListener("click", () => {
+      if (confirm("Delete this grow entry?")) {
+        deleteGrowEntry(plantId, entry.id);
+        showToast("Entry deleted");
+        renderGrowTab(plantId);
+      }
+    });
+
+    container.appendChild(card);
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// END GERMINATION & PROPAGATION
+// ══════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════
+// JOURNAL / PHOTO SYSTEM
+// ══════════════════════════════════════════════════════
+
+const JOURNAL_KEY = "gardenkeeper_journal";
+
+function loadJournal() {
+  try {
+    const s = localStorage.getItem(JOURNAL_KEY);
+    return s ? JSON.parse(s) : {};
+  } catch { return {}; }
+}
+
+function saveJournal(journal) {
+  try { localStorage.setItem(JOURNAL_KEY, JSON.stringify(journal)); } catch(e) {
+    console.warn("Journal save failed (storage full?):", e);
+    showToast("Storage full — try removing old photos", "warn");
+  }
+}
+
+// journal = { [plantId]: [ {id, dataUrl, caption, tag, date} ] }
+let journal = loadJournal();
+
+function getPlantPhotos(plantId) {
+  return (journal[plantId] || []).sort((a,b) => new Date(b.date) - new Date(a.date));
+}
+
+function addPhoto(plantId, dataUrl, caption, tag) {
+  if (!journal[plantId]) journal[plantId] = [];
+  journal[plantId].push({
+    id: Date.now() + Math.random(),
+    dataUrl,
+    caption: caption || "",
+    tag: tag || "progress",
+    date: new Date().toISOString()
+  });
+  saveJournal(journal);
+}
+
+function deletePhoto(plantId, photoId) {
+  if (!journal[plantId]) return;
+  journal[plantId] = journal[plantId].filter(p => p.id !== photoId);
+  saveJournal(journal);
+}
+
+// ── Photo modal ──────────────────────────────────────
+let photoModalPlantId = null;
+let photoModalDataUrl = null;
+let photoModalTag = "progress";
+
+function openPhotoModal(plantId) {
+  photoModalPlantId = plantId;
+  photoModalDataUrl = null;
+  photoModalTag = "progress";
+
+  document.getElementById("photo-caption-input").value = "";
+  document.getElementById("photo-file-input").value = "";
+  document.getElementById("photo-preview-wrap").style.display = "none";
+  document.getElementById("photo-drop-zone").style.display = "block";
+
+  document.querySelectorAll(".photo-tag-chip").forEach(c =>
+    c.classList.toggle("active", c.dataset.tag === "progress"));
+
+  document.getElementById("photo-modal-overlay").classList.add("open");
+}
+
+function closePhotoModal() {
+  document.getElementById("photo-modal-overlay").classList.remove("open");
+  photoModalDataUrl = null;
+}
+
+function initPhotoModal() {
+  const overlay   = document.getElementById("photo-modal-overlay");
+  const closeBtn  = document.getElementById("photo-modal-close");
+  const cancelBtn = document.getElementById("photo-modal-cancel");
+  const saveBtn   = document.getElementById("photo-modal-save");
+  const fileInput = document.getElementById("photo-file-input");
+  const dropZone  = document.getElementById("photo-drop-zone");
+  const previewWrap = document.getElementById("photo-preview-wrap");
+  const previewImg  = document.getElementById("photo-preview-img");
+  const clearBtn    = document.getElementById("photo-preview-clear");
+
+  if (overlay._journalInited) return;
+  overlay._journalInited = true;
+
+  closeBtn.addEventListener("click", closePhotoModal);
+  cancelBtn.addEventListener("click", closePhotoModal);
+  overlay.addEventListener("click", e => { if (e.target === overlay) closePhotoModal(); });
+
+  // Tag chips
+  document.getElementById("photo-tag-row").addEventListener("click", e => {
+    const chip = e.target.closest(".photo-tag-chip");
+    if (!chip) return;
+    photoModalTag = chip.dataset.tag;
+    document.querySelectorAll(".photo-tag-chip").forEach(c => c.classList.toggle("active", c === chip));
+  });
+
+  // File input → preview
+  fileInput.addEventListener("change", () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      // Compress image to keep localStorage usage manageable
+      compressImage(e.target.result, 800, 0.78, dataUrl => {
+        photoModalDataUrl = dataUrl;
+        previewImg.src = dataUrl;
+        previewWrap.style.display = "block";
+        dropZone.style.display = "none";
+      });
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Drag-drop on desktop
+  dropZone.addEventListener("dragover", e => { e.preventDefault(); dropZone.classList.add("dragover"); });
+  dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
+  dropZone.addEventListener("drop", e => {
+    e.preventDefault(); dropZone.classList.remove("dragover");
+    const file = e.dataTransfer.files[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      compressImage(ev.target.result, 800, 0.78, dataUrl => {
+        photoModalDataUrl = dataUrl;
+        previewImg.src = dataUrl;
+        previewWrap.style.display = "block";
+        dropZone.style.display = "none";
+      });
+    };
+    reader.readAsDataURL(file);
+  });
+
+  clearBtn.addEventListener("click", () => {
+    photoModalDataUrl = null;
+    previewImg.src = "";
+    previewWrap.style.display = "none";
+    dropZone.style.display = "block";
+    fileInput.value = "";
+  });
+
+  saveBtn.addEventListener("click", () => {
+    if (!photoModalDataUrl) { showToast("Please choose a photo first", "warn"); return; }
+    const caption = document.getElementById("photo-caption-input").value.trim();
+    addPhoto(photoModalPlantId, photoModalDataUrl, caption, photoModalTag);
+    closePhotoModal();
+    showToast("📷 Photo saved to journal!");
+    renderDetail(); // refresh detail view to show new photo
+  });
+}
+
+function compressImage(dataUrl, maxWidth, quality, callback) {
+  const img = new Image();
+  img.onload = () => {
+    const canvas = document.createElement("canvas");
+    let w = img.width, h = img.height;
+    if (w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0, w, h);
+    callback(canvas.toDataURL("image/jpeg", quality));
+  };
+  img.src = dataUrl;
+}
+
+// ── Lightbox ─────────────────────────────────────────
+let lightboxPhotos = [];
+let lightboxIdx = 0;
+
+function openLightbox(photos, idx) {
+  lightboxPhotos = photos;
+  lightboxIdx = idx;
+  showLightboxSlide();
+  document.getElementById("lightbox").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+function closeLightbox() {
+  document.getElementById("lightbox").classList.remove("open");
+  document.body.style.overflow = "";
+}
+
+function showLightboxSlide() {
+  const p = lightboxPhotos[lightboxIdx];
+  if (!p) return;
+  document.getElementById("lightbox-img").src = p.dataUrl;
+  document.getElementById("lightbox-caption").textContent = p.caption || "No caption";
+  document.getElementById("lightbox-date").textContent = new Date(p.date).toLocaleDateString("en-US", {month:"long",day:"numeric",year:"numeric"});
+  document.getElementById("lightbox-tag").textContent = p.tag ? "# " + p.tag : "";
+  document.getElementById("lightbox-prev").style.display = lightboxPhotos.length > 1 ? "flex" : "none";
+  document.getElementById("lightbox-next").style.display = lightboxPhotos.length > 1 ? "flex" : "none";
+}
+
+function initLightbox() {
+  const lb = document.getElementById("lightbox");
+  if (lb._lbInited) return;
+  lb._lbInited = true;
+  document.getElementById("lightbox-close").addEventListener("click", closeLightbox);
+  lb.addEventListener("click", e => { if (e.target === lb) closeLightbox(); });
+  document.getElementById("lightbox-prev").addEventListener("click", () => {
+    lightboxIdx = (lightboxIdx - 1 + lightboxPhotos.length) % lightboxPhotos.length;
+    showLightboxSlide();
+  });
+  document.getElementById("lightbox-next").addEventListener("click", () => {
+    lightboxIdx = (lightboxIdx + 1) % lightboxPhotos.length;
+    showLightboxSlide();
+  });
+  // Swipe support
+  let touchStartX = 0;
+  lb.addEventListener("touchstart", e => { touchStartX = e.touches[0].clientX; }, {passive:true});
+  lb.addEventListener("touchend", e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50) {
+      lightboxIdx = dx < 0
+        ? (lightboxIdx + 1) % lightboxPhotos.length
+        : (lightboxIdx - 1 + lightboxPhotos.length) % lightboxPhotos.length;
+      showLightboxSlide();
+    }
+  }, {passive:true});
+  // Keyboard nav
+  document.addEventListener("keydown", e => {
+    if (!lb.classList.contains("open")) return;
+    if (e.key === "ArrowRight") { lightboxIdx = (lightboxIdx+1)%lightboxPhotos.length; showLightboxSlide(); }
+    if (e.key === "ArrowLeft")  { lightboxIdx = (lightboxIdx-1+lightboxPhotos.length)%lightboxPhotos.length; showLightboxSlide(); }
+    if (e.key === "Escape") closeLightbox();
+  });
+}
+
+// ── Render journal tab content ───────────────────────
+function renderJournalTab(plantId) {
+  const photos = getPlantPhotos(plantId);
+  const container = document.getElementById("journal-tab-content");
+  if (!container) return;
+
+  if (photos.length === 0) {
+    container.innerHTML = `
+      <div class="journal-empty">
+        <div style="font-size:40px;margin-bottom:12px">📷</div>
+        <div style="font-family:var(--font-display);font-size:18px;color:var(--ink-soft);margin-bottom:8px">No photos yet</div>
+        <div style="margin-bottom:20px">Document your plant's journey — snap a photo each time you water, see new growth, or notice something interesting.</div>
+        <button class="btn-primary" id="journal-add-first">📷 Add First Photo</button>
+      </div>`;
+    document.getElementById("journal-add-first").addEventListener("click", () => openPhotoModal(plantId));
+    return;
+  }
+
+  container.innerHTML = "";
+
+  // Add photo button
+  const addRow = document.createElement("div");
+  addRow.style.cssText = "display:flex;justify-content:flex-end;margin-bottom:16px";
+  addRow.innerHTML = `<button class="btn-primary" style="font-size:14px;padding:10px 20px">📷 Add Photo</button>`;
+  addRow.querySelector("button").addEventListener("click", () => openPhotoModal(plantId));
+  container.appendChild(addRow);
+
+  // Timeline
+  const timeline = document.createElement("div");
+  timeline.className = "journal-timeline";
+
+  photos.forEach((photo, idx) => {
+    const entry = document.createElement("div");
+    entry.className = "journal-entry";
+    const dateStr = new Date(photo.date).toLocaleDateString("en-US", {weekday:"short",month:"short",day:"numeric",year:"numeric"});
+    const tagEmojis = {progress:"📈",bloom:"🌸",issue:"⚠️",harvest:"🌾",repot:"🪴",other:"📝"};
+    entry.innerHTML = `
+      ${photo.dataUrl
+        ? `<img class="journal-entry-img" src="${photo.dataUrl}" alt="journal photo">`
+        : `<div class="journal-entry-img-placeholder">${(myPlants.find(p=>p.id===plantId)||{emoji:"🌿"}).emoji}</div>`}
+      <div class="journal-entry-body">
+        <div class="journal-entry-date">${dateStr}</div>
+        <div class="journal-entry-caption">${photo.caption || '<em style="color:var(--ink-faint)">No caption</em>'}</div>
+        <div class="journal-entry-tags">
+          <span class="journal-entry-tag">${tagEmojis[photo.tag]||"📝"} ${photo.tag}</span>
+        </div>
+      </div>
+      <button class="journal-entry-del" data-id="${photo.id}" title="Delete photo">🗑</button>`;
+
+    // click to open lightbox
+    const imgEl = entry.querySelector(".journal-entry-img, .journal-entry-img-placeholder");
+    imgEl.style.cursor = "zoom-in";
+    imgEl.addEventListener("click", () => openLightbox(photos, idx));
+
+    entry.querySelector(".journal-entry-del").addEventListener("click", e => {
+      e.stopPropagation();
+      if (confirm("Delete this photo?")) {
+        deletePhoto(plantId, photo.id);
+        renderJournalTab(plantId);
+        // also refresh strip if care tab active
+        const strip = document.getElementById("journal-photo-strip");
+        if (strip) buildPhotoStrip(plantId, strip);
+        showToast("Photo deleted");
+      }
+    });
+
+    timeline.appendChild(entry);
+  });
+
+  container.appendChild(timeline);
+}
+
+// ── Photo strip (shown in Care tab) ─────────────────
+function buildPhotoStrip(plantId, container) {
+  const photos = getPlantPhotos(plantId).slice(0, 12); // show last 12
+  container.innerHTML = "";
+
+  // Add button always first
+  const addBtn = document.createElement("div");
+  addBtn.className = "journal-add-btn";
+  addBtn.innerHTML = `<span class="journal-add-icon">📷</span><span>Add photo</span>`;
+  addBtn.addEventListener("click", () => openPhotoModal(plantId));
+  container.appendChild(addBtn);
+
+  photos.forEach((photo, idx) => {
+    const thumb = document.createElement("div");
+    thumb.className = "journal-strip-thumb";
+    const dateStr = new Date(photo.date).toLocaleDateString("en-US", {month:"short",day:"numeric"});
+    thumb.innerHTML = `
+      <img src="${photo.dataUrl}" alt="${photo.caption || 'photo'}">
+      <div class="thumb-date">${dateStr}${photo.caption ? " · " + photo.caption.slice(0,18) + (photo.caption.length>18?"…":"") : ""}</div>`;
+    thumb.addEventListener("click", () => openLightbox(getPlantPhotos(plantId), idx));
+    container.appendChild(thumb);
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// END JOURNAL
+// ══════════════════════════════════════════════════════
+
+// ── Push Notifications ──────────────────────────────────────────
+const PUSH_STORAGE_KEY = "gardenkeeper_push";
+const SW_SOURCE = `
+self.addEventListener("push", e => {
+  const d = e.data ? e.data.json() : {};
+  self.registration.showNotification(d.title || "Garden Keeper", {
+    body: d.body || "Your plants need attention!",
+    icon: d.icon || "",
+    badge: d.badge || "",
+    tag: d.tag || "garden",
+    data: d.data || {}
+  });
+});
+self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  e.waitUntil(clients.matchAll({type:"window"}).then(cs => {
+    if (cs.length) { cs[0].focus(); } else { clients.openWindow("/"); }
+  }));
+});
+self.addEventListener("message", e => {
+  if (e.data && e.data.type === "CHECK_PLANTS") {
+    const plants = e.data.plants || [];
+    const alerts = [];
+    const now = Date.now();
+    plants.forEach(p => {
+      const wNext = new Date(p.lastWatered).getTime() + p.waterDays * 86400000;
+      const fNext = new Date(p.lastFertilized).getTime() + p.fertilizeDays * 86400000;
+      if (wNext <= now) alerts.push(p.emoji + " " + p.name + " needs watering");
+      else if (fNext <= now) alerts.push(p.emoji + " " + p.name + " needs fertilizing");
+    });
+    if (alerts.length) {
+      self.registration.showNotification("🌿 Garden Keeper", {
+        body: alerts.slice(0,3).join("\n") + (alerts.length > 3 ? "\n+" + (alerts.length-3) + " more" : ""),
+        tag: "garden-daily",
+        icon: ""
+      });
+    }
+  }
+});
+`;
+
+let swReg = null;
+let pushCheckInterval = null;
+
+function getPushPrefs() {
+  try { return JSON.parse(localStorage.getItem(PUSH_STORAGE_KEY) || "{}"); } catch { return {}; }
+}
+function savePushPrefs(prefs) {
+  try { localStorage.setItem(PUSH_STORAGE_KEY, JSON.stringify(prefs)); } catch {}
+}
+
+async function registerSW() {
+  if (!("serviceWorker" in navigator)) return null;
+  try {
+    const blob = new Blob([SW_SOURCE], { type: "application/javascript" });
+    const swUrl = URL.createObjectURL(blob);
+    const reg = await navigator.serviceWorker.register(swUrl, { scope: "/" });
+    await navigator.serviceWorker.ready;
+    return reg;
+  } catch(e) { console.warn("SW registration failed:", e); return null; }
+}
+
+async function initPushPanel() {
+  const panel = document.getElementById("push-panel");
+  if (!panel) return;
+
+  const dot        = document.getElementById("push-dot");
+  const statusText = document.getElementById("push-status-text");
+  const enableBtn  = document.getElementById("btn-enable-push");
+  const testBtn    = document.getElementById("btn-test-push");
+  const scheduleEl = document.getElementById("push-schedule");
+  const howtoEl    = document.getElementById("push-howto");
+  const timeInput  = document.getElementById("push-time");
+  const saveTimeBtn= document.getElementById("btn-save-time");
+
+  const prefs = getPushPrefs();
+  if (prefs.time) timeInput.value = prefs.time;
+
+  function setStatus(state) {
+    dot.className = "push-dot " + state;
+    if (state === "granted") {
+      statusText.textContent = "Notifications enabled — your plants will alert you when they need care";
+      enableBtn.textContent  = "✓ Alerts enabled";
+      enableBtn.style.background = "#3d8361";
+      enableBtn.disabled = true;
+      testBtn.style.display  = "inline-flex";
+      scheduleEl.style.display = "block";
+      howtoEl.style.display  = "none";
+      scheduleDailyCheck();
+    } else if (state === "denied") {
+      statusText.textContent = "Notifications blocked. Please allow notifications in your browser settings, then reload.";
+      enableBtn.textContent  = "Notifications blocked";
+      enableBtn.disabled = true;
+      enableBtn.style.opacity = "0.5";
+      howtoEl.style.display  = "none";
+    } else {
+      statusText.textContent = "Not enabled — tap below to allow plant care alerts on this device";
+      enableBtn.textContent  = "Enable phone alerts";
+      enableBtn.disabled = false;
+      enableBtn.style.background = "";
+      enableBtn.style.opacity = "";
+      testBtn.style.display  = "none";
+      scheduleEl.style.display = "none";
+      howtoEl.style.display  = "block";
+    }
+  }
+
+  // Check current permission
+  if (!("Notification" in window)) {
+    statusText.textContent = "Push notifications are not supported in this browser.";
+    dot.className = "push-dot denied";
+    enableBtn.style.display = "none";
+    return;
+  }
+  setStatus(Notification.permission);
+
+  enableBtn.addEventListener("click", async () => {
+    const perm = await Notification.requestPermission();
+    setStatus(perm);
+    if (perm === "granted") {
+      swReg = await registerSW();
+      savePushPrefs({ ...getPushPrefs(), enabled: true });
+      showToast("🔔 Phone alerts enabled!");
+    }
+  });
+
+  testBtn.addEventListener("click", async () => {
+    if (!swReg) swReg = await registerSW();
+    if (swReg && swReg.active) {
+      swReg.active.postMessage({ type: "CHECK_PLANTS", plants: myPlants });
+    } else {
+      // Fallback: direct Notification API
+      new Notification("🌿 Garden Keeper — Test", {
+        body: myPlants.length > 0
+          ? myPlants.slice(0,2).map(p => p.emoji + " " + p.name).join(", ") + " are in your garden"
+          : "Your garden is ready!",
+        tag: "garden-test"
+      });
+    }
+    showToast("Test alert sent!");
+  });
+
+  saveTimeBtn.addEventListener("click", () => {
+    savePushPrefs({ ...getPushPrefs(), time: timeInput.value, enabled: true });
+    scheduleDailyCheck();
+    showToast("⏰ Daily check time saved!");
+  });
+
+  // Re-check if permission was granted before
+  if (Notification.permission === "granted") {
+    swReg = await registerSW();
+    scheduleDailyCheck();
+  }
+}
+
+function scheduleDailyCheck() {
+  if (pushCheckInterval) clearInterval(pushCheckInterval);
+  if (Notification.permission !== "granted") return;
+
+  const prefs = getPushPrefs();
+  const [h, m] = (prefs.time || "08:00").split(":").map(Number);
+
+  // Check every minute if it is the scheduled time
+  pushCheckInterval = setInterval(async () => {
+    const now = new Date();
+    const lastCheck = getPushPrefs().lastCheck;
+    const todayKey = now.toDateString() + "-" + h + ":" + m;
+    if (now.getHours() === h && now.getMinutes() === m && lastCheck !== todayKey) {
+      savePushPrefs({ ...getPushPrefs(), lastCheck: todayKey });
+      if (!swReg) swReg = await registerSW();
+      if (swReg && swReg.active) {
+        swReg.active.postMessage({ type: "CHECK_PLANTS", plants: myPlants });
+      } else {
+        // Direct fallback
+        const notifs = getNotifications();
+        if (notifs.length > 0) {
+          new Notification("🌿 Garden Keeper", {
+            body: notifs.slice(0,3).map(n => n.plant.emoji + " " + n.plant.name + (n.type==="water"?" needs watering":" needs feeding")).join("\n"),
+            tag: "garden-daily"
+          });
+        }
+      }
+    }
+  }, 60000);
+
+  // Also run once on load if overdue
+  setTimeout(async () => {
+    if (Notification.permission === "granted") {
+      const notifs = getNotifications();
+      if (notifs.length > 0 && !getPushPrefs().lastCheck) {
+        if (!swReg) swReg = await registerSW();
+        if (swReg && swReg.active) {
+          swReg.active.postMessage({ type: "CHECK_PLANTS", plants: myPlants });
+        }
+      }
+    }
+  }, 2000);
+}
+// ── End Push Notifications ───────────────────────────────────────
+
+
+// ══════════════════════════════════════════════════════
+// APPEARANCE SETTINGS
+// ══════════════════════════════════════════════════════
+
+const APPEARANCE_KEY = "gardenkeeper_appearance";
+
+const THEMES = [
+  {
+    id: "botanical",
+    name: "Botanical",
+    vars: {
+      "--parchment": "#f5f0e8", "--parchment-dark": "#ede8df",
+      "--forest": "#2d3d2e", "--green": "#3d8361", "--green-light": "#7fb069",
+      "--ink": "#2d3d2e", "--ink-mid": "#5a4f3e", "--ink-soft": "#8a7a60",
+      "--ink-faint": "#b0a08a", "--rule": "#d4c9b5", "--card-border": "#e8e2d8"
+    },
+    preview: ["#2d3d2e", "#3d8361", "#f5f0e8"]
+  },
+  {
+    id: "slate",
+    name: "Slate",
+    vars: {
+      "--parchment": "#f0f2f5", "--parchment-dark": "#e4e7ec",
+      "--forest": "#1e2a3a", "--green": "#3b82c4", "--green-light": "#64a8e0",
+      "--ink": "#1e2a3a", "--ink-mid": "#3d4f63", "--ink-soft": "#6b7c92",
+      "--ink-faint": "#9aaab8", "--rule": "#c8d0da", "--card-border": "#dde2ea"
+    },
+    preview: ["#1e2a3a", "#3b82c4", "#f0f2f5"]
+  },
+  {
+    id: "terracotta",
+    name: "Terracotta",
+    vars: {
+      "--parchment": "#fdf6f0", "--parchment-dark": "#f5ebe0",
+      "--forest": "#4a2c1a", "--green": "#c0622f", "--green-light": "#e08050",
+      "--ink": "#3a2010", "--ink-mid": "#6b4030", "--ink-soft": "#9a6858",
+      "--ink-faint": "#c09888", "--rule": "#dfc0a8", "--card-border": "#eed8c8"
+    },
+    preview: ["#4a2c1a", "#c0622f", "#fdf6f0"]
+  },
+  {
+    id: "midnight",
+    name: "Midnight",
+    vars: {
+      "--parchment": "#1a1d24", "--parchment-dark": "#13151b",
+      "--forest": "#0d0f14", "--green": "#4ade80", "--green-light": "#86efac",
+      "--ink": "#e8eaf0", "--ink-mid": "#b0b8cc", "--ink-soft": "#7a8499",
+      "--ink-faint": "#4a5268", "--rule": "#2a2f3e", "--card-border": "#252a38"
+    },
+    preview: ["#0d0f14", "#4ade80", "#1a1d24"]
+  },
+  {
+    id: "lavender",
+    name: "Lavender",
+    vars: {
+      "--parchment": "#f3f0fb", "--parchment-dark": "#ebe6f6",
+      "--forest": "#2d1f5e", "--green": "#7c5cbf", "--green-light": "#a98de0",
+      "--ink": "#2d1f5e", "--ink-mid": "#5a4880", "--ink-soft": "#8878aa",
+      "--ink-faint": "#b0a8cc", "--rule": "#cdc4e8", "--card-border": "#ddd8f0"
+    },
+    preview: ["#2d1f5e", "#7c5cbf", "#f3f0fb"]
+  },
+  {
+    id: "sage",
+    name: "Sage",
+    vars: {
+      "--parchment": "#f2f5f0", "--parchment-dark": "#e6ebe3",
+      "--forest": "#2a3828", "--green": "#5a8a52", "--green-light": "#85b87a",
+      "--ink": "#2a3828", "--ink-mid": "#4a5e48", "--ink-soft": "#708868",
+      "--ink-faint": "#9aaa95", "--rule": "#c4d0bf", "--card-border": "#d8e2d4"
+    },
+    preview: ["#2a3828", "#5a8a52", "#f2f5f0"]
+  }
+];
+
+const FONT_PAIRS = [
+  {
+    id: "botanical",
+    name: "Botanical",
+    body: "'Crimson Pro', Georgia, serif",
+    display: "'Playfair Display', Georgia, serif",
+    ui: "'Crimson Pro', Georgia, serif",
+    preview: "Playfair Display",
+    previewClass: ""
+  },
+  {
+    id: "modern",
+    name: "Modern",
+    body: "'Inter', system-ui, sans-serif",
+    display: "'Inter', system-ui, sans-serif",
+    ui: "'Inter', system-ui, sans-serif",
+    preview: "Inter",
+    previewClass: ""
+  },
+  {
+    id: "editorial",
+    name: "Editorial",
+    body: "'Lato', sans-serif",
+    display: "'DM Serif Display', Georgia, serif",
+    ui: "'Lato', sans-serif",
+    preview: "DM Serif Display",
+    previewClass: ""
+  },
+  {
+    id: "literary",
+    name: "Literary",
+    body: "'Merriweather', Georgia, serif",
+    display: "'Merriweather', Georgia, serif",
+    ui: "'Merriweather', Georgia, serif",
+    preview: "Merriweather",
+    previewClass: ""
+  },
+  {
+    id: "friendly",
+    name: "Friendly",
+    body: "'Nunito', sans-serif",
+    display: "'Nunito', sans-serif",
+    ui: "'Nunito', sans-serif",
+    preview: "Nunito",
+    previewClass: ""
+  },
+  {
+    id: "poetic",
+    name: "Poetic",
+    body: "'Crimson Pro', Georgia, serif",
+    display: "'Fraunces', Georgia, serif",
+    ui: "'Crimson Pro', Georgia, serif",
+    preview: "Fraunces",
+    previewClass: ""
+  }
+];
+
+function loadAppearance() {
+  try {
+    const s = localStorage.getItem(APPEARANCE_KEY);
+    if (s) return JSON.parse(s);
+  } catch {}
+  return { themeId: "botanical", fontId: "botanical" };
+}
+
+function saveAppearance(app) {
+  try { localStorage.setItem(APPEARANCE_KEY, JSON.stringify(app)); } catch {}
+}
+
+function applyTheme(themeId) {
+  const theme = THEMES.find(t => t.id === themeId) || THEMES[0];
+  const root = document.documentElement;
+  Object.entries(theme.vars).forEach(([k, v]) => root.style.setProperty(k, v));
+  // Update scrollbar colors dynamically
+  document.querySelectorAll(".theme-swatch").forEach(el =>
+    el.classList.toggle("active", el.dataset.theme === themeId));
+}
+
+function applyFont(fontId) {
+  const pair = FONT_PAIRS.find(f => f.id === fontId) || FONT_PAIRS[0];
+  const root = document.documentElement;
+  root.style.setProperty("--font-body",    pair.body);
+  root.style.setProperty("--font-display", pair.display);
+  root.style.setProperty("--font-ui",      pair.ui);
+  document.querySelectorAll(".font-opt").forEach(el =>
+    el.classList.toggle("active", el.dataset.font === fontId));
+}
+
+function initSettings() {
+  const appearance = loadAppearance();
+
+  // Build theme swatches
+  const themeGrid = document.getElementById("theme-grid");
+  if (themeGrid && !themeGrid.children.length) {
+    THEMES.forEach(theme => {
+      const sw = document.createElement("div");
+      sw.className = "theme-swatch" + (theme.id === appearance.themeId ? " active" : "");
+      sw.dataset.theme = theme.id;
+      sw.innerHTML = `
+        <div class="theme-swatch-bar" style="background:linear-gradient(90deg,${theme.preview[0]} 33%,${theme.preview[1]} 33%,${theme.preview[1]} 66%,${theme.preview[2]} 66%)"></div>
+        <div class="theme-swatch-name">${theme.name}</div>`;
+      sw.addEventListener("click", () => {
+        appearance.themeId = theme.id;
+        saveAppearance(appearance);
+        applyTheme(theme.id);
+      });
+      themeGrid.appendChild(sw);
+    });
+  }
+
+  // Build font options
+  const fontList = document.getElementById("font-list");
+  if (fontList && !fontList.children.length) {
+    FONT_PAIRS.forEach(pair => {
+      const opt = document.createElement("div");
+      opt.className = "font-opt" + (pair.id === appearance.fontId ? " active" : "");
+      opt.dataset.font = pair.id;
+      opt.innerHTML = `
+        <span class="font-opt-preview" style="font-family:${pair.display}">${pair.name}</span>
+        <span class="font-opt-name">${pair.name}</span>`;
+      opt.addEventListener("click", () => {
+        appearance.fontId = pair.id;
+        saveAppearance(appearance);
+        applyFont(pair.id);
+      });
+      fontList.appendChild(opt);
+    });
+  }
+
+  // Drawer open/close
+  const fab    = document.getElementById("settings-fab");
+  const overlay= document.getElementById("settings-overlay");
+  const drawer = document.getElementById("settings-drawer");
+  const closeBtn = document.getElementById("settings-close");
+  const resetBtn = document.getElementById("settings-reset-appearance");
+
+  const openDrawer  = () => { overlay.classList.add("open"); drawer.classList.add("open"); };
+  const closeDrawer = () => { overlay.classList.remove("open"); drawer.classList.remove("open"); };
+
+  fab.addEventListener("click", openDrawer);
+  overlay.addEventListener("click", closeDrawer);
+  closeBtn.addEventListener("click", closeDrawer);
+
+  resetBtn.addEventListener("click", () => {
+    appearance.themeId = "botanical";
+    appearance.fontId  = "botanical";
+    saveAppearance(appearance);
+    applyTheme("botanical");
+    applyFont("botanical");
+    document.querySelectorAll(".theme-swatch").forEach(el => el.classList.toggle("active", el.dataset.theme === "botanical"));
+    document.querySelectorAll(".font-opt").forEach(el => el.classList.toggle("active", el.dataset.font === "botanical"));
+    showToast("Appearance reset to defaults");
+  });
+
+  // Apply saved appearance on load
+  applyTheme(appearance.themeId);
+  applyFont(appearance.fontId);
+}
+
+// ── Mobile nav sync ──
+function updateMobileNav(view) {
+  document.querySelectorAll(".mob-nav-btn").forEach(b => b.classList.toggle("active", b.dataset.view === view));
+  const n = getNotifications ? getNotifications().length : 0;
+  const badge = document.getElementById("mob-badge");
+  if (badge) { badge.textContent = n; badge.classList.toggle("show", n > 0); }
+}
+
+document.querySelectorAll(".nav-btn").forEach(btn => btn.addEventListener("click", () => navigateTo(btn.dataset.view)));
+document.querySelectorAll(".mob-nav-btn").forEach(btn => btn.addEventListener("click", () => navigateTo(btn.dataset.view)));
+
+
+const _origRenderDiscover = renderDiscover;
+renderDiscover = function() {
+  _origRenderDiscover();
+  initCustomForm();
+};
+
+// Register service worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then(reg => {
+      swReg = reg;
+      console.log('SW registered:', reg.scope);
+    }).catch(err => console.warn('SW registration failed:', err));
+  });
+}
+
+// Handle URL shortcuts (e.g. /?view=alerts)
+const _urlParams = new URLSearchParams(window.location.search);
+const _startView = _urlParams.get('view') || 'dashboard';
+
+initSettings();
+renderView(_startView);
+</script>
+</body>
+</html>
