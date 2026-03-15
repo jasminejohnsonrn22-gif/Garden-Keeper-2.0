@@ -3437,22 +3437,18 @@ They will be added to your existing garden (existing plants kept).`;
 }
 
 function downloadTemplate() {
-  // Generate a minimal CSV template as fallback if XLSX not available
-  // But we'll embed the template as base64 for reliability
-  const csvContent = [
-    'name *,category *,emoji,waterDays *,fertilizeDays *,sunlight,light,humidity,difficulty,location,notes',
-    'Peace Lily,houseplant,🌼,5,21,Low Light,Natural Sun,High,Easy,Living Room,Droops when thirsty',
-    '',
-  ].join('\n');
-
-  const blob = new Blob([csvContent], { type: 'text/csv' });
+  const nl = String.fromCharCode(10);
+  const header = "name *,category *,emoji,waterDays *,fertilizeDays *,sunlight,light,humidity,difficulty,location,notes";
+  const example = "Peace Lily,houseplant,,5,21,Low Light,Natural Sun,High,Easy,Living Room,Droops when thirsty";
+  const csvContent = header + nl + example + nl;
+  const blob = new Blob([csvContent], { type: "text/csv" });
   const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
+  const a    = document.createElement("a");
   a.href     = url;
-  a.download = 'garden-keeper-template.csv';
+  a.download = "garden-keeper-template.csv";
   a.click();
   URL.revokeObjectURL(url);
-  showToast('Template downloaded — open in Excel or Google Sheets');
+  showToast("Template downloaded — open in Excel or Google Sheets");
 }
 
 function initSpreadsheetImport() {
