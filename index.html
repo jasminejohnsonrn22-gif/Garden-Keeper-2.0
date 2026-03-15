@@ -3443,8 +3443,7 @@ function downloadTemplate() {
     'name *,category *,emoji,waterDays *,fertilizeDays *,sunlight,light,humidity,difficulty,location,notes',
     'Peace Lily,houseplant,🌼,5,21,Low Light,Natural Sun,High,Easy,Living Room,Droops when thirsty',
     '',
-  ].join('
-');
+  ].join('\n');
 
   const blob = new Blob([csvContent], { type: 'text/csv' });
   const url  = URL.createObjectURL(blob);
