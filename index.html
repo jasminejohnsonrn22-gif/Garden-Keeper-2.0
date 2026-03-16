@@ -3373,22 +3373,41 @@ function parseSpreadsheet(file) {
       // Use first sheet
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
-      const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
 
-      if (!rows.length) { showToast('Spreadsheet appears empty', 'warn'); return; }
+      // Get raw rows as arrays so we can find the real header row ourselves
+      const rawRows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+      if (!rawRows.length) { showToast('Spreadsheet appears empty', 'warn'); return; }
 
-      // Map column headers → plant fields
-      const firstRow = rows[0];
-      const colMapping = {};
-      Object.keys(firstRow).forEach(col => {
-        const norm = normalizeCol(col);
-        if (COL_MAP[norm]) colMapping[col] = COL_MAP[norm];
-      });
+      // Scan rows to find the one containing a recognisable header like "name" or "plant name"
+      let headerRowIdx = -1;
+      const nameKeys = ['name', 'plant name', 'plant'];
+      for (let i = 0; i < Math.min(rawRows.length, 15); i++) {
+        const rowLower = rawRows[i].map(c => normalizeCol(String(c)));
+        if (rowLower.some(c => nameKeys.includes(c))) { headerRowIdx = i; break; }
+      }
 
-      if (!colMapping[Object.keys(colMapping).find(k => colMapping[k] === 'name')]) {
-        showToast('No "Name" column found in spreadsheet', 'warn');
+      if (headerRowIdx === -1) {
+        showToast('Could not find a "Name" column — check the template or column headers', 'warn');
         return;
       }
+
+      // Build column index → plant field mapping from the header row
+      const headerRow = rawRows[headerRowIdx];
+      const colMapping = {}; // colIndex → fieldName
+      headerRow.forEach((col, idx) => {
+        const norm = normalizeCol(String(col));
+        if (COL_MAP[norm]) colMapping[idx] = COL_MAP[norm];
+      });
+
+      // Convert data rows (everything after header) into objects
+      const dataRows = rawRows.slice(headerRowIdx + 1);
+      const rows = dataRows.map(row => {
+        const obj = {};
+        Object.entries(colMapping).forEach(([idx, field]) => {
+          obj[field] = String(row[idx] || '').trim();
+        });
+        return obj;
+      });
 
       const now = new Date().toISOString();
       const imported = [];
