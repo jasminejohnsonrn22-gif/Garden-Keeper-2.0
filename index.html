@@ -103,6 +103,7 @@
   .card-emoji { font-size: 16px; line-height: 1; flex-shrink: 0; }
   .card-badges { text-align: right; flex-shrink: 0; }
   .card-name { font-family: var(--font-display); color: var(--ink); font-size: 14px; font-weight: 600; margin-bottom: 0; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-variety { font-size: 11px; color: var(--ink-soft); font-style: italic; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .card-sunlight { color: var(--ink-faint); font-size: 11px; margin-bottom: 8px; font-style: italic; }
 
   .urgency-badge { display: inline-block; border-radius: 3px; padding: 2px 7px; font-size: 10px; font-weight: 700; font-family: var(--font-body); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 3px; }
@@ -461,6 +462,15 @@
 
   /* ── Organic badge ── */
   .organic-badge { display:inline-flex; align-items:center; gap:3px; background:rgba(61,131,97,0.12); color:var(--green); border-radius:3px; padding:2px 7px; font-size:10px; font-weight:700; font-family:var(--font-body); letter-spacing:0.3px; text-transform:uppercase; border:1px solid rgba(61,131,97,0.25); }
+
+  /* ── Detail care summary ── */
+  .detail-care-summary { background:var(--parchment-dark); border-radius:8px; padding:10px 14px; margin-bottom:10px; font-size:13px; color:var(--ink-mid); line-height:1.7; }
+  .detail-care-summary .cs-row { display:flex; align-items:baseline; gap:6px; }
+  .detail-care-summary .cs-label { font-weight:600; color:var(--ink); white-space:nowrap; }
+  .detail-care-summary .cs-val { color:var(--ink-soft); }
+  .detail-care-summary .cs-alert { color:var(--green); font-weight:600; }
+  .detail-care-summary .cs-warn  { color:#d47c0f; font-weight:600; }
+  .detail-care-summary .cs-urgent{ color:#c0392b; font-weight:600; }
 
   /* ── Push notification panel ── */
   .push-panel { background: white; border: 1.5px solid var(--card-border); border-radius: 10px; padding: 24px 28px; margin-bottom: 24px; }
@@ -1178,6 +1188,40 @@ function getDaysUntil(lastDate, intervalDays) {
 function getUrgency(days) {
   return days <= 0 ? "overdue" : days === 1 ? "today" : days <= 3 ? "soon" : "ok";
 }
+function getGrowingNotifs() {
+  // Returns upcoming germination & harvest alerts for fruit/veg plants
+  const notifs = [];
+  myPlants.forEach(p => {
+    if (!isGrowingCategory(p)) return;
+    const g = getGrowing(p.id);
+    if (!g) return;
+    const base = g.plantingDate || g.transplantDate;
+    if (!base) return;
+
+    // Germination alert (only if not yet germinated)
+    if (!g.actualGermDate) {
+      const germDate = g.germMaxDays ? addDays(base, parseInt(g.germMaxDays))
+                     : g.germMinDays ? addDays(base, parseInt(g.germMinDays)) : null;
+      if (germDate) {
+        const d = daysFromNow(germDate);
+        if (d <= 7) notifs.push({ plant:p, type:"germination", days:d, date:germDate,
+          minDays:g.germMinDays, maxDays:g.germMaxDays });
+      }
+    }
+
+    // Harvest alert (only if not yet harvested)
+    if (!g.actualHarvestDate) {
+      const harvDate = g.harvestMinDays ? addDays(base, parseInt(g.harvestMinDays)) : null;
+      if (harvDate) {
+        const d = daysFromNow(harvDate);
+        if (d <= 14) notifs.push({ plant:p, type:"harvest", days:d, date:harvDate,
+          minDays:g.harvestMinDays, maxDays:g.harvestMaxDays });
+      }
+    }
+  });
+  return notifs;
+}
+
 function getNotifications() {
   const notifs = [];
   myPlants.forEach(p => {
@@ -1186,7 +1230,8 @@ function getNotifications() {
     if (w <= 1) notifs.push({ plant:p, type:"water",     days:w });
     if (f <= 3) notifs.push({ plant:p, type:"fertilize", days:f });
   });
-  return notifs;
+  // Include growing notifs in total badge count
+  return [...notifs, ...getGrowingNotifs()];
 }
 
 function showToast(msg, type="success") {
@@ -1290,16 +1335,19 @@ function renderGridView(filtered, content) {
       <div class="card-top-bar" style="background:${urg.color};opacity:${topU==="ok"?0.4:1}"></div>
       <div class="card-body">
         <div class="card-header">
-          <div class="card-name-row">
-            ${plant.emoji ? `<span class="card-emoji">${plant.emoji}</span>` : ""}
-            <span class="card-name display">${plant.name}</span>
+          <div class="card-name-row" style="flex-direction:column;align-items:flex-start;gap:1px">
+            <div style="display:flex;align-items:center;gap:6px;width:100%">
+              ${plant.emoji ? `<span class="card-emoji">${plant.emoji}</span>` : ""}
+              <span class="card-name display">${plant.name}</span>
+            </div>
+            ${plant.variety ? `<span class="card-variety">${plant.variety}</span>` : ""}
           </div>
           <div class="card-badges">
             <span class="urgency-badge" style="background:${urg.bg};color:${urg.color}">${urg.label}</span><br>
             <span class="cat-badge" style="background:${meta.light};color:${meta.accent}">${meta.icon} ${meta.label}</span>
           </div>
         </div>
-        <div class="card-sunlight">${plant.variety?`<span style="font-style:normal;font-weight:600;color:var(--ink-mid)">${plant.variety}</span> · `:""}${plant.light==="Grow Light"?"💡":plant.light==="Both"?"☀️💡":"☀️"} ${plant.sunlight}${plant.humidity?" · 💧 "+plant.humidity:""}${plant.location?` <span class="card-location">⌂ ${plant.location}</span>`:""}${plant.organic?` <span class="organic-badge">🌿 organic</span>`:""}</div>
+        <div class="card-sunlight">${plant.light==="Grow Light"?"💡":plant.light==="Both"?"☀️💡":"☀️"} ${plant.sunlight}${plant.humidity?" · 💧 "+plant.humidity:""}${plant.location?` <span class="card-location">⌂ ${plant.location}</span>`:""}${plant.organic?` <span class="organic-badge">🌿 organic</span>`:""}</div>
         <div class="care-grid">
           ${[{icon:"💧",label:"Water",days:wDays,u:wU},{icon:"🌾",label:"Feed",days:fDays,u:fU}].map(item=>{
             const u=URGENCY[item.u];
@@ -1525,7 +1573,9 @@ function renderAlerts() {
     : notifs.length+" task"+(notifs.length>1?"s":"")+" need your attention";
 
   const content = document.getElementById("alerts-content");
-  if (notifs.length===0) {
+  const growNotifs = getGrowingNotifs();
+
+  if (notifs.length===0 && growNotifs.length===0) {
     content.innerHTML = `<div class="empty-state"><div class="empty-emoji">✿</div><p class="empty-title display" style="color:#3d8361">All caught up!</p><p class="empty-sub">Your plants are thriving. Check back soon.</p></div>`;
   } else {
     const list = document.createElement("div");
@@ -1560,6 +1610,70 @@ function renderAlerts() {
       const p = myPlants.find(p=>p.id===parseInt(btn.dataset.plantId));
       if (p) setReminder(p, btn.dataset.taskKey);
     }));
+  }
+
+  // ── Growing alerts section ──
+  if (growNotifs.length > 0) {
+    const growSection = document.createElement("div");
+    growSection.style.cssText = "margin-top:20px";
+    growSection.innerHTML = `<div style="font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink);margin-bottom:12px">🌱 Growing Alerts</div>`;
+    const growList = document.createElement("div");
+    growList.className = "alert-list";
+
+    growNotifs.forEach(notif => {
+      const meta = CAT_META[notif.plant.category] || CAT_META.vegetable;
+      const isGerm = notif.type === "germination";
+      const daysLabel = notif.days <= 0 ? "now / overdue"
+        : notif.days === 1 ? "tomorrow"
+        : `in ${notif.days} day${notif.days!==1?"s":""}`;
+      const color = notif.days <= 0 ? "#c0392b" : notif.days <= 3 ? "#d47c0f" : "#3d8361";
+      const rangeStr = (notif.minDays && notif.maxDays)
+        ? `${notif.minDays}–${notif.maxDays} days from planting`
+        : `${notif.minDays || notif.maxDays} days from planting`;
+
+      const row = document.createElement("div");
+      row.className = "alert-row";
+      row.style.borderLeftColor = color;
+      row.style.borderLeftWidth = "4px";
+      row.innerHTML = `
+        <div class="alert-left">
+          <span class="alert-emoji">${notif.plant.emoji || (isGerm?"🌿":"🌾")}</span>
+          <div>
+            <div class="alert-name">
+              <span class="display">${notif.plant.name}</span>
+              ${notif.plant.variety ? `<span style="font-size:12px;color:var(--ink-soft);font-style:italic">${notif.plant.variety}</span>` : ""}
+              <span class="cat-badge" style="background:${meta.light};color:${meta.accent}">${meta.label}</span>
+            </div>
+            <div class="alert-task" style="color:${color}">
+              ${isGerm ? "🌿 Expected germination" : "🌾 Expected harvest"} — ${daysLabel}
+              <span style="color:#8a7a60;font-weight:400"> (${rangeStr})</span>
+            </div>
+          </div>
+        </div>
+        <div class="alert-right">
+          <button class="btn-primary" style="font-size:13px;padding:8px 14px;background:${color}" data-plant-id="${notif.plant.id}">
+            ${isGerm ? "Log Germination" : "Log Harvest"}
+          </button>
+        </div>`;
+
+      row.querySelector("button").addEventListener("click", () => {
+        const today = new Date().toISOString().slice(0,10);
+        if (isGerm) {
+          setGrowing(notif.plant.id, { actualGermDate: today });
+          showToast(`🌿 Germination logged for ${notif.plant.name}!`);
+        } else {
+          setGrowing(notif.plant.id, { actualHarvestDate: today });
+          showToast(`🌾 Harvest logged for ${notif.plant.name}!`);
+        }
+        renderAlerts();
+        initPushPanel();
+      });
+
+      growList.appendChild(row);
+    });
+
+    growSection.appendChild(growList);
+    content.appendChild(growSection);
   }
 
   const setAllBtn = document.getElementById("btn-set-all");
@@ -1658,6 +1772,7 @@ function renderDetail() {
               <span class="detail-emoji" id="hero-emoji-display">${plant.emoji || ""}</span>
               <div>
                 <h2 class="detail-title display" id="hero-name-display">${plant.name}</h2>
+              ${plant.variety ? `<div style="font-size:14px;color:var(--ink-soft);font-style:italic;margin-top:2px" id="hero-variety-display">${plant.variety}</div>` : ""}
                 <div class="detail-meta">
                   <span class="cat-badge" style="background:${meta.light};color:${meta.accent};padding:4px 12px;font-size:13px">${meta.icon} ${meta.label}</span>
                   ${plant.location?`<span style="font-size:13px;color:var(--ink-soft)">⌂ ${getLocationMeta(plant.location).icon} ${getLocationMeta(plant.location).name}</span>`:""}
@@ -1724,8 +1839,9 @@ function renderDetail() {
         </div>
 
         <div class="detail-desc-wrap">
-          <div class="detail-desc-text${!plant.notes||plant.notes==="A custom plant in your garden."?" empty":""}" id="detail-desc-text">${plant.notes&&plant.notes!=="A custom plant in your garden."?plant.notes:"Tap to add a description…"}</div>
-          <textarea class="detail-desc-edit" id="detail-desc-edit" maxlength="300" placeholder="Add a description or care notes…">${plant.notes&&plant.notes!=="A custom plant in your garden."?plant.notes:""}</textarea>
+          <div class="detail-care-summary" id="detail-care-summary"></div>
+          <div class="detail-desc-text${!plant.notes||plant.notes==="A custom plant in your garden."?" empty":""}" id="detail-desc-text">${plant.notes&&plant.notes!=="A custom plant in your garden."?plant.notes:"Tap to add notes…"}</div>
+          <textarea class="detail-desc-edit" id="detail-desc-edit" maxlength="300" placeholder="Add notes…">${plant.notes&&plant.notes!=="A custom plant in your garden."?plant.notes:""}</textarea>
           <div class="detail-desc-actions" id="detail-desc-actions">
             <button class="btn-primary" id="desc-save" style="padding:6px 16px;font-size:13px">Save</button>
             <button class="btn-ghost" id="desc-cancel" style="padding:6px 14px;font-size:13px">Cancel</button>
@@ -1762,6 +1878,72 @@ function renderDetail() {
 
       </div>
     </div>`;
+
+  // ── Care summary ──
+  (function buildCareSummary() {
+    const el = document.getElementById("detail-care-summary");
+    if (!el) return;
+    const g = getGrowing(plant.id);
+    const wDays = getDaysUntil(plant.lastWatered, plant.waterDays);
+    const fDays = getDaysUntil(plant.lastFertilized, plant.fertilizeDays);
+    const rows = [];
+
+    // Watering
+    const wLabel = wDays <= 0 ? "cs-urgent" : wDays <= 1 ? "cs-warn" : wDays <= 3 ? "cs-alert" : "cs-val";
+    rows.push(`<div class="cs-row"><span class="cs-label">💧 Water:</span><span class="${wLabel}">${wDays<=0?"Overdue now":wDays===1?"Due today":`in ${wDays} days`} · every ${plant.waterDays}d</span></div>`);
+
+    // Fertilize
+    const fLabel = fDays <= 0 ? "cs-urgent" : fDays <= 1 ? "cs-warn" : fDays <= 3 ? "cs-alert" : "cs-val";
+    rows.push(`<div class="cs-row"><span class="cs-label">🌾 Feed:</span><span class="${fLabel}">${fDays<=0?"Overdue now":fDays===1?"Due today":`in ${fDays} days`} · every ${plant.fertilizeDays}d</span></div>`);
+
+    // Germination window (fruit/veg only)
+    if (isGrowingCategory(plant) && g) {
+      const base = g.plantingDate || g.transplantDate;
+      if (g.actualGermDate) {
+        rows.push(`<div class="cs-row"><span class="cs-label">🌿 Germinated:</span><span class="cs-val">${formatDate(g.actualGermDate)}</span></div>`);
+      } else if (base && (g.germMinDays || g.germMaxDays)) {
+        const early = g.germMinDays ? addDays(base, parseInt(g.germMinDays)) : null;
+        const late  = g.germMaxDays ? addDays(base, parseInt(g.germMaxDays)) : null;
+        const dE = early ? daysFromNow(early) : null;
+        const dL = late  ? daysFromNow(late)  : null;
+        const cls = dE !== null && dE <= 0 ? "cs-urgent" : dE !== null && dE <= 7 ? "cs-warn" : "cs-val";
+        const rangeStr = early && late
+          ? formatDate(early, {month:"short",day:"numeric"}) + " – " + formatDate(late, {month:"short",day:"numeric",year:"numeric"})
+          : early ? formatDate(early) : formatDate(late);
+        const hint = dE !== null && dL !== null
+          ? (dE <= 0 && dL <= 0 ? " (window passed)" : dE <= 0 ? ` (~${dL}d left)` : ` (in ${dE}–${dL}d)`)
+          : "";
+        rows.push(`<div class="cs-row"><span class="cs-label">🌿 Germination:</span><span class="${cls}">${rangeStr}${hint}</span></div>`);
+      }
+
+      // Harvest window
+      if (g.actualHarvestDate) {
+        rows.push(`<div class="cs-row"><span class="cs-label">🌾 Harvested:</span><span class="cs-val">${formatDate(g.actualHarvestDate)}</span></div>`);
+      } else if (base && (g.harvestMinDays || g.harvestMaxDays)) {
+        const hE = g.harvestMinDays ? addDays(base, parseInt(g.harvestMinDays)) : null;
+        const hL = g.harvestMaxDays ? addDays(base, parseInt(g.harvestMaxDays)) : null;
+        const dhE = hE ? daysFromNow(hE) : null;
+        const dhL = hL ? daysFromNow(hL) : null;
+        const hCls = dhE !== null && dhE <= 0 ? "cs-urgent" : dhE !== null && dhE <= 14 ? "cs-alert" : "cs-val";
+        const hRange = hE && hL
+          ? formatDate(hE, {month:"short",day:"numeric"}) + " – " + formatDate(hL, {month:"short",day:"numeric",year:"numeric"})
+          : hE ? formatDate(hE) : formatDate(hL);
+        const hHint = dhE !== null && dhL !== null
+          ? (dhE <= 0 && dhL <= 0 ? " (window passed)" : dhE <= 0 ? ` (~${dhL}d left)` : ` (in ${dhE}–${dhL}d)`)
+          : "";
+        rows.push(`<div class="cs-row"><span class="cs-label">🌾 Harvest:</span><span class="${hCls}">${hRange}${hHint}</span></div>`);
+      }
+
+      // Spacing
+      if (g.spacingCm || g.spacingIn) {
+        const sp = [g.spacingCm ? g.spacingCm+"cm" : "", g.spacingIn ? g.spacingIn+'"' : ""].filter(Boolean).join(" / ");
+        rows.push(`<div class="cs-row"><span class="cs-label">📐 Spacing:</span><span class="cs-val">${sp}</span></div>`);
+      }
+    }
+
+    el.innerHTML = rows.join("");
+    el.style.display = rows.length ? "block" : "none";
+  })();
 
   // ── Name & emoji inline editing ──
   const heroStatic    = document.getElementById("hero-static");
@@ -3454,8 +3636,27 @@ self.addEventListener("message", e => {
     plants.forEach(p => {
       const wNext = new Date(p.lastWatered).getTime() + p.waterDays * 86400000;
       const fNext = new Date(p.lastFertilized).getTime() + p.fertilizeDays * 86400000;
-      if (wNext <= now) alerts.push(p.emoji + " " + p.name + " needs watering");
-      else if (fNext <= now) alerts.push(p.emoji + " " + p.name + " needs fertilizing");
+      if (wNext <= now) alerts.push((p.emoji||"") + " " + p.name + " needs watering");
+      else if (fNext <= now) alerts.push((p.emoji||"") + " " + p.name + " needs fertilizing");
+      // Growing alerts
+      if (p.growing) {
+        const g = p.growing;
+        const base = g.plantingDate || g.transplantDate;
+        if (base) {
+          const MS = 86400000;
+          const baseT = new Date(base).getTime();
+          if (!g.actualGermDate && g.germMaxDays) {
+            const germT = baseT + parseInt(g.germMaxDays) * MS;
+            const daysLeft = Math.ceil((germT - now) / MS);
+            if (daysLeft <= 3 && daysLeft >= -1) alerts.push((p.emoji||"🌿") + " " + p.name + " germination expected" + (daysLeft <= 0 ? " now" : " in " + daysLeft + "d"));
+          }
+          if (!g.actualHarvestDate && g.harvestMinDays) {
+            const harvT = baseT + parseInt(g.harvestMinDays) * MS;
+            const daysLeft = Math.ceil((harvT - now) / MS);
+            if (daysLeft <= 7 && daysLeft >= -3) alerts.push((p.emoji||"🌾") + " " + p.name + " harvest window starting" + (daysLeft <= 0 ? " now" : " in " + daysLeft + "d"));
+          }
+        }
+      }
     });
     if (alerts.length) {
       self.registration.showNotification("🌿 Garden Keeper", {
@@ -3556,7 +3757,7 @@ async function initPushPanel() {
   testBtn.addEventListener("click", async () => {
     if (!swReg) swReg = await registerSW();
     if (swReg && swReg.active) {
-      swReg.active.postMessage({ type: "CHECK_PLANTS", plants: myPlants });
+      swReg.active.postMessage({ type: "CHECK_PLANTS", plants: myPlants.map(p => ({...p, growing: getGrowing(p.id)})) });
     } else {
       // Fallback: direct Notification API
       new Notification("🌿 Garden Keeper — Test", {
@@ -3598,7 +3799,7 @@ function scheduleDailyCheck() {
       savePushPrefs({ ...getPushPrefs(), lastCheck: todayKey });
       if (!swReg) swReg = await registerSW();
       if (swReg && swReg.active) {
-        swReg.active.postMessage({ type: "CHECK_PLANTS", plants: myPlants });
+        swReg.active.postMessage({ type: "CHECK_PLANTS", plants: myPlants.map(p => ({...p, growing: getGrowing(p.id)})) });
       } else {
         // Direct fallback
         const notifs = getNotifications();
@@ -3619,7 +3820,7 @@ function scheduleDailyCheck() {
       if (notifs.length > 0 && !getPushPrefs().lastCheck) {
         if (!swReg) swReg = await registerSW();
         if (swReg && swReg.active) {
-          swReg.active.postMessage({ type: "CHECK_PLANTS", plants: myPlants });
+          swReg.active.postMessage({ type: "CHECK_PLANTS", plants: myPlants.map(p => ({...p, growing: getGrowing(p.id)})) });
         }
       }
     }
