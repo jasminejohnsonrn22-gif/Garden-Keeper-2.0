@@ -3690,15 +3690,20 @@ function parseSpreadsheet(file) {
       // Scan rows to find the one containing a recognisable header like "name" or "plant name"
       let headerRowIdx = -1;
       const nameKeys = ['name', 'plant name', 'plant'];
+      console.log('[GK Import] Total rows read:', rawRows.length);
       for (let i = 0; i < Math.min(rawRows.length, 15); i++) {
         const rowLower = rawRows[i].map(c => normalizeCol(String(c)));
+        console.log('[GK Import] Row', i, 'normalized:', rowLower.slice(0,5));
         if (rowLower.some(c => nameKeys.includes(c))) { headerRowIdx = i; break; }
       }
 
       if (headerRowIdx === -1) {
         showToast('Could not find a "Name" column — check the template or column headers', 'warn');
+        console.error('[GK Import] No header row found. First 5 rows:', rawRows.slice(0,5));
         return;
       }
+
+      console.log('[GK Import] Header row found at index:', headerRowIdx);
 
       // Build column index → plant field mapping from the header row
       const headerRow = rawRows[headerRowIdx];
@@ -3706,10 +3711,13 @@ function parseSpreadsheet(file) {
       headerRow.forEach((col, idx) => {
         const norm = normalizeCol(String(col));
         if (COL_MAP[norm]) colMapping[idx] = COL_MAP[norm];
+        else if (norm) console.log('[GK Import] Unmapped column:', JSON.stringify(col), '->', norm);
       });
+      console.log('[GK Import] Column mapping:', colMapping);
 
       // Convert data rows (everything after header) into objects
       const dataRows = rawRows.slice(headerRowIdx + 1);
+      console.log('[GK Import] Data rows to process:', dataRows.length);
 
       const now = new Date().toISOString();
       const imported = [];
@@ -3721,11 +3729,15 @@ function parseSpreadsheet(file) {
           const _raw = row[parseInt(idx)];
           plant[field] = (_raw === null || _raw === undefined) ? '' : String(_raw).trim();
         });
+        console.log('[GK Import] Row data:', JSON.stringify(plant));
 
         // Skip example/header rows and empty rows
         const nameVal = plant.name || '';
         if (!nameVal || nameVal.toLowerCase().includes('example') ||
-            nameVal.toLowerCase().startsWith('e.g') || nameVal === 'Plant Name') return;
+            nameVal.toLowerCase().startsWith('e.g') || nameVal === 'Plant Name') {
+          console.log('[GK Import] Skipping row, name:', JSON.stringify(nameVal));
+          return;
+        }
 
         // Normalize category
         const catNorm = (plant.category || '').toLowerCase().trim();
@@ -3786,6 +3798,8 @@ function parseSpreadsheet(file) {
         imported.push(plant);
       });
 
+      console.log('[GK Import] Imported plants:', imported.length, imported.map(p => p.name));
+      console.log('[GK Import] Growing data keys:', Object.keys(growing));
       if (!imported.length) {
         showToast('No valid plants found in spreadsheet', 'warn');
         return;
@@ -3797,18 +3811,28 @@ function parseSpreadsheet(file) {
 They will be added to your existing garden (existing plants kept).`;
       if (!confirm(msg)) return;
 
-      myPlants = [...myPlants, ...imported];
+      // Deduplicate: skip plants whose name+category already exist
+      const existingKeys = new Set(myPlants.map(p => (p.name + '|' + p.category).toLowerCase()));
+      const deduped   = imported.filter(p => !existingKeys.has((p.name + '|' + p.category).toLowerCase()));
+      const dupCount  = imported.length - deduped.length;
+
+      if (!deduped.length) {
+        showToast('All plants already exist in your garden', 'warn');
+        return;
+      }
+
+      myPlants = [...myPlants, ...deduped];
       savePlants();
       saveGrowing();
 
       const status = document.getElementById('backup-status');
       if (status) {
-        status.textContent = `✓ Imported ${imported.length} plant${imported.length !== 1 ? 's' : ''} from spreadsheet`;
+        status.textContent = `✓ Imported ${deduped.length} plant${deduped.length !== 1 ? 's' : ''}` + (dupCount ? ` (${dupCount} duplicate${dupCount !== 1 ? 's' : ''} skipped)` : '');
         status.style.display = 'block';
         setTimeout(() => { status.style.display = 'none'; }, 6000);
       }
 
-      showToast(`✓ ${imported.length} plants imported!`);
+      showToast(`✓ ${deduped.length} imported${dupCount ? ', ' + dupCount + ' duplicates skipped' : ''}!`);
       navigateTo('dashboard');
 
     } catch (err) {
