@@ -431,6 +431,34 @@
   .emoji-edit-none.selected { border-color:var(--green); color:var(--green); background:rgba(61,131,97,0.06); }
   .name-edit-actions { display:flex; gap:8px; }
 
+  /* ── Growing timeline (fruit & veg) ── */
+  .growing-timeline { display:flex; flex-direction:column; gap:16px; margin-bottom:20px; }
+  .gt-card { background:white; border:1.5px solid var(--card-border); border-radius:10px; overflow:hidden; }
+  .gt-card-head { background:var(--parchment-dark); padding:12px 16px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--rule); }
+  .gt-card-title { font-family:var(--font-display); font-size:14px; font-weight:600; color:var(--ink); }
+  .gt-card-badge { font-size:11px; color:var(--ink-soft); font-style:italic; }
+  .gt-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:14px 16px; }
+  .gt-grid.full { grid-template-columns:1fr; }
+  .gt-field { display:flex; flex-direction:column; gap:4px; }
+  .gt-field.full { grid-column:1/-1; }
+  .gt-label { font-size:11px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.5px; }
+  .gt-input { background:var(--parchment); border:1.5px solid var(--rule); border-radius:6px; padding:7px 10px; font-family:var(--font-body); font-size:14px; color:var(--ink); outline:none; transition:border-color 0.2s; width:100%; }
+  .gt-input:focus { border-color:var(--green); }
+  .gt-input-row { display:flex; align-items:center; gap:6px; }
+  .gt-input-sep { font-size:12px; color:var(--ink-faint); white-space:nowrap; }
+  .gt-result { background:rgba(61,131,97,0.07); border:1.5px solid rgba(61,131,97,0.2); border-radius:6px; padding:8px 12px; font-size:13px; color:var(--green); font-weight:600; min-height:34px; display:flex; align-items:center; }
+  .gt-result.empty { color:var(--ink-faint); font-weight:400; font-style:italic; }
+  .gt-result.overdue { background:rgba(192,57,43,0.07); border-color:rgba(192,57,43,0.2); color:#c0392b; }
+  .gt-result.soon { background:rgba(212,124,15,0.07); border-color:rgba(212,124,15,0.2); color:#d47c0f; }
+  .gt-save-row { padding:10px 16px 14px; display:flex; gap:8px; justify-content:flex-end; border-top:1px solid var(--rule); background:var(--parchment); }
+  .gt-section-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--ink-faint); padding:10px 16px 4px; }
+  .gt-timeline-bar { margin:0 16px 14px; }
+  .gt-bar-track { background:var(--parchment-dark); border-radius:6px; height:10px; overflow:visible; position:relative; }
+  .gt-bar-segment { position:absolute; height:100%; border-radius:6px; transition:width 0.4s ease; }
+  .gt-bar-labels { display:flex; justify-content:space-between; margin-top:5px; font-size:10px; color:var(--ink-faint); }
+  .gt-bar-marker { position:absolute; top:-4px; width:3px; height:18px; background:var(--green); border-radius:2px; }
+  @media (max-width:600px) { .gt-grid { grid-template-columns:1fr; } }
+
   /* ── Push notification panel ── */
   .push-panel { background: white; border: 1.5px solid var(--card-border); border-radius: 10px; padding: 24px 28px; margin-bottom: 24px; }
   .push-panel-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
@@ -1693,7 +1721,7 @@ function renderDetail() {
 
         <div class="detail-tabs">
           <button class="detail-tab active" data-tab="care">🌿 Care</button>
-          <button class="detail-tab" data-tab="grow">🌱 Grow</button>
+          <button class="detail-tab" data-tab="grow">${isGrowingCategory(plant)?"🌾 Grow & Harvest":"🌱 Grow"}</button>
           <button class="detail-tab" data-tab="journal">📷 Journal</button>
         </div>
 
@@ -2451,6 +2479,260 @@ function showBulkRelocate() {
 // END LOCATIONS + MULTI-SELECT
 // ══════════════════════════════════════════════════════
 
+
+// ══════════════════════════════════════════════════════
+// GROWING TIMELINE (fruit & vegetable specific)
+// ══════════════════════════════════════════════════════
+
+const GROWING_KEY = "gardenkeeper_growing";
+
+// growing = { [plantId]: { plantingDate, transplantDate, spacingCm,
+//   germMinDays, germMaxDays, actualGermDate,
+//   harvestMinDays, harvestMaxDays, actualHarvestDate } }
+
+function loadGrowing() {
+  try { const s = localStorage.getItem(GROWING_KEY); return s ? JSON.parse(s) : {}; }
+  catch { return {}; }
+}
+function saveGrowing() {
+  try { localStorage.setItem(GROWING_KEY, JSON.stringify(growing)); }
+  catch(e) { showToast("Storage full", "warn"); }
+}
+
+let growing = loadGrowing();
+
+function getGrowing(plantId) {
+  return growing[String(plantId)] || {};
+}
+
+function setGrowing(plantId, data) {
+  growing[String(plantId)] = { ...(growing[String(plantId)] || {}), ...data };
+  saveGrowing();
+}
+
+function addDays(dateStr, days) {
+  if (!dateStr || !days) return null;
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function formatDate(dateStr, opts) {
+  if (!dateStr) return null;
+  try { return new Date(dateStr + "T12:00:00").toLocaleDateString("en-US", opts || { month:"short", day:"numeric", year:"numeric" }); }
+  catch { return dateStr; }
+}
+
+function daysFromNow(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr + "T12:00:00");
+  return Math.ceil((d - new Date()) / 86400000);
+}
+
+// Determine if plant category supports growing timeline
+function isGrowingCategory(plant) {
+  return plant && (plant.category === "vegetable" || plant.category === "fruit");
+}
+
+// Render the growing timeline tab section inside the Grow tab
+function renderGrowingTimeline(plantId, container) {
+  const plant = myPlants.find(p => p.id === plantId);
+  if (!plant || !isGrowingCategory(plant)) return;
+
+  const g = getGrowing(plantId);
+
+  // ── Calculate derived dates ──
+  const baseDate = g.plantingDate || g.transplantDate;
+
+  const germEarlyDate  = baseDate && g.germMinDays  ? addDays(baseDate, parseInt(g.germMinDays))  : null;
+  const germLateDate   = baseDate && g.germMaxDays   ? addDays(baseDate, parseInt(g.germMaxDays))   : null;
+  const harvEarlyDate  = baseDate && g.harvestMinDays ? addDays(baseDate, parseInt(g.harvestMinDays)) : null;
+  const harvLateDate   = baseDate && g.harvestMaxDays ? addDays(baseDate, parseInt(g.harvestMaxDays)) : null;
+
+  function dateResult(early, late, actual, label) {
+    if (actual) {
+      return `<div class="gt-result">Actual ${label}: ${formatDate(actual)}</div>`;
+    }
+    if (early && late) {
+      const dE = daysFromNow(early), dL = daysFromNow(late);
+      const cls = dE < 0 ? "overdue" : dE <= 7 ? "soon" : "";
+      const rangeStr = `${formatDate(early, {month:"short", day:"numeric"})} – ${formatDate(late, {month:"short", day:"numeric", year:"numeric"})}`;
+      const hint = dE < 0 && dL < 0 ? " (window passed)"
+        : dE < 0 ? ` (started, ~${dL}d remaining)`
+        : dE === 0 ? " (starts today!)"
+        : ` (in ${dE}–${dL} days)`;
+      return `<div class="gt-result ${cls}">${rangeStr}<br><span style="font-size:11px;font-weight:400">${hint}</span></div>`;
+    }
+    if (early) {
+      const d = daysFromNow(early);
+      const cls = d < 0 ? "overdue" : d <= 7 ? "soon" : "";
+      return `<div class="gt-result ${cls}">${formatDate(early)}${d >= 0 ? ` (in ${d} days)` : " (passed)"}</div>`;
+    }
+    return `<div class="gt-result empty">Enter dates above to calculate</div>`;
+  }
+
+  const section = document.createElement("div");
+  section.innerHTML = `
+    <div style="font-family:var(--font-display);font-size:15px;font-weight:600;color:var(--ink);margin-bottom:14px;padding-top:4px">
+      ${plant.category === "fruit" ? "🍎" : "🥬"} Growing Timeline
+    </div>
+
+    <div class="growing-timeline">
+
+      <!-- Planting Info -->
+      <div class="gt-card">
+        <div class="gt-card-head">
+          <span class="gt-card-title">🌱 Planting</span>
+          <span class="gt-card-badge">Base date for all calculations</span>
+        </div>
+        <div class="gt-grid">
+          <div class="gt-field">
+            <label class="gt-label">Planting Date</label>
+            <input class="gt-input" type="date" id="gt-planting" value="${g.plantingDate || ""}">
+          </div>
+          <div class="gt-field">
+            <label class="gt-label">Transplant Date</label>
+            <input class="gt-input" type="date" id="gt-transplant" value="${g.transplantDate || ""}">
+          </div>
+          <div class="gt-field">
+            <label class="gt-label">Spacing (cm)</label>
+            <input class="gt-input" type="number" id="gt-spacing" min="1" max="500" placeholder="e.g. 30" value="${g.spacingCm || ""}">
+          </div>
+          <div class="gt-field">
+            <label class="gt-label">Spacing (inches)</label>
+            <input class="gt-input" type="number" id="gt-spacing-in" min="1" max="200" placeholder="e.g. 12" value="${g.spacingIn || ""}">
+          </div>
+        </div>
+        <div class="gt-save-row">
+          <button class="btn-primary" id="gt-save-planting" style="font-size:13px;padding:8px 18px">Save</button>
+        </div>
+      </div>
+
+      <!-- Germination -->
+      <div class="gt-card">
+        <div class="gt-card-head">
+          <span class="gt-card-title">🌿 Germination</span>
+          <span class="gt-card-badge">From planting date</span>
+        </div>
+        <div class="gt-grid">
+          <div class="gt-field">
+            <label class="gt-label">Min days to germinate</label>
+            <input class="gt-input" type="number" id="gt-germ-min" min="1" max="365" placeholder="e.g. 5" value="${g.germMinDays || ""}">
+          </div>
+          <div class="gt-field">
+            <label class="gt-label">Max days to germinate</label>
+            <input class="gt-input" type="number" id="gt-germ-max" min="1" max="365" placeholder="e.g. 14" value="${g.germMaxDays || ""}">
+          </div>
+          <div class="gt-field full">
+            <label class="gt-label">Expected germination window</label>
+            ${dateResult(germEarlyDate, germLateDate, null, "germination")}
+          </div>
+          <div class="gt-field">
+            <label class="gt-label">Actual germination date</label>
+            <input class="gt-input" type="date" id="gt-germ-actual" value="${g.actualGermDate || ""}">
+          </div>
+          <div class="gt-field" style="justify-content:flex-end">
+            <label class="gt-label">&nbsp;</label>
+            ${g.actualGermDate ? `<div class="gt-result">Germinated ${formatDate(g.actualGermDate)}</div>` : '<div class="gt-result empty">Not yet germinated</div>'}
+          </div>
+        </div>
+        <div class="gt-save-row">
+          <button class="btn-primary" id="gt-save-germ" style="font-size:13px;padding:8px 18px">Save</button>
+        </div>
+      </div>
+
+      <!-- Harvest -->
+      <div class="gt-card">
+        <div class="gt-card-head">
+          <span class="gt-card-title">🌾 Harvest</span>
+          <span class="gt-card-badge">From planting or transplant date</span>
+        </div>
+        <div class="gt-grid">
+          <div class="gt-field">
+            <label class="gt-label">Min days to harvest</label>
+            <input class="gt-input" type="number" id="gt-harv-min" min="1" max="730" placeholder="e.g. 60" value="${g.harvestMinDays || ""}">
+          </div>
+          <div class="gt-field">
+            <label class="gt-label">Max days to harvest</label>
+            <input class="gt-input" type="number" id="gt-harv-max" min="1" max="730" placeholder="e.g. 80" value="${g.harvestMaxDays || ""}">
+          </div>
+          <div class="gt-field full">
+            <label class="gt-label">Expected harvest window</label>
+            ${dateResult(harvEarlyDate, harvLateDate, null, "harvest")}
+          </div>
+          <div class="gt-field">
+            <label class="gt-label">Actual harvest date</label>
+            <input class="gt-input" type="date" id="gt-harv-actual" value="${g.actualHarvestDate || ""}">
+          </div>
+          <div class="gt-field" style="justify-content:flex-end">
+            <label class="gt-label">&nbsp;</label>
+            ${g.actualHarvestDate ? `<div class="gt-result">Harvested ${formatDate(g.actualHarvestDate)}</div>` : '<div class="gt-result empty">Not yet harvested</div>'}
+          </div>
+        </div>
+        <div class="gt-save-row">
+          <button class="btn-primary" id="gt-save-harv" style="font-size:13px;padding:8px 18px">Save</button>
+        </div>
+      </div>
+
+    </div>`;
+
+  container.appendChild(section);
+
+  // ── Wire save buttons ──
+  document.getElementById("gt-save-planting").addEventListener("click", () => {
+    const plantingDate = document.getElementById("gt-planting").value;
+    const transplantDate = document.getElementById("gt-transplant").value;
+    const spacingCm = document.getElementById("gt-spacing").value;
+    const spacingIn = document.getElementById("gt-spacing-in").value;
+    // Auto-convert between cm and inches
+    const cmEl = document.getElementById("gt-spacing");
+    const inEl = document.getElementById("gt-spacing-in");
+    cmEl.addEventListener("input", () => { if (cmEl.value) inEl.value = Math.round(cmEl.value / 2.54); });
+    inEl.addEventListener("input", () => { if (inEl.value) cmEl.value = Math.round(inEl.value * 2.54); });
+    setGrowing(plantId, { plantingDate, transplantDate, spacingCm, spacingIn });
+    showToast("Planting info saved");
+    renderGrowTab(plantId);
+  });
+
+  document.getElementById("gt-save-germ").addEventListener("click", () => {
+    const germMinDays   = document.getElementById("gt-germ-min").value;
+    const germMaxDays   = document.getElementById("gt-germ-max").value;
+    const actualGermDate = document.getElementById("gt-germ-actual").value;
+    if (germMinDays && germMaxDays && parseInt(germMinDays) > parseInt(germMaxDays)) {
+      showToast("Min days must be less than max days", "warn"); return;
+    }
+    setGrowing(plantId, { germMinDays, germMaxDays, actualGermDate });
+    showToast("Germination info saved");
+    renderGrowTab(plantId);
+  });
+
+  document.getElementById("gt-save-harv").addEventListener("click", () => {
+    const harvestMinDays  = document.getElementById("gt-harv-min").value;
+    const harvestMaxDays  = document.getElementById("gt-harv-max").value;
+    const actualHarvestDate = document.getElementById("gt-harv-actual").value;
+    if (harvestMinDays && harvestMaxDays && parseInt(harvestMinDays) > parseInt(harvestMaxDays)) {
+      showToast("Min days must be less than max days", "warn"); return;
+    }
+    setGrowing(plantId, { harvestMinDays, harvestMaxDays, actualHarvestDate });
+    showToast("Harvest info saved");
+    renderGrowTab(plantId);
+  });
+
+  // Live unit conversion on spacing inputs
+  setTimeout(() => {
+    const cmEl = document.getElementById("gt-spacing");
+    const inEl = document.getElementById("gt-spacing-in");
+    if (cmEl && inEl) {
+      cmEl.addEventListener("input", () => { if (cmEl.value) inEl.value = Math.round(parseFloat(cmEl.value) / 2.54); });
+      inEl.addEventListener("input", () => { if (inEl.value) cmEl.value = Math.round(parseFloat(inEl.value) * 2.54); });
+    }
+  }, 0);
+}
+
+// ══════════════════════════════════════════════════════
+// END GROWING TIMELINE
+// ══════════════════════════════════════════════════════
+
 // ══════════════════════════════════════════════════════
 // GERMINATION & PROPAGATION SYSTEM
 // ══════════════════════════════════════════════════════
@@ -2540,6 +2822,20 @@ function renderGrowTab(plantId) {
   const container = document.getElementById("grow-tab-content");
   if (!container) return;
   container.innerHTML = "";
+
+  // ── Growing Timeline section (fruit & veg only) ──
+  const plant = myPlants.find(p => p.id === plantId);
+  if (isGrowingCategory(plant)) {
+    renderGrowingTimeline(plantId, container);
+    // Add divider before propagation section
+    const divider = document.createElement("div");
+    divider.style.cssText = "border-top:1.5px solid var(--rule);margin:20px 0 16px;";
+    const divLabel = document.createElement("div");
+    divLabel.style.cssText = "font-family:var(--font-display);font-size:15px;font-weight:600;color:var(--ink);margin-bottom:14px;";
+    divLabel.textContent = "Propagation Tracking";
+    container.appendChild(divider);
+    container.appendChild(divLabel);
+  }
 
   const entries = getPlantGrow(plantId);
 
@@ -3401,22 +3697,15 @@ function parseSpreadsheet(file) {
 
       // Convert data rows (everything after header) into objects
       const dataRows = rawRows.slice(headerRowIdx + 1);
-      const rows = dataRows.map(row => {
-        const obj = {};
-        Object.entries(colMapping).forEach(([idx, field]) => {
-          obj[field] = String(row[idx] || '').trim();
-        });
-        return obj;
-      });
 
       const now = new Date().toISOString();
       const imported = [];
-      const skipped  = [];
 
-      rows.forEach((row, idx) => {
+      dataRows.forEach(row => {
+        // Build plant object directly from column index mapping
         const plant = {};
-        Object.entries(colMapping).forEach(([col, field]) => {
-          plant[field] = String(row[col] || '').trim();
+        Object.entries(colMapping).forEach(([idx, field]) => {
+          plant[field] = String(row[parseInt(idx)] || '').trim();
         });
 
         // Skip example/header rows and empty rows
@@ -3552,6 +3841,7 @@ function exportGardenData() {
     plants:    myPlants,
     locations: userLocations,
     grow:      grow,
+    growing:   growing,
     journal:   journal,
     meta:      loadMeta(),
   };
@@ -3597,12 +3887,14 @@ function importGardenData(file) {
       myPlants       = backup.plants;
       userLocations  = backup.locations || userLocations;
       grow           = backup.grow      || {};
+      growing        = backup.growing   || {};
       journal        = backup.journal   || {};
 
       // Persist to localStorage
       savePlants();
       saveLocations();
       saveGrow();
+      saveGrowing();
       saveJournal(journal);
       if (backup.meta) saveMeta(backup.meta);
 
