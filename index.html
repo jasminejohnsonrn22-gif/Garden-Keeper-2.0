@@ -881,8 +881,13 @@ window.addEventListener('unhandledrejection', function(e) {
               <option value="houseplant">Houseplant</option>
               <option value="flower">Flower</option>
               <option value="vegetable">Vegetable / Herb</option>
+              <option value="fruit">Fruit</option>
             </select>
             <span class="form-error" id="cf-cat-err">Please choose a category</span>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Variety</label>
+            <input class="form-input" id="cf-variety" type="text" placeholder="e.g. Cherry, Roma, Heirloom..." maxlength="50">
           </div>
           <div class="form-field">
             <label class="form-label">Water every (days) *</label>
@@ -1065,12 +1070,14 @@ const CATEGORIES = [
   { id:"houseplant", label:"Houseplants", icon:"🏠" },
   { id:"flower",     label:"Flowers",     icon:"🌸" },
   { id:"vegetable",  label:"Vegetables",  icon:"🥬" },
+  { id:"fruit",      label:"Fruits",      icon:"🍎" },
 ];
 
 const CAT_META = {
   houseplant: { icon:"🏠", label:"Houseplant", accent:"#7fb069", light:"rgba(127,176,105,0.12)" },
   flower:     { icon:"🌸", label:"Flower",     accent:"#e07a5f", light:"rgba(224,122,95,0.12)"  },
   vegetable:  { icon:"🥬", label:"Vegetable",  accent:"#3d8361", light:"rgba(61,131,97,0.12)"   },
+  fruit:      { icon:"🍎", label:"Fruit",      accent:"#c0572b", light:"rgba(192,87,43,0.10)"   },
 };
 
 const URGENCY = {
@@ -1255,7 +1262,7 @@ function renderGridView(filtered, content) {
             <span class="cat-badge" style="background:${meta.light};color:${meta.accent}">${meta.icon} ${meta.label}</span>
           </div>
         </div>
-        <div class="card-sunlight">${plant.light==="Grow Light"?"💡":plant.light==="Both"?"☀️💡":"☀️"} ${plant.sunlight}${plant.humidity?" · 💧 "+plant.humidity:""}${plant.location?` <span class="card-location">⌂ ${plant.location}</span>`:""}</div>
+        <div class="card-sunlight">${plant.variety?`<span style="font-style:normal;font-weight:600;color:var(--ink-mid)">${plant.variety}</span> · `:""}${plant.light==="Grow Light"?"💡":plant.light==="Both"?"☀️💡":"☀️"} ${plant.sunlight}${plant.humidity?" · 💧 "+plant.humidity:""}${plant.location?` <span class="card-location">⌂ ${plant.location}</span>`:""}</div>
         <div class="care-grid">
           ${[{icon:"💧",label:"Water",days:wDays,u:wU},{icon:"🌾",label:"Feed",days:fDays,u:fU}].map(item=>{
             const u=URGENCY[item.u];
@@ -1388,7 +1395,7 @@ function renderChartView(content) {
   const catSection = document.createElement("div");
   catSection.className = "chart-section";
   catSection.innerHTML = `<div class="chart-title">Garden breakdown by category</div>`;
-  const catColors = { houseplant:"#7fb069", flower:"#e07a5f", vegetable:"#3d8361" };
+  const catColors = { houseplant:"#7fb069", flower:"#e07a5f", vegetable:"#3d8361", fruit:"#c0572b" };
   const catData = CATEGORIES.slice(1).map(c => ({
     id:c.id, label:c.label, icon:c.icon,
     count: allPlants.filter(p=>p.category===c.id).length,
@@ -1669,6 +1676,10 @@ function renderDetail() {
               ${["Low","Medium","High"].map(v=>`<div class="detail-attr-option${(plant.humidity||"Medium")===v?" active":""}" data-val="${v}">${v}</div>`).join("")}
             </div>
           </div>
+          <div class="detail-attr" id="attr-variety" title="Click to edit variety" style="${plant.variety?'':'opacity:0.5'}">
+            <span>🌿</span>
+            <span class="detail-attr-label" id="attr-variety-label">${plant.variety||"Add variety"}</span>
+          </div>
         </div>
 
         <div class="detail-desc-wrap">
@@ -1844,6 +1855,38 @@ function renderDetail() {
   wireAttrDropdown("attr-diff", "dd-diff", "difficulty", null);
   wireAttrDropdown("attr-hum",  "dd-hum",  "humidity",   v => v + " humidity");
 
+  // Variety — inline text edit on click
+  const varietyAttr  = document.getElementById("attr-variety");
+  const varietyLabel = document.getElementById("attr-variety-label");
+  if (varietyAttr) {
+    varietyAttr.addEventListener("click", () => {
+      const current = plant.variety || "";
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = current;
+      input.maxLength = 50;
+      input.placeholder = "e.g. Cherry, Roma...";
+      input.style.cssText = "font-family:var(--font-body);font-size:12px;border:none;outline:none;background:transparent;width:100px;color:var(--ink)";
+      varietyLabel.replaceWith(input);
+      input.focus(); input.select();
+      const save = () => {
+        const val = input.value.trim();
+        myPlants = myPlants.map(p => p.id !== plant.id ? p : { ...p, variety: val });
+        savePlants();
+        plant.variety = val;
+        const newLabel = document.createElement("span");
+        newLabel.id = "attr-variety-label";
+        newLabel.className = "detail-attr-label";
+        newLabel.textContent = val || "Add variety";
+        varietyAttr.style.opacity = val ? "1" : "0.5";
+        input.replaceWith(newLabel);
+        if (val) showToast("Variety saved");
+      };
+      input.addEventListener("blur", save);
+      input.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); save(); } });
+    });
+  }
+
   // Close dropdowns on outside click
   document.addEventListener("click", function closeDropdowns(e) {
     if (!e.target.closest(".detail-attr")) {
@@ -1985,6 +2028,7 @@ function resetForm() {
   const sun = document.getElementById("cf-sun"); if(sun) sun.value = "Full Sun";
   const diff = document.getElementById("cf-diff"); if(diff) diff.value = "Easy";
   const loc = document.getElementById("cf-location"); if(loc) loc.value = "";
+  const vari = document.getElementById("cf-variety"); if(vari) vari.value = "";
   const hum = document.getElementById("cf-humidity"); if(hum) hum.value = "Medium";
   const lig = document.getElementById("cf-light"); if(lig) lig.value = "Natural Sun";
   const noE = document.getElementById("cf-no-emoji"); if(noE) noE.checked = false;
@@ -2006,13 +2050,14 @@ function submitCustomPlant() {
   const cat   = catEl.value;
   const water = parseInt(wEl.value);
   const fert  = parseInt(fEl.value);
-  const sun   = document.getElementById("cf-sun").value;
-  const diff  = document.getElementById("cf-diff").value;
-  const notes = document.getElementById("cf-notes").value.trim() || "A custom plant in your garden.";
+  const sun     = document.getElementById("cf-sun").value;
+  const diff    = document.getElementById("cf-diff").value;
+  const notes   = document.getElementById("cf-notes").value.trim() || "A custom plant in your garden.";
   const location = document.getElementById("cf-location")?.value || "";
   const humidity = document.getElementById("cf-humidity")?.value || "Medium";
   const light    = document.getElementById("cf-light")?.value || "Natural Sun";
   const noEmoji  = document.getElementById("cf-no-emoji")?.checked;
+  const variety  = document.getElementById("cf-variety")?.value.trim() || "";
 
   const showErr = (id, show) => document.getElementById(id).classList.toggle("show", show);
 
@@ -2029,7 +2074,7 @@ function submitCustomPlant() {
     name, category:cat, emoji: noEmoji ? "" : selectedEmoji,
     waterDays:water, fertilizeDays:fert,
     sunlight:sun, difficulty:diff, notes,
-    location, humidity, light,
+    location, humidity, light, variety,
     custom: true,
     addedDate:now, lastWatered:now, lastFertilized:now
   };
@@ -2332,7 +2377,8 @@ function showBulkRecategorize() {
     [
       {id:"houseplant",label:"Houseplant",icon:"🏠"},
       {id:"flower",label:"Flower",icon:"🌸"},
-      {id:"vegetable",label:"Vegetable",icon:"🥬"}
+      {id:"vegetable",label:"Vegetable",icon:"🥬"},
+      {id:"fruit",label:"Fruit",icon:"🍎"}
     ].map(c => `<div class="bulk-cat-btn" data-cat="${c.id}"><div class="bulk-cat-icon">${c.icon}</div><div class="bulk-cat-name">${c.label}</div></div>`).join("")
   }</div>`;
 
@@ -3293,6 +3339,8 @@ const COL_MAP = {
   // Notes
   'notes': 'notes', 'care notes': 'notes', 'care tips': 'notes',
   'description': 'notes', 'tips': 'notes',
+  // Variety
+  'variety': 'variety', 'cultivar': 'variety', 'type': 'variety',
 };
 
 const CATEGORY_MAP = {
@@ -3300,7 +3348,7 @@ const CATEGORY_MAP = {
   'flower': 'flower', 'flowers': 'flower', 'floral': 'flower',
   'vegetable': 'vegetable', 'vegetables': 'vegetable', 'herb': 'vegetable',
   'herbs': 'vegetable', 'veg': 'vegetable', 'veggie': 'vegetable',
-  'fruit': 'vegetable', 'crop': 'vegetable',
+  'fruit': 'fruit', 'fruits': 'fruit', 'berry': 'fruit', 'berries': 'fruit', 'crop': 'vegetable',
 };
 
 const SUNLIGHT_MAP = {
