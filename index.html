@@ -3636,7 +3636,18 @@ const COL_MAP = {
   'notes': 'notes', 'care notes': 'notes', 'care tips': 'notes',
   'description': 'notes', 'tips': 'notes',
   // Variety
-  'variety': 'variety', 'cultivar': 'variety', 'type': 'variety',
+  'variety': 'variety', 'cultivar': 'variety',
+  // Growing timeline (fruit & veg)
+  'planting date': 'plantingDate', 'planting': 'plantingDate', 'sow date': 'plantingDate', 'sow': 'plantingDate',
+  'transplant date': 'transplantDate', 'transplant': 'transplantDate',
+  'spacing (cm)': 'spacingCm', 'spacing cm': 'spacingCm', 'spacing': 'spacingCm',
+  'spacing (inches)': 'spacingIn', 'spacing in': 'spacingIn', 'spacing inches': 'spacingIn',
+  'germination min days': 'germMinDays', 'germ min days': 'germMinDays', 'germmindays': 'germMinDays',
+  'germination max days': 'germMaxDays', 'germ max days': 'germMaxDays', 'germmaxdays': 'germMaxDays',
+  'actual germination date': 'actualGermDate', 'germination date': 'actualGermDate', 'germdate': 'actualGermDate',
+  'harvest min days': 'harvestMinDays', 'harvestmindays': 'harvestMinDays',
+  'harvest max days': 'harvestMaxDays', 'harvestmaxdays': 'harvestMaxDays',
+  'actual harvest date': 'actualHarvestDate', 'harvest date': 'actualHarvestDate', 'harvestdate': 'actualHarvestDate',
 };
 
 const CATEGORY_MAP = {
@@ -3756,6 +3767,18 @@ function parseSpreadsheet(file) {
         plant.addedDate    = now;
         plant.lastWatered  = now;
         plant.lastFertilized = now;
+
+        // Extract and save growing timeline fields separately
+        const growingFields = ['plantingDate','transplantDate','spacingCm','spacingIn',
+          'germMinDays','germMaxDays','actualGermDate','harvestMinDays','harvestMaxDays','actualHarvestDate'];
+        const growingData = {};
+        let hasGrowingData = false;
+        growingFields.forEach(f => {
+          if (plant[f]) { growingData[f] = plant[f]; hasGrowingData = true; delete plant[f]; }
+        });
+        if (hasGrowingData) {
+          growing[String(plant.id)] = growingData;
+        }
 
         imported.push(plant);
       });
