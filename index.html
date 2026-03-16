@@ -459,6 +459,9 @@
   .gt-bar-marker { position:absolute; top:-4px; width:3px; height:18px; background:var(--green); border-radius:2px; }
   @media (max-width:600px) { .gt-grid { grid-template-columns:1fr; } }
 
+  /* ── Organic badge ── */
+  .organic-badge { display:inline-flex; align-items:center; gap:3px; background:rgba(61,131,97,0.12); color:var(--green); border-radius:3px; padding:2px 7px; font-size:10px; font-weight:700; font-family:var(--font-body); letter-spacing:0.3px; text-transform:uppercase; border:1px solid rgba(61,131,97,0.25); }
+
   /* ── Push notification panel ── */
   .push-panel { background: white; border: 1.5px solid var(--card-border); border-radius: 10px; padding: 24px 28px; margin-bottom: 24px; }
   .push-panel-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
@@ -945,6 +948,12 @@ window.addEventListener('unhandledrejection', function(e) {
               <option value="Hard">Hard</option>
             </select>
           </div>
+          <div class="form-field" style="justify-content:flex-end">
+            <label class="form-label">&nbsp;</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink-mid);cursor:pointer;padding-top:4px">
+              <input type="checkbox" id="cf-organic" style="width:16px;height:16px;accent-color:var(--green)"> 🌿 Organic
+            </label>
+          </div>
           <div class="form-field">
             <label class="form-label">Location</label>
             <select class="form-select" id="cf-location">
@@ -1290,7 +1299,7 @@ function renderGridView(filtered, content) {
             <span class="cat-badge" style="background:${meta.light};color:${meta.accent}">${meta.icon} ${meta.label}</span>
           </div>
         </div>
-        <div class="card-sunlight">${plant.variety?`<span style="font-style:normal;font-weight:600;color:var(--ink-mid)">${plant.variety}</span> · `:""}${plant.light==="Grow Light"?"💡":plant.light==="Both"?"☀️💡":"☀️"} ${plant.sunlight}${plant.humidity?" · 💧 "+plant.humidity:""}${plant.location?` <span class="card-location">⌂ ${plant.location}</span>`:""}</div>
+        <div class="card-sunlight">${plant.variety?`<span style="font-style:normal;font-weight:600;color:var(--ink-mid)">${plant.variety}</span> · `:""}${plant.light==="Grow Light"?"💡":plant.light==="Both"?"☀️💡":"☀️"} ${plant.sunlight}${plant.humidity?" · 💧 "+plant.humidity:""}${plant.location?` <span class="card-location">⌂ ${plant.location}</span>`:""}${plant.organic?` <span class="organic-badge">🌿 organic</span>`:""}</div>
         <div class="care-grid">
           ${[{icon:"💧",label:"Water",days:wDays,u:wU},{icon:"🌾",label:"Feed",days:fDays,u:fU}].map(item=>{
             const u=URGENCY[item.u];
@@ -1335,7 +1344,7 @@ function renderListView(filtered, content) {
       <span class="list-emoji">${plant.emoji || "🌿"}</span>
       <div class="list-main">
         <div class="list-name">${plant.name}</div>
-        <div class="list-meta">${meta.icon} ${meta.label} · ☀️ ${plant.sunlight} · ${plant.difficulty}${plant.location?" · ⌂ "+plant.location:""}${plant.humidity?" · 💧 "+plant.humidity:""}</div>
+        <div class="list-meta">${meta.icon} ${meta.label} · ☀️ ${plant.sunlight} · ${plant.difficulty}${plant.location?" · ⌂ "+plant.location:""}${plant.humidity?" · 💧 "+plant.humidity:""}${plant.organic?" · 🌿 organic":""}</div>
       </div>
       <div class="list-badges">
         <span class="list-pill" style="background:${urg.bg};color:${urg.color}">${urg.label}</span>
@@ -1708,6 +1717,10 @@ function renderDetail() {
             <span>🌿</span>
             <span class="detail-attr-label" id="attr-variety-label">${plant.variety||"Add variety"}</span>
           </div>
+          <div class="detail-attr" id="attr-organic" title="Toggle organic" style="cursor:pointer;${plant.organic?'background:rgba(61,131,97,0.08);border-color:var(--green)':''}">
+            <span>🌿</span>
+            <span class="detail-attr-label" id="attr-organic-label">${plant.organic?"Organic":"Not organic"}</span>
+          </div>
         </div>
 
         <div class="detail-desc-wrap">
@@ -1884,6 +1897,21 @@ function renderDetail() {
   wireAttrDropdown("attr-hum",  "dd-hum",  "humidity",   v => v + " humidity");
 
   // Variety — inline text edit on click
+  // Organic toggle
+  const organicAttr = document.getElementById("attr-organic");
+  if (organicAttr) {
+    organicAttr.addEventListener("click", () => {
+      plant.organic = !plant.organic;
+      myPlants = myPlants.map(p => p.id !== plant.id ? p : { ...p, organic: plant.organic });
+      savePlants();
+      const lbl = document.getElementById("attr-organic-label");
+      if (lbl) lbl.textContent = plant.organic ? "Organic" : "Not organic";
+      organicAttr.style.background = plant.organic ? "rgba(61,131,97,0.08)" : "";
+      organicAttr.style.borderColor = plant.organic ? "var(--green)" : "";
+      showToast(plant.organic ? "🌿 Marked as organic" : "Organic status removed");
+    });
+  }
+
   const varietyAttr  = document.getElementById("attr-variety");
   const varietyLabel = document.getElementById("attr-variety-label");
   if (varietyAttr) {
@@ -2060,6 +2088,7 @@ function resetForm() {
   const hum = document.getElementById("cf-humidity"); if(hum) hum.value = "Medium";
   const lig = document.getElementById("cf-light"); if(lig) lig.value = "Natural Sun";
   const noE = document.getElementById("cf-no-emoji"); if(noE) noE.checked = false;
+  const orgEl = document.getElementById("cf-organic"); if(orgEl) orgEl.checked = false;
   selectedEmoji = "🌿";
   const grid = document.getElementById("cf-emoji-grid");
   if (grid) grid.querySelectorAll(".emoji-btn").forEach(b => b.classList.toggle("selected", b.textContent === "🌿"));
@@ -2080,6 +2109,7 @@ function submitCustomPlant() {
   const fert  = parseInt(fEl.value);
   const sun     = document.getElementById("cf-sun").value;
   const diff    = document.getElementById("cf-diff").value;
+  const organic = document.getElementById("cf-organic")?.checked || false;
   const notes   = document.getElementById("cf-notes").value.trim() || "A custom plant in your garden.";
   const location = document.getElementById("cf-location")?.value || "";
   const humidity = document.getElementById("cf-humidity")?.value || "Medium";
@@ -2102,7 +2132,7 @@ function submitCustomPlant() {
     name, category:cat, emoji: noEmoji ? "" : selectedEmoji,
     waterDays:water, fertilizeDays:fert,
     sunlight:sun, difficulty:diff, notes,
-    location, humidity, light, variety,
+    location, humidity, light, variety, organic,
     custom: true,
     addedDate:now, lastWatered:now, lastFertilized:now
   };
@@ -3609,7 +3639,9 @@ const COL_MAP = {
   // Name
   'name': 'name', 'plant name': 'name', 'plant': 'name',
   // Category
-  'category': 'category', 'type': 'category', 'kind': 'category',
+  'category': 'category', 'kind': 'category',
+  // Variety
+  'variety': 'variety', 'cultivar': 'variety', 'variety / cultivar': 'variety',
   // Emoji
   'emoji': 'emoji', 'icon': 'emoji',
   // Water
@@ -3620,36 +3652,38 @@ const COL_MAP = {
   'fertilizedays': 'fertilizeDays', 'fertilize every (days)': 'fertilizeDays',
   'fertilize every': 'fertilizeDays', 'fertilize days': 'fertilizeDays',
   'feed every': 'fertilizeDays', 'feed days': 'fertilizeDays',
-  'fertilize interval': 'fertilizeDays', 'feed interval': 'fertilizeDays',
   // Sunlight
-  'sunlight': 'sunlight', 'sun': 'sunlight', 'light needs': 'sunlight',
-  'sun needs': 'sunlight', 'sunlight needs': 'sunlight',
+  'sunlight': 'sunlight', 'sun': 'sunlight', 'light needs': 'sunlight', 'sunlight needs': 'sunlight',
   // Light source
-  'light': 'light', 'light source': 'light', 'grow light': 'light',
+  'light': 'light', 'light source': 'light',
   // Humidity
   'humidity': 'humidity', 'humidity needs': 'humidity',
   // Difficulty
   'difficulty': 'difficulty', 'care level': 'difficulty', 'level': 'difficulty',
   // Location
-  'location': 'location', 'room': 'location', 'spot': 'location', 'place': 'location',
+  'location': 'location', 'room': 'location', 'spot': 'location',
   // Notes
   'notes': 'notes', 'care notes': 'notes', 'care tips': 'notes',
-  'description': 'notes', 'tips': 'notes',
-  // Variety
-  'variety': 'variety', 'cultivar': 'variety', 'variety / cultivar': 'variety',
-  // Notes
-  'notes / care tips': 'notes', 'care tips': 'notes',
-  // Growing timeline (fruit & veg)
-  'planting date': 'plantingDate', 'planting': 'plantingDate', 'sow date': 'plantingDate', 'sow': 'plantingDate',
+  'notes / care tips': 'notes', 'description': 'notes', 'tips': 'notes',
+  // Organic
+  'organic': 'organic',
+  // Growing timeline — display labels
+  'planting date': 'plantingDate', 'planting': 'plantingDate', 'sow date': 'plantingDate',
   'transplant date': 'transplantDate', 'transplant': 'transplantDate',
   'spacing (cm)': 'spacingCm', 'spacing cm': 'spacingCm', 'spacing': 'spacingCm',
   'spacing (inches)': 'spacingIn', 'spacing in': 'spacingIn', 'spacing inches': 'spacingIn',
-  'germination min days': 'germMinDays', 'germ min days': 'germMinDays', 'germmindays': 'germMinDays',
-  'germination max days': 'germMaxDays', 'germ max days': 'germMaxDays', 'germmaxdays': 'germMaxDays',
-  'actual germination date': 'actualGermDate', 'germination date': 'actualGermDate', 'germdate': 'actualGermDate',
-  'harvest min days': 'harvestMinDays', 'harvestmindays': 'harvestMinDays',
-  'harvest max days': 'harvestMaxDays', 'harvestmaxdays': 'harvestMaxDays',
-  'actual harvest date': 'actualHarvestDate', 'harvest date': 'actualHarvestDate', 'harvestdate': 'actualHarvestDate',
+  'germination min days': 'germMinDays', 'germ min days': 'germMinDays',
+  'germination max days': 'germMaxDays', 'germ max days': 'germMaxDays',
+  'actual germination date': 'actualGermDate', 'germination date': 'actualGermDate',
+  'harvest min days': 'harvestMinDays', 'harvest max days': 'harvestMaxDays',
+  'actual harvest date': 'actualHarvestDate', 'harvest date': 'actualHarvestDate',
+  // Growing timeline — camelCase keys (for CSVs exported with JSON field names)
+  'plantingdate': 'plantingDate', 'transplantdate': 'transplantDate',
+  'spacingcm': 'spacingCm', 'spacingin': 'spacingIn',
+  'germmindays': 'germMinDays', 'germmaxdays': 'germMaxDays',
+  'actualgermdate': 'actualGermDate',
+  'harvestmindays': 'harvestMinDays', 'harvestmaxdays': 'harvestMaxDays',
+  'actualharvestdate': 'actualHarvestDate',
 };
 
 const CATEGORY_MAP = {
@@ -3673,11 +3707,21 @@ function normalizeCol(raw) {
 }
 
 function parseSpreadsheet(file) {
+  // For CSV use text reader to preserve emoji; for xlsx use arraybuffer
+  const isCSV = file.name.toLowerCase().endsWith('.csv');
   const reader = new FileReader();
   reader.onload = e => {
     try {
       const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: 'array' });
+      // For CSV: use TextDecoder for proper UTF-8 handling (preserves emoji)
+      // For XLSX: use array buffer directly
+      let workbook;
+      if (isCSV) {
+        const csvText = new TextDecoder('utf-8').decode(data);
+        workbook = XLSX.read(csvText, { type: 'string', raw: false, cellDates: false });
+      } else {
+        workbook = XLSX.read(data, { type: 'array', raw: false, cellDates: false });
+      }
 
       // Use first sheet
       const sheetName = workbook.SheetNames[0];
@@ -3690,7 +3734,8 @@ function parseSpreadsheet(file) {
       // Scan rows to find the one containing a recognisable header like "name" or "plant name"
       let headerRowIdx = -1;
       const nameKeys = ['name', 'plant name', 'plant'];
-      console.log('[GK Import] Total rows read:', rawRows.length);
+      console.log('[GK Import] Total rows read:', rawRows.length, 'isCSV:', isCSV);
+      // Scan up to 15 rows to find the header row (works for both CSV and XLSX)
       for (let i = 0; i < Math.min(rawRows.length, 15); i++) {
         const rowLower = rawRows[i].map(c => normalizeCol(String(c)));
         console.log('[GK Import] Row', i, 'normalized:', rowLower.slice(0,5));
@@ -3727,16 +3772,40 @@ function parseSpreadsheet(file) {
         const plant = {};
         Object.entries(colMapping).forEach(([idx, field]) => {
           const _raw = row[parseInt(idx)];
-          plant[field] = (_raw === null || _raw === undefined) ? '' : String(_raw).trim();
+          const _raw2 = (_raw === null || _raw === undefined) ? '' : _raw;
+          let _val = String(_raw2).trim();
+          // Fix Excel serial date numbers for date fields
+          const dateFields = ['plantingDate','transplantDate','actualGermDate','actualHarvestDate'];
+          if (dateFields.includes(field) && _val && /^\d{4,6}(\.\d+)?$/.test(_val)) {
+            const serial = parseFloat(_val);
+            if (serial > 40000 && serial < 60000) { // plausible Excel date range
+              const msFromEpoch = (serial - 25569) * 86400000;
+              const d = new Date(msFromEpoch);
+              _val = d.toISOString().slice(0, 10);
+            }
+          }
+          // SheetJS sometimes returns emoji codepoints as numeric strings — convert back
+          if (field === 'emoji' && _val && /^\d+$/.test(_val)) {
+            try { _val = String.fromCodePoint(parseInt(_val)); } catch(e) { _val = ''; }
+          }
+          plant[field] = _val;
         });
         console.log('[GK Import] Row data:', JSON.stringify(plant));
 
-        // Skip example/header rows and empty rows
+        // Skip example/header rows, empty rows, and rows where values ARE field names
         const nameVal = plant.name || '';
+        const isFieldNameRow = nameVal.toLowerCase() === 'name' ||
+          (plant.category && plant.category.toLowerCase() === 'category') ||
+          nameVal === 'Plant Name';
         if (!nameVal || nameVal.toLowerCase().includes('example') ||
-            nameVal.toLowerCase().startsWith('e.g') || nameVal === 'Plant Name') {
+            nameVal.toLowerCase().startsWith('e.g') || isFieldNameRow) {
           console.log('[GK Import] Skipping row, name:', JSON.stringify(nameVal));
           return;
+        }
+        // Trailing * means organic — set flag and clean the name
+        if (plant.name.endsWith('*')) {
+          plant.organic = true;
+          plant.name = plant.name.replace(/\*+$/, '').trim();
         }
 
         // Normalize category
@@ -3769,6 +3838,11 @@ function parseSpreadsheet(file) {
         else if (diffVal.includes('medium') || diffVal.includes('med')) plant.difficulty = 'Medium';
         else plant.difficulty = 'Easy';
 
+        // Normalize organic flag
+        if (plant.organic) {
+          const orgVal = String(plant.organic).toLowerCase().trim();
+          plant.organic = (orgVal === 'true' || orgVal === 'yes' || orgVal === '1' || orgVal === 'x');
+        }
         // Normalize location - try to match to existing location by name
         if (plant.location) {
           const locNorm = plant.location.toLowerCase().trim();
