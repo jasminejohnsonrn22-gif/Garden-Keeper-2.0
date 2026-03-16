@@ -3636,7 +3636,9 @@ const COL_MAP = {
   'notes': 'notes', 'care notes': 'notes', 'care tips': 'notes',
   'description': 'notes', 'tips': 'notes',
   // Variety
-  'variety': 'variety', 'cultivar': 'variety',
+  'variety': 'variety', 'cultivar': 'variety', 'variety / cultivar': 'variety',
+  // Notes
+  'notes / care tips': 'notes', 'care tips': 'notes',
   // Growing timeline (fruit & veg)
   'planting date': 'plantingDate', 'planting': 'plantingDate', 'sow date': 'plantingDate', 'sow': 'plantingDate',
   'transplant date': 'transplantDate', 'transplant': 'transplantDate',
@@ -3716,7 +3718,8 @@ function parseSpreadsheet(file) {
         // Build plant object directly from column index mapping
         const plant = {};
         Object.entries(colMapping).forEach(([idx, field]) => {
-          plant[field] = String(row[parseInt(idx)] || '').trim();
+          const _raw = row[parseInt(idx)];
+          plant[field] = (_raw === null || _raw === undefined) ? '' : String(_raw).trim();
         });
 
         // Skip example/header rows and empty rows
@@ -3796,6 +3799,7 @@ They will be added to your existing garden (existing plants kept).`;
 
       myPlants = [...myPlants, ...imported];
       savePlants();
+      saveGrowing();
 
       const status = document.getElementById('backup-status');
       if (status) {
