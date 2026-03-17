@@ -932,6 +932,10 @@ window.addEventListener('unhandledrejection', function(e) {
             <input class="form-input" id="cf-variety" type="text" placeholder="e.g. Cherry, Roma, Heirloom..." maxlength="50">
           </div>
           <div class="form-field">
+            <label class="form-label">Quantity</label>
+            <input class="form-input" id="cf-quantity" type="number" min="1" max="9999" placeholder="e.g. 6">
+          </div>
+          <div class="form-field">
             <label class="form-label">Water every (days) *</label>
             <input class="form-input" id="cf-water" type="number" min="1" max="90" placeholder="e.g. 3">
             <span class="form-error" id="cf-water-err">Enter a number between 1-90</span>
@@ -1350,7 +1354,10 @@ function renderGridView(filtered, content) {
               ${plant.emoji ? `<span class="card-emoji">${plant.emoji}</span>` : ""}
               <span class="card-name display">${plant.name}</span>
             </div>
-            ${plant.variety ? `<span class="card-variety">${plant.variety}</span>` : ""}
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+              ${plant.variety ? `<span class="card-variety">${plant.variety}</span>` : ""}
+              ${plant.quantity && plant.quantity > 1 ? `<span class="card-variety" style="background:rgba(61,131,97,0.1);border-radius:3px;padding:0 5px;font-style:normal;font-weight:600;color:var(--green)">x${plant.quantity}</span>` : ""}
+            </div>
           </div>
           <div class="card-badges">
             <span class="urgency-badge" style="background:${urg.bg};color:${urg.color}">${urg.label}</span><br>
@@ -1402,7 +1409,7 @@ function renderListView(filtered, content) {
       <span class="list-emoji">${plant.emoji || "🌿"}</span>
       <div class="list-main">
         <div class="list-name">${plant.name}</div>
-        <div class="list-meta">${meta.icon} ${meta.label} · ☀️ ${plant.sunlight} · ${plant.difficulty}${plant.location?" · ⌂ "+plant.location:""}${plant.humidity?" · 💧 "+plant.humidity:""}${plant.organic?" · 🌿 organic":""}</div>
+        <div class="list-meta">${meta.icon} ${meta.label} · ☀️ ${plant.sunlight} · ${plant.difficulty}${plant.quantity && plant.quantity>1?" · x"+plant.quantity:""}${plant.location?" · ⌂ "+plant.location:""}${plant.humidity?" · 💧 "+plant.humidity:""}${plant.organic?" · 🌿 organic":""}</div>
       </div>
       <div class="list-badges">
         <span class="list-pill" style="background:${urg.bg};color:${urg.color}">${urg.label}</span>
@@ -1842,6 +1849,10 @@ function renderDetail() {
             <span>🌿</span>
             <span class="detail-attr-label" id="attr-variety-label">${plant.variety||"Add variety"}</span>
           </div>
+          <div class="detail-attr" id="attr-qty" title="Click to edit quantity">
+            <span>🔢</span>
+            <span class="detail-attr-label" id="attr-qty-label">${plant.quantity && plant.quantity > 1 ? plant.quantity+" plants" : "Qty: 1"}</span>
+          </div>
           <div class="detail-attr" id="attr-organic" title="Toggle organic" style="cursor:pointer;${plant.organic?'background:rgba(61,131,97,0.08);border-color:var(--green)':''}">
             <span>🌿</span>
             <span class="detail-attr-label" id="attr-organic-label">${plant.organic?"Organic":"Not organic"}</span>
@@ -2089,6 +2100,34 @@ function renderDetail() {
   wireAttrDropdown("attr-hum",  "dd-hum",  "humidity",   v => v + " humidity");
 
   // Variety — inline text edit on click
+  // Quantity inline edit
+  const qtyAttr  = document.getElementById("attr-qty");
+  const qtyLabel = document.getElementById("attr-qty-label");
+  if (qtyAttr) {
+    qtyAttr.addEventListener("click", () => {
+      const input = document.createElement("input");
+      input.type = "number"; input.min = "1"; input.max = "9999";
+      input.value = plant.quantity || 1;
+      input.style.cssText = "font-family:var(--font-body);font-size:12px;border:none;outline:none;background:transparent;width:60px;color:var(--ink)";
+      qtyLabel.replaceWith(input);
+      input.focus(); input.select();
+      const save = () => {
+        const val = Math.max(1, parseInt(input.value) || 1);
+        myPlants = myPlants.map(p => p.id !== plant.id ? p : { ...p, quantity: val });
+        savePlants();
+        plant.quantity = val;
+        const newLabel = document.createElement("span");
+        newLabel.id = "attr-qty-label";
+        newLabel.className = "detail-attr-label";
+        newLabel.textContent = val > 1 ? val + " plants" : "Qty: 1";
+        input.replaceWith(newLabel);
+        showToast("Quantity saved");
+      };
+      input.addEventListener("blur", save);
+      input.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); save(); } });
+    });
+  }
+
   // Organic toggle
   const organicAttr = document.getElementById("attr-organic");
   if (organicAttr) {
@@ -2277,6 +2316,7 @@ function resetForm() {
   const diff = document.getElementById("cf-diff"); if(diff) diff.value = "Easy";
   const loc = document.getElementById("cf-location"); if(loc) loc.value = "";
   const vari = document.getElementById("cf-variety"); if(vari) vari.value = "";
+  const qty  = document.getElementById("cf-quantity");  if(qty)  qty.value  = "";
   const hum = document.getElementById("cf-humidity"); if(hum) hum.value = "Medium";
   const lig = document.getElementById("cf-light"); if(lig) lig.value = "Natural Sun";
   const noE = document.getElementById("cf-no-emoji"); if(noE) noE.checked = false;
@@ -2308,6 +2348,7 @@ function submitCustomPlant() {
   const light    = document.getElementById("cf-light")?.value || "Natural Sun";
   const noEmoji  = document.getElementById("cf-no-emoji")?.checked;
   const variety  = document.getElementById("cf-variety")?.value.trim() || "";
+  const quantity = parseInt(document.getElementById("cf-quantity")?.value) || 1;
 
   const showErr = (id, show) => document.getElementById(id).classList.toggle("show", show);
 
@@ -2324,7 +2365,7 @@ function submitCustomPlant() {
     name, category:cat, emoji: noEmoji ? "" : selectedEmoji,
     waterDays:water, fertilizeDays:fert,
     sunlight:sun, difficulty:diff, notes,
-    location, humidity, light, variety, organic,
+    location, humidity, light, variety, organic, quantity,
     custom: true,
     addedDate:now, lastWatered:now, lastFertilized:now
   };
@@ -3884,6 +3925,9 @@ const COL_MAP = {
   'notes / care tips': 'notes', 'description': 'notes', 'tips': 'notes',
   // Organic
   'organic': 'organic',
+  // Quantity
+  'quantity': 'quantity', 'qty': 'quantity', 'count': 'quantity', 'number': 'quantity',
+  '# of plants': 'quantity', 'num plants': 'quantity',
   // Growing timeline — display labels
   'planting date': 'plantingDate', 'planting': 'plantingDate', 'sow date': 'plantingDate',
   'transplant date': 'transplantDate', 'transplant': 'transplantDate',
@@ -4055,6 +4099,11 @@ function parseSpreadsheet(file) {
         else if (diffVal.includes('medium') || diffVal.includes('med')) plant.difficulty = 'Medium';
         else plant.difficulty = 'Easy';
 
+        // Normalize quantity
+        if (plant.quantity) {
+          const q = parseInt(plant.quantity);
+          plant.quantity = isNaN(q) || q < 1 ? 1 : q;
+        }
         // Normalize organic flag
         if (plant.organic) {
           const orgVal = String(plant.organic).toLowerCase().trim();
