@@ -783,6 +783,7 @@ window.addEventListener('unhandledrejection', function(e) {
         <p style="font-size:13px;color:var(--ink-soft);margin-bottom:12px;line-height:1.5">Export all your plants, journal photos, grow logs, and locations to a file. Import it after any app update to restore everything.</p>
         <div style="display:flex;flex-direction:column;gap:8px">
           <button class="btn-primary" id="btn-export-data" style="font-size:13px;padding:10px">⬇ Export Garden Data</button>
+          <p id="last-backup-info" style="font-size:11px;color:var(--ink-faint);font-style:italic;margin-top:4px"></p>
           <label class="btn-ghost" id="btn-import-label" style="font-size:13px;padding:10px;text-align:center;cursor:pointer;display:block">
             ⬆ Import Garden Data (.json)
             <input type="file" id="btn-import-data" accept=".json" style="display:none">
@@ -1097,6 +1098,11 @@ window.addEventListener('unhandledrejection', function(e) {
 </div>
 
 <script>
+// ── App version — bump this with every PWA update ──
+const APP_VERSION = "2.1";
+const VERSION_KEY  = "gardenkeeper_version";
+const AUTOBAK_KEY  = "gardenkeeper_autobak_date";
+
 const PLANTS = [
   { id:1,  name:"Basil",       emoji:"🌿", category:"vegetable",  waterDays:2,  fertilizeDays:14, sunlight:"Full Sun",        difficulty:"Easy",   notes:"Keep soil moist. Pinch flowers to encourage leaf growth." },
   { id:2,  name:"Tomatoes",    emoji:"🍅", category:"vegetable",  waterDays:1,  fertilizeDays:7,  sunlight:"Full Sun",        difficulty:"Medium", notes:"Stake when tall. Water at base to prevent disease." },
@@ -1152,7 +1158,11 @@ function loadPlants() {
 }
 
 function savePlants() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(myPlants)); } catch(e) { console.warn("Could not save plants:", e); }
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(myPlants));
+    // Keep snapshot in sync so it is always fresh
+    saveLocalBackupSnapshot();
+  } catch(e) { console.warn("Could not save plants:", e); }
 }
 
 function loadMeta() {
@@ -4160,6 +4170,134 @@ function initSpreadsheetImport() {
 // END SPREADSHEET IMPORT
 // ══════════════════════════════════════════════════════
 
+
+// ══════════════════════════════════════════════════════
+// AUTO-BACKUP & VERSION MIGRATION
+// ══════════════════════════════════════════════════════
+
+function buildBackupObject() {
+  return {
+    version:    APP_VERSION,
+    exportedAt: new Date().toISOString(),
+    plants:     myPlants,
+    locations:  userLocations,
+    grow:       grow,
+    growing:    growing,
+    journal:    journal,
+    meta:       loadMeta(),
+  };
+}
+
+function triggerBackupDownload(silent) {
+  try {
+    const json = JSON.stringify(buildBackupObject(), null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url  = URL.createObjectURL(blob);
+    const date = new Date().toISOString().slice(0, 10);
+    const a    = document.createElement("a");
+    a.href     = url;
+    a.download = "garden-keeper-backup-" + date + ".json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    if (!silent) showToast("Garden backup downloaded ✓");
+  } catch(e) {
+    console.warn("Auto-backup download failed:", e);
+  }
+}
+
+// Save a compact backup to localStorage (no photos — too large)
+// Used as a safety net if the file download does not happen
+function saveLocalBackupSnapshot() {
+  try {
+    const snapshot = {
+      version:   APP_VERSION,
+      savedAt:   new Date().toISOString(),
+      plants:    myPlants,
+      locations: userLocations,
+      grow:      grow,
+      growing:   growing,
+      meta:      loadMeta(),
+      // journal omitted — photos are large
+    };
+    localStorage.setItem("gardenkeeper_snapshot", JSON.stringify(snapshot));
+  } catch(e) {
+    console.warn("Snapshot save failed (storage full?):", e);
+  }
+}
+
+function loadLocalBackupSnapshot() {
+  try {
+    const s = localStorage.getItem("gardenkeeper_snapshot");
+    return s ? JSON.parse(s) : null;
+  } catch { return null; }
+}
+
+// ── Version migration ────────────────────────────────
+// Called once on startup. If the stored version differs from APP_VERSION,
+// we know the user just deployed an update.
+function runVersionMigration() {
+  const stored = localStorage.getItem(VERSION_KEY);
+
+  if (stored === APP_VERSION) return; // same version, nothing to do
+
+  if (stored && myPlants.length === 0) {
+    // Data wiped somehow — try to restore from snapshot
+    const snap = loadLocalBackupSnapshot();
+    if (snap && snap.plants && snap.plants.length > 0) {
+      myPlants      = snap.plants;
+      userLocations = snap.locations || userLocations;
+      grow          = snap.grow      || grow;
+      growing       = snap.growing   || growing;
+      savePlants();
+      saveLocations();
+      saveGrow();
+      saveGrowing();
+      if (snap.meta) saveMeta(snap.meta);
+      showToast("Garden restored from snapshot after update ✓");
+      console.log("[GK] Data restored from snapshot, version", snap.version, "->", APP_VERSION);
+    }
+  } else if (stored && myPlants.length > 0) {
+    // Update detected and data is intact — save a snapshot for next time
+    saveLocalBackupSnapshot();
+    console.log("[GK] Updated", stored, "->", APP_VERSION, "— snapshot saved");
+  }
+
+  // Record new version
+  localStorage.setItem(VERSION_KEY, APP_VERSION);
+}
+
+// ── Auto daily backup ────────────────────────────────
+function runAutoBackup() {
+  if (myPlants.length === 0) return; // nothing to back up
+
+  const today    = new Date().toISOString().slice(0, 10);
+  const lastBak  = localStorage.getItem(AUTOBAK_KEY);
+
+  if (lastBak === today) return; // already backed up today
+
+  // Always save the local snapshot (no file download needed for this)
+  saveLocalBackupSnapshot();
+
+  // Download a file backup once per day, but only if the user has
+  // more than 2 plants (skip for fresh/demo installs)
+  if (myPlants.filter(p => p.custom).length > 0 || myPlants.length > 3) {
+    // Delay slightly so it does not interrupt page load
+    setTimeout(() => {
+      triggerBackupDownload(true);
+      localStorage.setItem(AUTOBAK_KEY, today);
+      console.log("[GK] Auto-backup downloaded for", today);
+    }, 3000);
+  } else {
+    localStorage.setItem(AUTOBAK_KEY, today);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// END AUTO-BACKUP & VERSION MIGRATION
+// ══════════════════════════════════════════════════════
+
 // ══════════════════════════════════════════════════════
 // BACKUP & RESTORE
 // ══════════════════════════════════════════════════════
@@ -4167,27 +4305,7 @@ function initSpreadsheetImport() {
 const BACKUP_VERSION = 1;
 
 function exportGardenData() {
-  const backup = {
-    version:   BACKUP_VERSION,
-    exportedAt: new Date().toISOString(),
-    plants:    myPlants,
-    locations: userLocations,
-    grow:      grow,
-    growing:   growing,
-    journal:   journal,
-    meta:      loadMeta(),
-  };
-
-  const json = JSON.stringify(backup, null, 2);
-  const blob = new Blob([json], { type: "application/json" });
-  const url  = URL.createObjectURL(blob);
-  const date = new Date().toISOString().slice(0,10);
-  const a    = document.createElement("a");
-  a.href     = url;
-  a.download = `garden-keeper-backup-${date}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast("Garden data exported ✓");
+  triggerBackupDownload(false);
 }
 
 function importGardenData(file) {
@@ -4229,6 +4347,7 @@ function importGardenData(file) {
       saveGrowing();
       saveJournal(journal);
       if (backup.meta) saveMeta(backup.meta);
+      saveLocalBackupSnapshot();
 
       // Sync customNextId
       customNextId = Math.max(1000, ...myPlants.filter(p=>p.custom).map(p=>p.id+1), 1000);
@@ -4267,6 +4386,19 @@ function initBackup() {
     });
   }
   initSpreadsheetImport();
+
+  // Show last backup date
+  const lastBakInfo = document.getElementById("last-backup-info");
+  if (lastBakInfo) {
+    const lastBak  = localStorage.getItem(AUTOBAK_KEY);
+    const snapshot = loadLocalBackupSnapshot();
+    if (lastBak) {
+      lastBakInfo.textContent = "Last auto-backup: " + lastBak
+        + (snapshot ? " (" + (snapshot.plants||[]).length + " plants)" : "");
+    } else {
+      lastBakInfo.textContent = "No auto-backup yet — one will download on next visit";
+    }
+  }
 }
 
 // ══════════════════════════════════════════════════════
@@ -4680,8 +4812,11 @@ if ('serviceWorker' in navigator) {
 const _urlParams = new URLSearchParams(window.location.search);
 const _startView = _urlParams.get('view') || 'dashboard';
 
+// Run migration first (before rendering), then auto-backup after
+runVersionMigration();
 initSettings();
 renderView(_startView);
+runAutoBackup();
 </script>
 </body>
 </html>
