@@ -960,6 +960,14 @@ window.addEventListener('unhandledrejection', function(e) {
               <input type="checkbox" id="cf-heirloom" style="width:16px;height:16px;accent-color:var(--green)"> 🌱 Heirloom
             </label>
           </div>
+          <div class="form-field" id="cf-growtype-field" style="display:none">
+            <label class="form-label">Grow Type</label>
+            <select class="form-select" id="cf-growtype">
+              <option value="">Not specified</option>
+              <option value="Determinate">🔲 Determinate</option>
+              <option value="Indeterminate">🔃 Indeterminate</option>
+            </select>
+          </div>
           <div class="form-field">
             <label class="form-label">Location</label>
             <select class="form-select" id="cf-location">
@@ -1408,7 +1416,7 @@ function renderListView(filtered, content) {
       <span class="list-emoji">${plant.emoji || "🌿"}</span>
       <div class="list-main">
         <div class="list-name">${plant.name}</div>
-        <div class="list-meta">${meta.icon} ${meta.label} · ☀️ ${plant.sunlight}${plant.quantity && plant.quantity>1?" · x"+plant.quantity:""}${plant.location?" · ⌂ "+plant.location:""}${plant.humidity?" · 💧 "+plant.humidity:""}${plant.organic?" · 🌿 organic":""}${plant.heirloom?" · 🌱 heirloom":""}</div>
+        <div class="list-meta">${meta.icon} ${meta.label}${plant.growType?" · "+plant.growType:""} · ☀️ ${plant.sunlight}${plant.quantity && plant.quantity>1?" · x"+plant.quantity:""}${plant.location?" · ⌂ "+plant.location:""}${plant.humidity?" · 💧 "+plant.humidity:""}${plant.organic?" · 🌿 organic":""}${plant.heirloom?" · 🌱 heirloom":""}</div>
       </div>
       <div class="list-badges">
         <span class="list-pill" style="background:${urg.bg};color:${urg.color}">${urg.label}</span>
@@ -1843,6 +1851,15 @@ function renderDetail() {
             <span>🔢</span>
             <span class="detail-attr-label" id="attr-qty-label">${plant.quantity && plant.quantity > 1 ? plant.quantity+" plants" : "Qty: 1"}</span>
           </div>
+          ${plant.category === "tomato" ? `
+          <div class="detail-attr" id="attr-growtype" title="Click to change" style="cursor:pointer">
+            <span>${plant.growType==="Indeterminate"?"🔃":"🔲"}</span>
+            <span class="detail-attr-label" id="attr-growtype-label">${plant.growType||"Set grow type"}</span>
+            <div class="detail-attr-dropdown" id="dd-growtype">
+              <div class="detail-attr-option${plant.growType==="Determinate"?" active":""}" data-val="Determinate">🔲 Determinate</div>
+              <div class="detail-attr-option${plant.growType==="Indeterminate"?" active":""}" data-val="Indeterminate">🔃 Indeterminate</div>
+            </div>
+          </div>` : ""}
           <div class="detail-attr" id="attr-organic" title="Toggle organic" style="cursor:pointer;${plant.organic?'background:rgba(61,131,97,0.08);border-color:var(--green)':''}">
             <span>🌿</span>
             <span class="detail-attr-label" id="attr-organic-label">${plant.organic?"Organic":"Not organic"}</span>
@@ -1949,6 +1966,11 @@ function renderDetail() {
         rows.push(`<div class="cs-row"><span class="cs-label">🌾 Harvest:</span><span class="${hCls}">${hRange}${hHint}</span></div>`);
       }
 
+      // Grow type (tomato only)
+      if (plant.category === "tomato" && plant.growType) {
+        const gtColor = plant.growType === "Indeterminate" ? "var(--green)" : "var(--ink-soft)";
+        rows.push('<div class="cs-row"><span class="cs-label">🍅 Type:</span><span class="cs-val" style="color:'+gtColor+';font-weight:600">'+plant.growType+'</span></div>');
+      }
       // Height
       if (g.heightIn || g.heightCm) {
         const ht = [g.heightIn ? g.heightIn+'"' : "", g.heightCm ? g.heightCm+"cm" : ""].filter(Boolean).join(" / ");
@@ -2136,6 +2158,9 @@ function renderDetail() {
     });
   }
   wireAttrDropdown("attr-hum",  "dd-hum",  "humidity",   v => v + " humidity");
+  if (plant.category === "tomato") {
+    wireAttrDropdown("attr-growtype", "dd-growtype", "growType", null);
+  }
 
   // Variety — inline text edit on click
   // Quantity inline edit
@@ -2331,6 +2356,14 @@ let customNextId = Math.max(1000, ...myPlants.filter(p=>p.custom).map(p=>p.id+1)
 
 function initCustomForm() {
   populateLocationSelect("cf-location", "");
+  // Show/hide grow type field for tomato category
+  const catSel = document.getElementById("cf-category");
+  const gtField = document.getElementById("cf-growtype-field");
+  if (catSel && gtField) {
+    const toggleGrowType = () => { gtField.style.display = catSel.value === "tomato" ? "" : "none"; };
+    catSel.addEventListener("change", toggleGrowType);
+    toggleGrowType();
+  }
   const grid = document.getElementById("cf-emoji-grid");
   if (!grid || grid.children.length > 0) return;
   PLANT_EMOJIS.forEach(em => {
@@ -2373,6 +2406,7 @@ function resetForm() {
   const lig = document.getElementById("cf-light"); if(lig) lig.value = "Natural Sun";
   const noE = document.getElementById("cf-no-emoji"); if(noE) noE.checked = false;
   const orgEl = document.getElementById("cf-organic");  if(orgEl) orgEl.checked = false;
+  const gtEl  = document.getElementById("cf-growtype");   if(gtEl)  gtEl.value  = "";
   const hlmEl = document.getElementById("cf-heirloom"); if(hlmEl) hlmEl.checked = false;
   selectedEmoji = "🌿";
   const grid = document.getElementById("cf-emoji-grid");
@@ -2394,6 +2428,7 @@ function submitCustomPlant() {
   const fert  = parseInt(fEl.value);
   const sun     = document.getElementById("cf-sun").value;
   const organic  = document.getElementById("cf-organic")?.checked  || false;
+  const growType = document.getElementById("cf-growtype")?.value || "";
   const heirloom = document.getElementById("cf-heirloom")?.checked || false;
   const notes   = document.getElementById("cf-notes").value.trim() || "A custom plant in your garden.";
   const location = document.getElementById("cf-location")?.value || "";
@@ -2418,7 +2453,7 @@ function submitCustomPlant() {
     name, category:cat, emoji: noEmoji ? "" : selectedEmoji,
     waterDays:water, fertilizeDays:fert,
     sunlight:sun, notes,
-    location, humidity, light, variety, organic, heirloom, quantity,
+    location, humidity, light, variety, organic, heirloom, quantity, growType,
     custom: true,
     addedDate:now, lastWatered:now, lastFertilized:now
   };
@@ -4044,6 +4079,9 @@ const CATEGORY_MAP = {
   'fruit': 'fruit', 'fruits': 'fruit', 'berry': 'fruit', 'berries': 'fruit', 'crop': 'vegetable',
   'herb': 'herb', 'herbs': 'herb', 'herbal': 'herb',
   'tomato': 'tomato', 'tomatoes': 'tomato',
+  // Grow type
+  'grow type': 'growType', 'growtype': 'growType', 'type': 'growType',
+  'determinate': 'growType', 'indeterminate': 'growType',
 };
 
 const SUNLIGHT_MAP = {
@@ -4197,6 +4235,13 @@ function parseSpreadsheet(file) {
         if (plant.quantity) {
           const q = parseInt(plant.quantity);
           plant.quantity = isNaN(q) || q < 1 ? 1 : q;
+        }
+        // Normalize grow type
+        if (plant.growType) {
+          const gt = plant.growType.toLowerCase().trim();
+          if (gt.includes("indet")) plant.growType = "Indeterminate";
+          else if (gt.includes("det")) plant.growType = "Determinate";
+          else plant.growType = "";
         }
         // Normalize organic flag
         if (plant.organic) {
