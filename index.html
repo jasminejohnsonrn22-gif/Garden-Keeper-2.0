@@ -924,6 +924,8 @@ window.addEventListener('unhandledrejection', function(e) {
               <option value="flower">Flower</option>
               <option value="vegetable">Vegetable / Herb</option>
               <option value="fruit">Fruit</option>
+              <option value="herb">Herb</option>
+              <option value="tomato">Tomato</option>
             </select>
             <span class="form-error" id="cf-cat-err">Please choose a category</span>
           </div>
@@ -946,27 +948,16 @@ window.addEventListener('unhandledrejection', function(e) {
             <span class="form-error" id="cf-fert-err">Enter a number between 1-365</span>
           </div>
           <div class="form-field">
-            <label class="form-label">Sunlight needs</label>
-            <select class="form-select" id="cf-sun">
-              <option value="Full Sun">Full Sun</option>
-              <option value="Partial Shade">Partial Shade</option>
-              <option value="Bright Indirect">Bright Indirect</option>
-              <option value="Low Light">Low Light</option>
-              <option value="Any Light">Any Light</option>
-            </select>
-          </div>
-          <div class="form-field">
-            <label class="form-label">Difficulty</label>
-            <select class="form-select" id="cf-diff">
-              <option value="Easy">Easy</option>
-              <option value="Medium">Medium</option>
-              <option value="Hard">Hard</option>
-            </select>
+            <label class="form-label">Sunlight (hrs/day)</label>
+            <input class="form-input" id="cf-sun" type="number" min="0" max="16" step="0.5" placeholder="e.g. 6">
           </div>
           <div class="form-field" style="justify-content:flex-end">
             <label class="form-label">&nbsp;</label>
             <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink-mid);cursor:pointer;padding-top:4px">
               <input type="checkbox" id="cf-organic" style="width:16px;height:16px;accent-color:var(--green)"> 🌿 Organic
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink-mid);cursor:pointer;padding-top:4px">
+              <input type="checkbox" id="cf-heirloom" style="width:16px;height:16px;accent-color:var(--green)"> 🌱 Heirloom
             </label>
           </div>
           <div class="form-field">
@@ -1102,7 +1093,7 @@ window.addEventListener('unhandledrejection', function(e) {
 </div>
 
 <script>
-// ── App version — bump this with every PWA update ──
+// App version - bump this with every PWA update
 const APP_VERSION = "2.1";
 const VERSION_KEY  = "gardenkeeper_version";
 const AUTOBAK_KEY  = "gardenkeeper_autobak_date";
@@ -1128,6 +1119,8 @@ const CATEGORIES = [
   { id:"flower",     label:"Flowers",     icon:"🌸" },
   { id:"vegetable",  label:"Vegetables",  icon:"🥬" },
   { id:"fruit",      label:"Fruits",      icon:"🍎" },
+  { id:"herb",       label:"Herbs",       icon:"🌿" },
+  { id:"tomato",     label:"Tomatoes",    icon:"🍅" },
 ];
 
 const CAT_META = {
@@ -1135,6 +1128,8 @@ const CAT_META = {
   flower:     { icon:"🌸", label:"Flower",     accent:"#e07a5f", light:"rgba(224,122,95,0.12)"  },
   vegetable:  { icon:"🥬", label:"Vegetable",  accent:"#3d8361", light:"rgba(61,131,97,0.12)"   },
   fruit:      { icon:"🍎", label:"Fruit",      accent:"#c0572b", light:"rgba(192,87,43,0.10)"   },
+  herb:       { icon:"🌿", label:"Herb",       accent:"#5a8a52", light:"rgba(90,138,82,0.10)"   },
+  tomato:     { icon:"🍅", label:"Tomato",     accent:"#c0392b", light:"rgba(192,57,43,0.10)"   },
 };
 
 const URGENCY = {
@@ -1345,33 +1340,37 @@ function renderGridView(filtered, content) {
     card.className = "plant-card";
     card.style.animationDelay = (idx*0.05)+"s";
     card.style.animationFillMode = "both";
-    card.innerHTML = `
-      <div class="card-top-bar" style="background:${urg.color};opacity:${topU==="ok"?0.4:1}"></div>
-      <div class="card-body">
-        <div class="card-header">
-          <div class="card-name-row">
-            <div style="display:flex;align-items:center;gap:6px;width:100%;min-width:0">
-              ${plant.emoji ? `<span class="card-emoji">${plant.emoji}</span>` : ""}
-              <span class="card-name display">${plant.name}</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-              ${plant.variety ? `<span class="card-variety">${plant.variety}</span>` : ""}
-              ${plant.quantity && plant.quantity > 1 ? `<span class="card-variety" style="background:rgba(61,131,97,0.1);border-radius:3px;padding:0 5px;font-style:normal;font-weight:600;color:var(--green)">x${plant.quantity}</span>` : ""}
-            </div>
-          </div>
-          <div class="card-badges">
-            <span class="urgency-badge" style="background:${urg.bg};color:${urg.color}">${urg.label}</span><br>
-            <span class="cat-badge" style="background:${meta.light};color:${meta.accent}">${meta.icon} ${meta.label}</span>
-          </div>
-        </div>
-        <div class="card-sunlight">${plant.light==="Grow Light"?"💡":plant.light==="Both"?"☀️💡":"☀️"} ${plant.sunlight}${plant.humidity?" · 💧 "+plant.humidity:""}${plant.location?` <span class="card-location">⌂ ${plant.location}</span>`:""}${plant.organic?` <span class="organic-badge">🌿 organic</span>`:""}</div>
-        <div class="care-grid">
-          ${[{icon:"💧",label:"Water",days:wDays,u:wU},{icon:"🌾",label:"Feed",days:fDays,u:fU}].map(item=>{
-            const u=URGENCY[item.u];
-            return `<div class="care-box" style="background:${u.bg};border-color:${u.color}22"><div class="care-icon">${item.icon}</div><div class="care-days" style="color:${u.color}">${item.days<=0?"Now!":item.days+"d"}</div><div class="care-label">${item.label}</div></div>`;
-          }).join("")}
-        </div>
-      </div>`;
+    const emojiHtml   = plant.emoji ? '<span class="card-emoji">'+plant.emoji+'</span>' : "";
+    const varietyHtml  = plant.variety ? '<span class="card-variety">'+plant.variety+'</span>' : "";
+    const qtyHtml      = (plant.quantity && plant.quantity > 1) ? '<span class="card-variety" style="background:rgba(61,131,97,0.1);border-radius:3px;padding:0 5px;font-style:normal;font-weight:600;color:var(--green)">x'+plant.quantity+'</span>' : "";
+    const lightIcon    = plant.light==="Grow Light" ? "💡" : plant.light==="Both" ? "☀️💡" : "☀️";
+    const sunDisplay   = plant.sunlight ? lightIcon+" "+plant.sunlight+"h/day" : lightIcon;
+    const locHtml      = plant.location ? ' <span class="card-location">⌂ '+getLocationMeta(plant.location).name+'</span>' : "";
+    const organicHtml  = plant.organic  ? ' <span class="organic-badge">🌿 organic</span>' : "";
+    const heirloomHtml = plant.heirloom ? ' <span class="organic-badge" style="background:rgba(192,87,43,0.1);color:#c0572b;border-color:rgba(192,87,43,0.25)">🌱 heirloom</span>' : "";
+    const careBoxes    = [{icon:"💧",label:"Water",days:wDays,u:wU},{icon:"🌾",label:"Feed",days:fDays,u:fU}].map(item=>{
+      const u=URGENCY[item.u];
+      return '<div class="care-box" style="background:'+u.bg+';border-color:'+u.color+'22"><div class="care-icon">'+item.icon+'</div><div class="care-days" style="color:'+u.color+'">'+(item.days<=0?"Now!":item.days+"d")+'</div><div class="care-label">'+item.label+'</div></div>';
+    }).join("");
+    card.innerHTML =
+      '<div class="card-top-bar" style="background:'+urg.color+';opacity:'+(topU==="ok"?0.4:1)+'"></div>'+
+      '<div class="card-body">'+
+        '<div class="card-header">'+
+          '<div class="card-name-row">'+
+            '<div style="display:flex;align-items:center;gap:6px;width:100%;min-width:0">'+
+              emojiHtml+
+              '<span class="card-name display">'+plant.name+'</span>'+
+            '</div>'+
+            (varietyHtml || qtyHtml ? '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'+varietyHtml+qtyHtml+'</div>' : '')+
+          '</div>'+
+          '<div class="card-badges">'+
+            '<span class="urgency-badge" style="background:'+urg.bg+';color:'+urg.color+'">'+urg.label+'</span><br>'+
+            '<span class="cat-badge" style="background:'+meta.light+';color:'+meta.accent+'">'+meta.icon+' '+meta.label+'</span>'+
+          '</div>'+
+        '</div>'+
+        '<div class="card-sunlight">'+sunDisplay+(plant.humidity?' · 💧 '+plant.humidity:'')+locHtml+organicHtml+heirloomHtml+'</div>'+
+        '<div class="care-grid">'+careBoxes+'</div>'+
+      '</div>';
     card.dataset.plantId = plant.id;
     if (multiSelectMode) {
       card.classList.toggle("selected", selectedPlantIds.has(plant.id));
@@ -1409,7 +1408,7 @@ function renderListView(filtered, content) {
       <span class="list-emoji">${plant.emoji || "🌿"}</span>
       <div class="list-main">
         <div class="list-name">${plant.name}</div>
-        <div class="list-meta">${meta.icon} ${meta.label} · ☀️ ${plant.sunlight} · ${plant.difficulty}${plant.quantity && plant.quantity>1?" · x"+plant.quantity:""}${plant.location?" · ⌂ "+plant.location:""}${plant.humidity?" · 💧 "+plant.humidity:""}${plant.organic?" · 🌿 organic":""}</div>
+        <div class="list-meta">${meta.icon} ${meta.label} · ☀️ ${plant.sunlight}${plant.quantity && plant.quantity>1?" · x"+plant.quantity:""}${plant.location?" · ⌂ "+plant.location:""}${plant.humidity?" · 💧 "+plant.humidity:""}${plant.organic?" · 🌿 organic":""}${plant.heirloom?" · 🌱 heirloom":""}</div>
       </div>
       <div class="list-badges">
         <span class="list-pill" style="background:${urg.bg};color:${urg.color}">${urg.label}</span>
@@ -1497,7 +1496,7 @@ function renderChartView(content) {
   const catSection = document.createElement("div");
   catSection.className = "chart-section";
   catSection.innerHTML = `<div class="chart-title">Garden breakdown by category</div>`;
-  const catColors = { houseplant:"#7fb069", flower:"#e07a5f", vegetable:"#3d8361", fruit:"#c0572b" };
+  const catColors = { houseplant:"#7fb069", flower:"#e07a5f", vegetable:"#3d8361", fruit:"#c0572b", herb:"#5a8a52", tomato:"#c0392b" };
   const catData = CATEGORIES.slice(1).map(c => ({
     id:c.id, label:c.label, icon:c.icon,
     count: allPlants.filter(p=>p.category===c.id).length,
@@ -1743,7 +1742,7 @@ function renderDiscover() {
           <span style="font-size:44px;line-height:1">${plant.emoji}</span>
           <div style="text-align:right">
             <span class="cat-badge" style="background:${meta.light};color:${meta.accent};display:block;margin-bottom:5px">${meta.label}</span>
-            <span class="difficulty-badge">${plant.difficulty}</span>
+
           </div>
         </div>
         <div class="card-name display">${plant.name}</div>
@@ -1817,12 +1816,9 @@ function renderDetail() {
         </div>
 
         <div class="detail-attr-row" id="detail-attr-row">
-          <div class="detail-attr" id="attr-sun" title="Click to change">
+          <div class="detail-attr" id="attr-sun" title="Click to edit sunlight hours">
             <span>${plant.light==="Grow Light"?"💡":plant.light==="Both"?"☀️💡":"☀️"}</span>
-            <span class="detail-attr-label">${plant.sunlight}</span>
-            <div class="detail-attr-dropdown" id="dd-sun">
-              ${["Full Sun","Partial Shade","Bright Indirect","Low Light","Any Light"].map(v=>`<div class="detail-attr-option${plant.sunlight===v?" active":""}" data-val="${v}">${v}</div>`).join("")}
-            </div>
+            <span class="detail-attr-label" id="attr-sun-label">${plant.sunlight ? plant.sunlight+"h/day" : "Add sun hrs"}</span>
           </div>
           <div class="detail-attr" id="attr-light" title="Click to change">
             <span>💡</span>
@@ -1831,13 +1827,7 @@ function renderDetail() {
               ${[["Natural Sun","☀️ Natural Sun"],["Grow Light","💡 Grow Light"],["Both","☀️💡 Both"]].map(([v,l])=>`<div class="detail-attr-option${(plant.light||"Natural Sun")===v?" active":""}" data-val="${v}">${l}</div>`).join("")}
             </div>
           </div>
-          <div class="detail-attr" id="attr-diff" title="Click to change">
-            <span>${plant.difficulty==="Easy"?"🟢":plant.difficulty==="Hard"?"🔴":"🟡"}</span>
-            <span class="detail-attr-label">${plant.difficulty}</span>
-            <div class="detail-attr-dropdown" id="dd-diff">
-              ${["Easy","Medium","Hard"].map(v=>`<div class="detail-attr-option${plant.difficulty===v?" active":""}" data-val="${v}">${v==="Easy"?"🟢 Easy":v==="Hard"?"🔴 Hard":"🟡 Medium"}</div>`).join("")}
-            </div>
-          </div>
+
           <div class="detail-attr" id="attr-hum" title="Click to change">
             <span>💧</span>
             <span class="detail-attr-label">${plant.humidity||"Medium"} humidity</span>
@@ -1856,6 +1846,10 @@ function renderDetail() {
           <div class="detail-attr" id="attr-organic" title="Toggle organic" style="cursor:pointer;${plant.organic?'background:rgba(61,131,97,0.08);border-color:var(--green)':''}">
             <span>🌿</span>
             <span class="detail-attr-label" id="attr-organic-label">${plant.organic?"Organic":"Not organic"}</span>
+          </div>
+          <div class="detail-attr" id="attr-heirloom" title="Toggle heirloom" style="cursor:pointer;${plant.heirloom?'background:rgba(192,87,43,0.08);border-color:#c0572b':''}">
+            <span>🌱</span>
+            <span class="detail-attr-label" id="attr-heirloom-label">${plant.heirloom?"Heirloom":"Not heirloom"}</span>
           </div>
         </div>
 
@@ -1955,10 +1949,30 @@ function renderDetail() {
         rows.push(`<div class="cs-row"><span class="cs-label">🌾 Harvest:</span><span class="${hCls}">${hRange}${hHint}</span></div>`);
       }
 
-      // Spacing
-      if (g.spacingCm || g.spacingIn) {
-        const sp = [g.spacingCm ? g.spacingCm+"cm" : "", g.spacingIn ? g.spacingIn+'"' : ""].filter(Boolean).join(" / ");
-        rows.push(`<div class="cs-row"><span class="cs-label">📐 Spacing:</span><span class="cs-val">${sp}</span></div>`);
+      // Height
+      if (g.heightIn || g.heightCm) {
+        const ht = [g.heightIn ? g.heightIn+'"' : "", g.heightCm ? g.heightCm+"cm" : ""].filter(Boolean).join(" / ");
+        rows.push('<div class="cs-row"><span class="cs-label">📏 Height:</span><span class="cs-val">'+ht+'</span></div>');
+      }
+      // Temperature
+      if (g.tempF) {
+        rows.push('<div class="cs-row"><span class="cs-label">🌡 Temp:</span><span class="cs-val">'+g.tempF+'°F</span></div>');
+      }
+      // Qty planted
+      if (g.qtyPlanted) {
+        rows.push('<div class="cs-row"><span class="cs-label">🌱 Planted:</span><span class="cs-val">'+g.qtyPlanted+' plants</span></div>');
+      }
+      // Harvest cues
+      if (g.harvestCues) {
+        rows.push('<div class="cs-row"><span class="cs-label">🌾 Ready when:</span><span class="cs-val">'+g.harvestCues+'</span></div>');
+      }
+      // Produce/bloom size
+      if (g.produceSizeIn || g.produceWeightLbs) {
+        const sz = [g.produceSizeIn ? g.produceSizeIn : "", g.produceWeightLbs ? g.produceWeightLbs : ""].filter(Boolean).join(" · ");
+        rows.push('<div class="cs-row"><span class="cs-label">📦 Produce:</span><span class="cs-val">'+sz+'</span></div>');
+      }
+      if (g.bloomSizeIn) {
+        rows.push('<div class="cs-row"><span class="cs-label">🌸 Bloom:</span><span class="cs-val">'+g.bloomSizeIn+'"</span></div>');
       }
     }
 
@@ -2094,9 +2108,33 @@ function renderDetail() {
     });
   }
 
-  wireAttrDropdown("attr-sun",  "dd-sun",  "sunlight",  null);
   wireAttrDropdown("attr-light","dd-light","light",      null);
-  wireAttrDropdown("attr-diff", "dd-diff", "difficulty", null);
+
+  // Sunlight hours inline edit
+  const sunAttr  = document.getElementById("attr-sun");
+  const sunLabel = document.getElementById("attr-sun-label");
+  if (sunAttr && sunLabel) {
+    sunAttr.addEventListener("click", () => {
+      const inp = document.createElement("input");
+      inp.type = "number"; inp.min = "0"; inp.max = "16"; inp.step = "0.5";
+      inp.value = plant.sunlight || "";
+      inp.placeholder = "hrs/day";
+      inp.style.cssText = "font-family:var(--font-body);font-size:12px;border:none;outline:none;background:transparent;width:70px;color:var(--ink)";
+      sunLabel.replaceWith(inp); inp.focus(); inp.select();
+      const save = () => {
+        const val = parseFloat(inp.value);
+        myPlants = myPlants.map(p => p.id !== plant.id ? p : { ...p, sunlight: isNaN(val) ? "" : String(val) });
+        savePlants(); plant.sunlight = isNaN(val) ? "" : String(val);
+        const newLbl = document.createElement("span");
+        newLbl.id = "attr-sun-label"; newLbl.className = "detail-attr-label";
+        newLbl.textContent = isNaN(val) ? "Add sun hrs" : val + "h/day";
+        inp.replaceWith(newLbl);
+        if (!isNaN(val)) showToast("Sunlight updated");
+      };
+      inp.addEventListener("blur", save);
+      inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); save(); } });
+    });
+  }
   wireAttrDropdown("attr-hum",  "dd-hum",  "humidity",   v => v + " humidity");
 
   // Variety — inline text edit on click
@@ -2140,6 +2178,21 @@ function renderDetail() {
       organicAttr.style.background = plant.organic ? "rgba(61,131,97,0.08)" : "";
       organicAttr.style.borderColor = plant.organic ? "var(--green)" : "";
       showToast(plant.organic ? "🌿 Marked as organic" : "Organic status removed");
+    });
+  }
+
+  // Heirloom toggle
+  const heirloomAttr = document.getElementById("attr-heirloom");
+  if (heirloomAttr) {
+    heirloomAttr.addEventListener("click", () => {
+      plant.heirloom = !plant.heirloom;
+      myPlants = myPlants.map(p => p.id !== plant.id ? p : { ...p, heirloom: plant.heirloom });
+      savePlants();
+      const lbl = document.getElementById("attr-heirloom-label");
+      if (lbl) lbl.textContent = plant.heirloom ? "Heirloom" : "Not heirloom";
+      heirloomAttr.style.background  = plant.heirloom ? "rgba(192,87,43,0.08)" : "";
+      heirloomAttr.style.borderColor = plant.heirloom ? "#c0572b" : "";
+      showToast(plant.heirloom ? "🌱 Marked as heirloom" : "Heirloom status removed");
     });
   }
 
@@ -2312,15 +2365,15 @@ function initCustomForm() {
 function resetForm() {
   ["cf-name","cf-water","cf-fert","cf-notes"].forEach(id => { const el = document.getElementById(id); if(el) el.value = ""; });
   const cat = document.getElementById("cf-category"); if(cat) cat.value = "";
-  const sun = document.getElementById("cf-sun"); if(sun) sun.value = "Full Sun";
-  const diff = document.getElementById("cf-diff"); if(diff) diff.value = "Easy";
+  const sun = document.getElementById("cf-sun"); if(sun) sun.value = "";
   const loc = document.getElementById("cf-location"); if(loc) loc.value = "";
   const vari = document.getElementById("cf-variety"); if(vari) vari.value = "";
   const qty  = document.getElementById("cf-quantity");  if(qty)  qty.value  = "";
   const hum = document.getElementById("cf-humidity"); if(hum) hum.value = "Medium";
   const lig = document.getElementById("cf-light"); if(lig) lig.value = "Natural Sun";
   const noE = document.getElementById("cf-no-emoji"); if(noE) noE.checked = false;
-  const orgEl = document.getElementById("cf-organic"); if(orgEl) orgEl.checked = false;
+  const orgEl = document.getElementById("cf-organic");  if(orgEl) orgEl.checked = false;
+  const hlmEl = document.getElementById("cf-heirloom"); if(hlmEl) hlmEl.checked = false;
   selectedEmoji = "🌿";
   const grid = document.getElementById("cf-emoji-grid");
   if (grid) grid.querySelectorAll(".emoji-btn").forEach(b => b.classList.toggle("selected", b.textContent === "🌿"));
@@ -2340,8 +2393,8 @@ function submitCustomPlant() {
   const water = parseInt(wEl.value);
   const fert  = parseInt(fEl.value);
   const sun     = document.getElementById("cf-sun").value;
-  const diff    = document.getElementById("cf-diff").value;
-  const organic = document.getElementById("cf-organic")?.checked || false;
+  const organic  = document.getElementById("cf-organic")?.checked  || false;
+  const heirloom = document.getElementById("cf-heirloom")?.checked || false;
   const notes   = document.getElementById("cf-notes").value.trim() || "A custom plant in your garden.";
   const location = document.getElementById("cf-location")?.value || "";
   const humidity = document.getElementById("cf-humidity")?.value || "Medium";
@@ -2364,8 +2417,8 @@ function submitCustomPlant() {
     id: customNextId++,
     name, category:cat, emoji: noEmoji ? "" : selectedEmoji,
     waterDays:water, fertilizeDays:fert,
-    sunlight:sun, difficulty:diff, notes,
-    location, humidity, light, variety, organic, quantity,
+    sunlight:sun, notes,
+    location, humidity, light, variety, organic, heirloom, quantity,
     custom: true,
     addedDate:now, lastWatered:now, lastFertilized:now
   };
@@ -2675,7 +2728,9 @@ function showBulkRecategorize() {
       {id:"houseplant",label:"Houseplant",icon:"🏠"},
       {id:"flower",label:"Flower",icon:"🌸"},
       {id:"vegetable",label:"Vegetable",icon:"🥬"},
-      {id:"fruit",label:"Fruit",icon:"🍎"}
+      {id:"fruit",label:"Fruit",icon:"🍎"},
+      {id:"herb",label:"Herb",icon:"🌿"},
+      {id:"tomato",label:"Tomato",icon:"🍅"}
     ].map(c => `<div class="bulk-cat-btn" data-cat="${c.id}"><div class="bulk-cat-icon">${c.icon}</div><div class="bulk-cat-name">${c.label}</div></div>`).join("")
   }</div>`;
 
@@ -2800,7 +2855,7 @@ function daysFromNow(dateStr) {
 
 // Determine if plant category supports growing timeline
 function isGrowingCategory(plant) {
-  return plant && (plant.category === "vegetable" || plant.category === "fruit");
+  return plant && (plant.category === "vegetable" || plant.category === "fruit" || plant.category === "herb" || plant.category === "tomato");
 }
 
 // Render the growing timeline tab section inside the Grow tab
@@ -2864,12 +2919,20 @@ function renderGrowingTimeline(plantId, container) {
             <input class="gt-input" type="date" id="gt-transplant" value="${g.transplantDate || ""}">
           </div>
           <div class="gt-field">
-            <label class="gt-label">Spacing (cm)</label>
-            <input class="gt-input" type="number" id="gt-spacing" min="1" max="500" placeholder="e.g. 30" value="${g.spacingCm || ""}">
+            <label class="gt-label">Qty Planted</label>
+            <input class="gt-input" type="number" id="gt-qty-planted" min="1" max="9999" placeholder="e.g. 6" value="${g.qtyPlanted || ""}">
           </div>
           <div class="gt-field">
-            <label class="gt-label">Spacing (inches)</label>
-            <input class="gt-input" type="number" id="gt-spacing-in" min="1" max="200" placeholder="e.g. 12" value="${g.spacingIn || ""}">
+            <label class="gt-label">Temperature (°F)</label>
+            <input class="gt-input" type="number" id="gt-temp" min="-20" max="130" placeholder="e.g. 65" value="${g.tempF || ""}">
+          </div>
+          <div class="gt-field">
+            <label class="gt-label">Expected Height (in)</label>
+            <input class="gt-input" type="number" id="gt-height" min="1" max="500" placeholder="e.g. 36" value="${g.heightIn || ""}">
+          </div>
+          <div class="gt-field">
+            <label class="gt-label">Expected Height (cm)</label>
+            <input class="gt-input" type="number" id="gt-height-cm" min="1" max="1000" placeholder="e.g. 90" value="${g.heightCm || ""}">
           </div>
         </div>
         <div class="gt-save-row">
@@ -2935,8 +2998,26 @@ function renderGrowingTimeline(plantId, container) {
           </div>
           <div class="gt-field" style="justify-content:flex-end">
             <label class="gt-label">&nbsp;</label>
-            ${g.actualHarvestDate ? `<div class="gt-result">Harvested ${formatDate(g.actualHarvestDate)}</div>` : '<div class="gt-result empty">Not yet harvested</div>'}
+            ${g.actualHarvestDate ? '<div class="gt-result">Harvested '+formatDate(g.actualHarvestDate)+'</div>' : '<div class="gt-result empty">Not yet harvested</div>'}
           </div>
+          <div class="gt-field full">
+            <label class="gt-label">Harvest cues — how to know it is ready</label>
+            <textarea class="gt-input" id="gt-harv-cues" rows="2" placeholder="e.g. Skin turns deep red, easily pulls from vine, firm but gives slightly to pressure..." style="resize:vertical">${g.harvestCues || ""}</textarea>
+          </div>
+          ${(plant.category==="vegetable"||plant.category==="fruit"||plant.category==="tomato") ? `
+          <div class="gt-field">
+            <label class="gt-label">Produce size (inches)</label>
+            <input class="gt-input" type="text" id="gt-produce-size-in" placeholder='e.g. 3"' value="${g.produceSizeIn || ""}">
+          </div>
+          <div class="gt-field">
+            <label class="gt-label">Produce weight (lbs)</label>
+            <input class="gt-input" type="text" id="gt-produce-weight" placeholder="e.g. 0.5 lb" value="${g.produceWeightLbs || ""}">
+          </div>` : ""}
+          ${plant.category==="flower" ? `
+          <div class="gt-field">
+            <label class="gt-label">Bloom size (inches)</label>
+            <input class="gt-input" type="text" id="gt-bloom-size" placeholder='e.g. 2"' value="${g.bloomSizeIn || ""}">
+          </div>` : ""}
         </div>
         <div class="gt-save-row">
           <button class="btn-primary" id="gt-save-harv" style="font-size:13px;padding:8px 18px">Save</button>
@@ -2949,16 +3030,18 @@ function renderGrowingTimeline(plantId, container) {
 
   // ── Wire save buttons ──
   document.getElementById("gt-save-planting").addEventListener("click", () => {
-    const plantingDate = document.getElementById("gt-planting").value;
-    const transplantDate = document.getElementById("gt-transplant").value;
-    const spacingCm = document.getElementById("gt-spacing").value;
-    const spacingIn = document.getElementById("gt-spacing-in").value;
-    // Auto-convert between cm and inches
-    const cmEl = document.getElementById("gt-spacing");
-    const inEl = document.getElementById("gt-spacing-in");
-    cmEl.addEventListener("input", () => { if (cmEl.value) inEl.value = Math.round(cmEl.value / 2.54); });
-    inEl.addEventListener("input", () => { if (inEl.value) cmEl.value = Math.round(inEl.value * 2.54); });
-    setGrowing(plantId, { plantingDate, transplantDate, spacingCm, spacingIn });
+    const plantingDate  = document.getElementById("gt-planting").value;
+    const transplantDate= document.getElementById("gt-transplant").value;
+    const qtyPlanted    = document.getElementById("gt-qty-planted").value;
+    const tempF         = document.getElementById("gt-temp").value;
+    const heightIn      = document.getElementById("gt-height").value;
+    const heightCm      = document.getElementById("gt-height-cm").value;
+    // Auto-convert height
+    const htInEl = document.getElementById("gt-height");
+    const htCmEl = document.getElementById("gt-height-cm");
+    if (htInEl) htInEl.addEventListener("input", () => { if (htInEl.value) htCmEl.value = Math.round(parseFloat(htInEl.value)*2.54); });
+    if (htCmEl) htCmEl.addEventListener("input", () => { if (htCmEl.value) htInEl.value = Math.round(parseFloat(htCmEl.value)/2.54); });
+    setGrowing(plantId, { plantingDate, transplantDate, qtyPlanted, tempF, heightIn, heightCm });
     showToast("Planting info saved");
     renderGrowTab(plantId);
   });
@@ -2976,24 +3059,28 @@ function renderGrowingTimeline(plantId, container) {
   });
 
   document.getElementById("gt-save-harv").addEventListener("click", () => {
-    const harvestMinDays  = document.getElementById("gt-harv-min").value;
-    const harvestMaxDays  = document.getElementById("gt-harv-max").value;
-    const actualHarvestDate = document.getElementById("gt-harv-actual").value;
+    const harvestMinDays   = document.getElementById("gt-harv-min").value;
+    const harvestMaxDays   = document.getElementById("gt-harv-max").value;
+    const actualHarvestDate= document.getElementById("gt-harv-actual").value;
+    const harvestCues      = document.getElementById("gt-harv-cues")?.value.trim() || "";
+    const produceSizeIn    = document.getElementById("gt-produce-size-in")?.value.trim() || "";
+    const produceWeightLbs = document.getElementById("gt-produce-weight")?.value.trim() || "";
+    const bloomSizeIn      = document.getElementById("gt-bloom-size")?.value.trim() || "";
     if (harvestMinDays && harvestMaxDays && parseInt(harvestMinDays) > parseInt(harvestMaxDays)) {
       showToast("Min days must be less than max days", "warn"); return;
     }
-    setGrowing(plantId, { harvestMinDays, harvestMaxDays, actualHarvestDate });
+    setGrowing(plantId, { harvestMinDays, harvestMaxDays, actualHarvestDate, harvestCues, produceSizeIn, produceWeightLbs, bloomSizeIn });
     showToast("Harvest info saved");
     renderGrowTab(plantId);
   });
 
-  // Live unit conversion on spacing inputs
+  // Live unit conversion on height inputs
   setTimeout(() => {
-    const cmEl = document.getElementById("gt-spacing");
-    const inEl = document.getElementById("gt-spacing-in");
-    if (cmEl && inEl) {
-      cmEl.addEventListener("input", () => { if (cmEl.value) inEl.value = Math.round(parseFloat(cmEl.value) / 2.54); });
-      inEl.addEventListener("input", () => { if (inEl.value) cmEl.value = Math.round(parseFloat(inEl.value) * 2.54); });
+    const htInEl = document.getElementById("gt-height");
+    const htCmEl = document.getElementById("gt-height-cm");
+    if (htInEl && htCmEl) {
+      htInEl.addEventListener("input", () => { if (htInEl.value) htCmEl.value = Math.round(parseFloat(htInEl.value)*2.54); });
+      htCmEl.addEventListener("input", () => { if (htCmEl.value) htInEl.value = Math.round(parseFloat(htCmEl.value)/2.54); });
     }
   }, 0);
 }
@@ -3577,7 +3664,7 @@ function renderJournalTab(plantId) {
       <div class="journal-empty">
         <div style="font-size:40px;margin-bottom:12px">📷</div>
         <div style="font-family:var(--font-display);font-size:18px;color:var(--ink-soft);margin-bottom:8px">No photos yet</div>
-        <div style="margin-bottom:20px">Document your plant's journey — snap a photo each time you water, see new growth, or notice something interesting.</div>
+        <div style="margin-bottom:20px">Document your plant journey — snap a photo each time you water, see new growth, or notice something interesting.</div>
         <button class="btn-primary" id="journal-add-first">📷 Add First Photo</button>
       </div>`;
     document.getElementById("journal-add-first").addEventListener("click", () => openPhotoModal(plantId));
@@ -3925,6 +4012,8 @@ const COL_MAP = {
   'notes / care tips': 'notes', 'description': 'notes', 'tips': 'notes',
   // Organic
   'organic': 'organic',
+  // Heirloom
+  'heirloom': 'heirloom',
   // Quantity
   'quantity': 'quantity', 'qty': 'quantity', 'count': 'quantity', 'number': 'quantity',
   '# of plants': 'quantity', 'num plants': 'quantity',
@@ -3953,14 +4042,16 @@ const CATEGORY_MAP = {
   'vegetable': 'vegetable', 'vegetables': 'vegetable', 'herb': 'vegetable',
   'herbs': 'vegetable', 'veg': 'vegetable', 'veggie': 'vegetable',
   'fruit': 'fruit', 'fruits': 'fruit', 'berry': 'fruit', 'berries': 'fruit', 'crop': 'vegetable',
+  'herb': 'herb', 'herbs': 'herb', 'herbal': 'herb',
+  'tomato': 'tomato', 'tomatoes': 'tomato',
 };
 
 const SUNLIGHT_MAP = {
-  'full sun': 'Full Sun', 'full': 'Full Sun', 'direct': 'Full Sun',
-  'partial shade': 'Partial Shade', 'partial': 'Partial Shade', 'part shade': 'Partial Shade',
-  'bright indirect': 'Bright Indirect', 'bright': 'Bright Indirect', 'indirect': 'Bright Indirect',
-  'low light': 'Low Light', 'low': 'Low Light', 'shade': 'Low Light',
-  'any light': 'Any Light', 'any': 'Any Light',
+  'full sun': '8', 'full': '8', 'direct': '8',
+  'partial shade': '4', 'partial': '4', 'part shade': '4',
+  'bright indirect': '3', 'bright': '3', 'indirect': '3',
+  'low light': '2', 'low': '2', 'shade': '2',
+  'any light': '4', 'any': '4',
 };
 
 function normalizeCol(raw) {
@@ -4063,7 +4154,11 @@ function parseSpreadsheet(file) {
           console.log('[GK Import] Skipping row, name:', JSON.stringify(nameVal));
           return;
         }
-        // Trailing * means organic — set flag and clean the name
+        // Trailing * = organic, trailing ~ = heirloom (can combine e.g. "Tomato*~")
+        if (plant.name.includes('~')) {
+          plant.heirloom = true;
+          plant.name = plant.name.replace(/~+/g, '').trim();
+        }
         if (plant.name.endsWith('*')) {
           plant.organic = true;
           plant.name = plant.name.replace(/\*+$/, '').trim();
@@ -4073,9 +4168,13 @@ function parseSpreadsheet(file) {
         const catNorm = (plant.category || '').toLowerCase().trim();
         plant.category = CATEGORY_MAP[catNorm] || 'houseplant';
 
-        // Normalize sunlight
-        const sunNorm = (plant.sunlight || '').toLowerCase().trim();
-        plant.sunlight = SUNLIGHT_MAP[sunNorm] || plant.sunlight || 'Any Light';
+        // Normalize sunlight - accept numeric hours or convert text labels
+        const sunRaw = (plant.sunlight || '').trim();
+        if (sunRaw && !isNaN(parseFloat(sunRaw))) {
+          plant.sunlight = String(parseFloat(sunRaw));
+        } else {
+          plant.sunlight = SUNLIGHT_MAP[sunRaw.toLowerCase()] || sunRaw || "";
+        }
 
         // Normalize numbers
         plant.waterDays    = Math.max(1, parseInt(plant.waterDays)    || 7);
@@ -4093,11 +4192,6 @@ function parseSpreadsheet(file) {
         else if (humVal.includes('low')) plant.humidity = 'Low';
         else plant.humidity = 'Medium';
 
-        // Normalize difficulty
-        const diffVal = (plant.difficulty || '').toLowerCase();
-        if (diffVal.includes('hard')) plant.difficulty = 'Hard';
-        else if (diffVal.includes('medium') || diffVal.includes('med')) plant.difficulty = 'Medium';
-        else plant.difficulty = 'Easy';
 
         // Normalize quantity
         if (plant.quantity) {
@@ -4108,6 +4202,11 @@ function parseSpreadsheet(file) {
         if (plant.organic) {
           const orgVal = String(plant.organic).toLowerCase().trim();
           plant.organic = (orgVal === 'true' || orgVal === 'yes' || orgVal === '1' || orgVal === 'x');
+        }
+        // Normalize heirloom flag
+        if (plant.heirloom) {
+          const hlmVal = String(plant.heirloom).toLowerCase().trim();
+          plant.heirloom = (hlmVal === 'true' || hlmVal === 'yes' || hlmVal === '1' || hlmVal === 'x');
         }
         // Normalize location - try to match to existing location by name
         if (plant.location) {
