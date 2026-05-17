@@ -472,6 +472,27 @@
   .detail-care-summary .cs-warn  { color:#d47c0f; font-weight:600; }
   .detail-care-summary .cs-urgent{ color:#c0392b; font-weight:600; }
 
+  /* ── Sort control ── */
+  .sort-row { display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+  .sort-label { font-size:12px; color:var(--ink-soft); white-space:nowrap; }
+  .sort-select { background:white; border:1.5px solid var(--rule); border-radius:6px; padding:4px 10px; font-family:var(--font-body); font-size:12px; color:var(--ink-mid); outline:none; cursor:pointer; transition:border-color 0.2s; }
+  .sort-select:focus { border-color:var(--green); }
+
+  /* ── Bulk task bar ── */
+  .bulk-task-bar { background:var(--parchment-dark); border:1.5px solid var(--rule); border-radius:8px; padding:10px 14px; margin-bottom:14px; display:none; }
+  .bulk-task-bar.show { display:block; }
+  .bulk-task-title { font-family:var(--font-display); font-size:13px; font-weight:600; color:var(--ink); margin-bottom:8px; }
+  .bulk-task-actions { display:flex; gap:8px; flex-wrap:wrap; }
+  .bulk-task-btn { background:white; border:1.5px solid var(--rule); border-radius:6px; padding:7px 14px; font-family:var(--font-body); font-size:13px; color:var(--ink-mid); cursor:pointer; transition:all 0.18s; display:flex; align-items:center; gap:6px; }
+  .bulk-task-btn:hover { border-color:var(--green); color:var(--green); background:rgba(61,131,97,0.04); }
+  .bulk-task-btn.water { border-color:rgba(79,163,214,0.4); color:#3476a0; }
+  .bulk-task-btn.water:hover { background:rgba(79,163,214,0.06); }
+  .bulk-task-btn.fert  { border-color:rgba(61,131,97,0.4); color:var(--green); }
+  .bulk-task-btn.fert:hover  { background:rgba(61,131,97,0.06); }
+
+  /* ── Container badge ── */
+  .container-badge { font-size:10px; color:var(--ink-soft); background:var(--parchment-dark); border-radius:3px; padding:1px 5px; border:1px solid var(--rule); white-space:nowrap; }
+
   /* ── Push notification panel ── */
   .push-panel { background: white; border: 1.5px solid var(--card-border); border-radius: 10px; padding: 24px 28px; margin-bottom: 24px; }
   .push-panel-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
@@ -823,6 +844,24 @@ window.addEventListener('unhandledrejection', function(e) {
     </div>
     <hr class="rule">
     <div class="filters" id="dash-filters"></div>
+    <div class="sort-row">
+      <span class="sort-label">Sort by:</span>
+      <select class="sort-select" id="dash-sort">
+        <option value="urgency">Most urgent</option>
+        <option value="name">Name A–Z</option>
+        <option value="harvest">Harvest date</option>
+        <option value="water">Water due</option>
+        <option value="category">Category</option>
+      </select>
+    </div>
+    <div class="bulk-task-bar" id="bulk-task-bar">
+      <div class="bulk-task-title">Apply to selected plants:</div>
+      <div class="bulk-task-actions">
+        <button class="bulk-task-btn water" id="btn-bulk-water">💧 Mark Watered</button>
+        <button class="bulk-task-btn fert"  id="btn-bulk-fert">🌾 Mark Fed</button>
+        <button class="bulk-task-btn" id="btn-bulk-both">💧🌾 Mark Both</button>
+      </div>
+    </div>
     <div class="select-bar" id="select-bar">
       <div class="select-bar-left">
         <span id="select-count">Select plants</span>
@@ -938,12 +977,12 @@ window.addEventListener('unhandledrejection', function(e) {
             <input class="form-input" id="cf-quantity" type="number" min="1" max="9999" placeholder="e.g. 6">
           </div>
           <div class="form-field">
-            <label class="form-label">Water every (days) *</label>
+            <label class="form-label">Water every (days)</label>
             <input class="form-input" id="cf-water" type="number" min="1" max="90" placeholder="e.g. 3">
             <span class="form-error" id="cf-water-err">Enter a number between 1-90</span>
           </div>
           <div class="form-field">
-            <label class="form-label">Fertilize every (days) *</label>
+            <label class="form-label">Fertilize every (days)</label>
             <input class="form-input" id="cf-fert" type="number" min="1" max="365" placeholder="e.g. 14">
             <span class="form-error" id="cf-fert-err">Enter a number between 1-365</span>
           </div>
@@ -989,6 +1028,28 @@ window.addEventListener('unhandledrejection', function(e) {
               <option value="Grow Light">💡 Grow Light</option>
               <option value="Both">☀️💡 Both</option>
             </select>
+          </div>
+          <div class="form-field" style="justify-content:flex-end">
+            <label class="form-label">&nbsp;</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink-mid);cursor:pointer;padding-top:4px">
+              <input type="checkbox" id="cf-container" style="width:16px;height:16px;accent-color:var(--green)"> 🪣 Container grown
+            </label>
+          </div>
+          <div id="cf-container-dims" style="display:none;grid-column:1/-1">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:2px">
+              <div class="form-field">
+                <label class="form-label">Width (in)</label>
+                <input class="form-input" id="cf-cont-w" type="number" min="1" max="200" placeholder='e.g. 12"'>
+              </div>
+              <div class="form-field">
+                <label class="form-label">Height (in)</label>
+                <input class="form-input" id="cf-cont-h" type="number" min="1" max="200" placeholder='e.g. 10"'>
+              </div>
+              <div class="form-field">
+                <label class="form-label">Depth (in)</label>
+                <input class="form-input" id="cf-cont-d" type="number" min="1" max="200" placeholder='e.g. 10"'>
+              </div>
+            </div>
           </div>
           <div class="form-field full">
             <label class="form-label">Care notes</label>
@@ -1190,6 +1251,7 @@ let currentView = "dashboard";
 let selectedPlantId = null;
 const _meta = loadMeta();
 let dashFilter = _meta.dashFilter || "all";
+let dashSort   = _meta.dashSort   || "urgency";
 let discoverFilter = "all";
 let dashViewMode = _meta.dashViewMode || "grid";
 let reminderStatus = {};
@@ -1199,10 +1261,12 @@ let selectedPlantIds = new Set();
 let growFormOpen = false;
 
 function getDaysUntil(lastDate, intervalDays) {
+  if (!intervalDays) return Infinity; // not tracked
   const next = new Date(new Date(lastDate).getTime() + intervalDays * 86400000);
   return Math.ceil((next - new Date()) / 86400000);
 }
 function getUrgency(days) {
+  if (days === Infinity || days === null || days === undefined) return "ok";
   return days <= 0 ? "overdue" : days === 1 ? "today" : days <= 3 ? "soon" : "ok";
 }
 function getGrowingNotifs() {
@@ -1228,7 +1292,13 @@ function getGrowingNotifs() {
 
     // Harvest alert (only if not yet harvested)
     if (!g.actualHarvestDate) {
-      const harvDate = g.harvestMinDays ? addDays(base, parseInt(g.harvestMinDays)) : null;
+      // Use actual germ date if available, else estimated germ date, else planting date
+      const _gE = g.germMinDays ? addDays(base, parseInt(g.germMinDays)) : null;
+      const _gL = g.germMaxDays ? addDays(base, parseInt(g.germMaxDays)) : null;
+      const _hBase = g.actualGermDate ? g.actualGermDate
+        : (_gE && _gL) ? addDays(_gE, Math.round((parseInt(g.germMaxDays)-parseInt(g.germMinDays))/2))
+        : _gE || _gL || base;
+      const harvDate = g.harvestMinDays ? addDays(_hBase, parseInt(g.harvestMinDays)) : null;
       if (harvDate) {
         const d = daysFromNow(harvDate);
         if (d <= 14) notifs.push({ plant:p, type:"harvest", days:d, date:harvDate,
@@ -1306,8 +1376,25 @@ function renderFilters(containerId, active, counts, onChange) {
 
 function renderDashboard() {
   const counts = { all:myPlants.length, ...Object.fromEntries(CATEGORIES.slice(1).map(c=>[c.id, myPlants.filter(p=>p.category===c.id).length])) };
-  renderFilters("dash-filters", dashFilter, counts, id => { dashFilter=id; saveMeta({dashFilter, dashViewMode}); renderDashboard(); });
+  renderFilters("dash-filters", dashFilter, counts, id => { dashFilter=id; saveMeta({dashFilter, dashViewMode, dashSort}); renderDashboard(); });
   document.getElementById("dash-sub").textContent = myPlants.length + " " + (myPlants.length===1?"plant":"plants") + " in your care";
+
+  // Wire sort dropdown
+  const sortSel = document.getElementById("dash-sort");
+  if (sortSel) {
+    sortSel.value = dashSort;
+    sortSel.onchange = () => { dashSort = sortSel.value; saveMeta({dashFilter, dashViewMode, dashSort}); renderDashboard(); };
+  }
+
+  // Wire bulk task bar
+  const bulkBar = document.getElementById("bulk-task-bar");
+  if (bulkBar) bulkBar.classList.toggle("show", multiSelectMode && selectedPlantIds.size > 0);
+  const waterBtn = document.getElementById("btn-bulk-water");
+  const fertBtn  = document.getElementById("btn-bulk-fert");
+  const bothBtn  = document.getElementById("btn-bulk-both");
+  if (waterBtn) waterBtn.onclick = () => bulkMarkTask("water");
+  if (fertBtn)  fertBtn.onclick  = () => bulkMarkTask("fertilize");
+  if (bothBtn)  bothBtn.onclick  = () => bulkMarkTask("both");
 
   // Wire up view toggle
   document.querySelectorAll(".vt-btn").forEach(btn => {
@@ -1319,7 +1406,31 @@ function renderDashboard() {
   if (msBtn) msBtn.classList.toggle("active", multiSelectMode);
   updateSelectBar();
 
-  const filtered = dashFilter==="all" ? myPlants : myPlants.filter(p=>p.category===dashFilter);
+  let filtered = dashFilter==="all" ? myPlants : myPlants.filter(p=>p.category===dashFilter);
+
+  // Apply sort
+  filtered = [...filtered].sort((a, b) => {
+    if (dashSort === "name") return a.name.localeCompare(b.name);
+    if (dashSort === "category") return a.category.localeCompare(b.category) || a.name.localeCompare(b.name);
+    if (dashSort === "water") return getDaysUntil(a.lastWatered, a.waterDays||999) - getDaysUntil(b.lastWatered, b.waterDays||999);
+    if (dashSort === "harvest") {
+      const getHarvDate = p => {
+        const g = getGrowing(p.id);
+        if (!g) return Infinity;
+        const base = g.actualGermDate || g.plantingDate || g.transplantDate;
+        if (!base || !g.harvestMinDays) return Infinity;
+        return new Date(addDays(base, parseInt(g.harvestMinDays))).getTime();
+      };
+      return getHarvDate(a) - getHarvDate(b);
+    }
+    // default: urgency
+    const urgOrder = { overdue:0, today:1, soon:2, ok:3 };
+    const uA = [getUrgency(getDaysUntil(a.lastWatered, a.waterDays||999)), getUrgency(getDaysUntil(a.lastFertilized, a.fertilizeDays||999))];
+    const uB = [getUrgency(getDaysUntil(b.lastWatered, b.waterDays||999)), getUrgency(getDaysUntil(b.lastFertilized, b.fertilizeDays||999))];
+    const topA = Math.min(...uA.map(u => urgOrder[u]));
+    const topB = Math.min(...uB.map(u => urgOrder[u]));
+    return topA - topB || a.name.localeCompare(b.name);
+  });
   const content = document.getElementById("dash-content");
 
   if (filtered.length === 0 && dashViewMode !== "chart") {
@@ -1354,9 +1465,16 @@ function renderGridView(filtered, content) {
     const lightIcon    = plant.light==="Grow Light" ? "💡" : plant.light==="Both" ? "☀️💡" : "☀️";
     const sunDisplay   = plant.sunlight ? lightIcon+" "+plant.sunlight+"h/day" : lightIcon;
     const locHtml      = plant.location ? ' <span class="card-location">⌂ '+getLocationMeta(plant.location).name+'</span>' : "";
-    const organicHtml  = plant.organic  ? ' <span class="organic-badge">🌿 organic</span>' : "";
-    const heirloomHtml = plant.heirloom ? ' <span class="organic-badge" style="background:rgba(192,87,43,0.1);color:#c0572b;border-color:rgba(192,87,43,0.25)">🌱 heirloom</span>' : "";
-    const careBoxes    = [{icon:"💧",label:"Water",days:wDays,u:wU},{icon:"🌾",label:"Feed",days:fDays,u:fU}].map(item=>{
+    const organicHtml   = plant.organic   ? ' <span class="organic-badge">🌿 organic</span>' : "";
+    const heirloomHtml  = plant.heirloom  ? ' <span class="organic-badge" style="background:rgba(192,87,43,0.1);color:#c0572b;border-color:rgba(192,87,43,0.25)">🌱 heirloom</span>' : "";
+    const contDimStr    = plant.container && (plant.contWidth||plant.contHeight||plant.contDepth)
+      ? [plant.contWidth?plant.contWidth+'"':'',plant.contHeight?plant.contHeight+'"':'',plant.contDepth?plant.contDepth+'"':''].filter(Boolean).join("×")
+      : "";
+    const containerHtml = plant.container ? ' <span class="container-badge">🪣'+(contDimStr?" "+contDimStr:"")+'</span>' : "";
+    const careItems = [];
+    if (plant.waterDays) careItems.push({icon:"💧",label:"Water",days:wDays,u:wU});
+    if (plant.fertilizeDays) careItems.push({icon:"🌾",label:"Feed",days:fDays,u:fU});
+    const careBoxes = careItems.map(item=>{
       const u=URGENCY[item.u];
       return '<div class="care-box" style="background:'+u.bg+';border-color:'+u.color+'22"><div class="care-icon">'+item.icon+'</div><div class="care-days" style="color:'+u.color+'">'+(item.days<=0?"Now!":item.days+"d")+'</div><div class="care-label">'+item.label+'</div></div>';
     }).join("");
@@ -1376,7 +1494,7 @@ function renderGridView(filtered, content) {
             '<span class="cat-badge" style="background:'+meta.light+';color:'+meta.accent+'">'+meta.icon+' '+meta.label+'</span>'+
           '</div>'+
         '</div>'+
-        '<div class="card-sunlight">'+sunDisplay+(plant.humidity?' · 💧 '+plant.humidity:'')+locHtml+organicHtml+heirloomHtml+'</div>'+
+        '<div class="card-sunlight">'+sunDisplay+(plant.humidity?' · 💧 '+plant.humidity:'')+locHtml+organicHtml+heirloomHtml+containerHtml+'</div>'+
         '<div class="care-grid">'+careBoxes+'</div>'+
       '</div>';
     card.dataset.plantId = plant.id;
@@ -1847,6 +1965,10 @@ function renderDetail() {
             <span>🌿</span>
             <span class="detail-attr-label" id="attr-variety-label">${plant.variety||"Add variety"}</span>
           </div>
+          <div class="detail-attr" id="attr-container" title="Toggle container grown" style="cursor:pointer;${plant.container?'background:rgba(61,131,97,0.08);border-color:var(--green)':''}">
+            <span>🪣</span>
+            <span class="detail-attr-label" id="attr-container-label">${plant.container?(plant.contWidth||plant.contHeight?[plant.contWidth?plant.contWidth+'"':'',plant.contHeight?plant.contHeight+'"':'',plant.contDepth?plant.contDepth+'"':''].filter(Boolean).join("×")+" container":"Container"):"Not in container"}</span>
+          </div>
           <div class="detail-attr" id="attr-qty" title="Click to edit quantity">
             <span>🔢</span>
             <span class="detail-attr-label" id="attr-qty-label">${plant.quantity && plant.quantity > 1 ? plant.quantity+" plants" : "Qty: 1"}</span>
@@ -1951,9 +2073,16 @@ function renderDetail() {
       // Harvest window
       if (g.actualHarvestDate) {
         rows.push(`<div class="cs-row"><span class="cs-label">🌾 Harvested:</span><span class="cs-val">${formatDate(g.actualHarvestDate)}</span></div>`);
-      } else if (base && (g.harvestMinDays || g.harvestMaxDays)) {
-        const hE = g.harvestMinDays ? addDays(base, parseInt(g.harvestMinDays)) : null;
-        const hL = g.harvestMaxDays ? addDays(base, parseInt(g.harvestMaxDays)) : null;
+      } else if ((base || g.actualGermDate) && (g.harvestMinDays || g.harvestMaxDays)) {
+        // Base harvest from: actual germ date > estimated germ date > planting date
+        const _germE = base && g.germMinDays ? addDays(base, parseInt(g.germMinDays)) : null;
+        const _germL = base && g.germMaxDays ? addDays(base, parseInt(g.germMaxDays)) : null;
+        const hBase  = g.actualGermDate ? g.actualGermDate
+          : (_germE && _germL) ? addDays(_germE, Math.round((parseInt(g.germMaxDays) - parseInt(g.germMinDays)) / 2))
+          : _germE || _germL || base;
+        const hBaseLabel = g.actualGermDate ? " (from germination)" : (_germE || _germL) ? " (from est. germ.)" : "";
+        const hE = g.harvestMinDays ? addDays(hBase, parseInt(g.harvestMinDays)) : null;
+        const hL = g.harvestMaxDays ? addDays(hBase, parseInt(g.harvestMaxDays)) : null;
         const dhE = hE ? daysFromNow(hE) : null;
         const dhL = hL ? daysFromNow(hL) : null;
         const hCls = dhE !== null && dhE <= 0 ? "cs-urgent" : dhE !== null && dhE <= 14 ? "cs-alert" : "cs-val";
@@ -1963,7 +2092,7 @@ function renderDetail() {
         const hHint = dhE !== null && dhL !== null
           ? (dhE <= 0 && dhL <= 0 ? " (window passed)" : dhE <= 0 ? ` (~${dhL}d left)` : ` (in ${dhE}–${dhL}d)`)
           : "";
-        rows.push(`<div class="cs-row"><span class="cs-label">🌾 Harvest:</span><span class="${hCls}">${hRange}${hHint}</span></div>`);
+        rows.push(`<div class="cs-row"><span class="cs-label">🌾 Harvest:</span><span class="${hCls}">${hRange}${hHint}<span style="font-size:10px;font-weight:400;color:var(--ink-faint)">${hBaseLabel}</span></span></div>`);
       }
 
       // Grow type (tomato only)
@@ -1971,10 +2100,12 @@ function renderDetail() {
         const gtColor = plant.growType === "Indeterminate" ? "var(--green)" : "var(--ink-soft)";
         rows.push('<div class="cs-row"><span class="cs-label">🍅 Type:</span><span class="cs-val" style="color:'+gtColor+';font-weight:600">'+plant.growType+'</span></div>');
       }
-      // Height
-      if (g.heightIn || g.heightCm) {
-        const ht = [g.heightIn ? g.heightIn+'"' : "", g.heightCm ? g.heightCm+"cm" : ""].filter(Boolean).join(" / ");
-        rows.push('<div class="cs-row"><span class="cs-label">📏 Height:</span><span class="cs-val">'+ht+'</span></div>');
+      // Height range (inches only)
+      const htMinIn = g.heightMinIn || g.heightIn || "";
+      const htMaxIn = g.heightMaxIn || "";
+      if (htMinIn) {
+        const htStr = htMaxIn ? htMinIn+'"–'+htMaxIn+'"' : htMinIn+'"';
+        rows.push('<div class="cs-row"><span class="cs-label">📏 Height:</span><span class="cs-val">'+htStr+'</span></div>');
       }
       // Temperature
       if (g.tempF) {
@@ -1989,12 +2120,23 @@ function renderDetail() {
         rows.push('<div class="cs-row"><span class="cs-label">🌾 Ready when:</span><span class="cs-val">'+g.harvestCues+'</span></div>');
       }
       // Produce/bloom size
-      if (g.produceSizeIn || g.produceWeightLbs) {
-        const sz = [g.produceSizeIn ? g.produceSizeIn : "", g.produceWeightLbs ? g.produceWeightLbs : ""].filter(Boolean).join(" · ");
-        rows.push('<div class="cs-row"><span class="cs-label">📦 Produce:</span><span class="cs-val">'+sz+'</span></div>');
+      // Produce size range
+      const pSizeMin = g.produceSizeMin || g.produceSizeIn || "";
+      const pSizeMax = g.produceSizeMax || "";
+      const pWtMin   = g.produceWeightMin || g.produceWeightLbs || "";
+      const pWtMax   = g.produceWeightMax || "";
+      if (pSizeMin || pWtMin) {
+        const sizeStr = pSizeMin && pSizeMax ? pSizeMin+' – '+pSizeMax : pSizeMin || "";
+        const wtStr   = pWtMin && pWtMax ? pWtMin+' – '+pWtMax : pWtMin || "";
+        const parts   = [sizeStr ? sizeStr+'"' : "", wtStr ? wtStr+' lbs' : ""].filter(Boolean).join(" · ");
+        rows.push('<div class="cs-row"><span class="cs-label">📦 Produce:</span><span class="cs-val">'+parts+'</span></div>');
       }
-      if (g.bloomSizeIn) {
-        rows.push('<div class="cs-row"><span class="cs-label">🌸 Bloom:</span><span class="cs-val">'+g.bloomSizeIn+'"</span></div>');
+      // Bloom size range
+      const bSizeMin = g.bloomSizeMin || g.bloomSizeIn || "";
+      const bSizeMax = g.bloomSizeMax || "";
+      if (bSizeMin) {
+        const bloomStr = bSizeMin && bSizeMax ? bSizeMin+'" – '+bSizeMax+'"' : bSizeMin+'"';
+        rows.push('<div class="cs-row"><span class="cs-label">🌸 Bloom:</span><span class="cs-val">'+bloomStr+'</span></div>');
       }
     }
 
@@ -2163,6 +2305,21 @@ function renderDetail() {
   }
 
   // Variety — inline text edit on click
+  // Container toggle
+  const contAttr = document.getElementById("attr-container");
+  if (contAttr) {
+    contAttr.addEventListener("click", () => {
+      plant.container = !plant.container;
+      myPlants = myPlants.map(p => p.id !== plant.id ? p : { ...p, container: plant.container });
+      savePlants();
+      contAttr.style.background = plant.container ? "rgba(61,131,97,0.08)" : "";
+      contAttr.style.borderColor = plant.container ? "var(--green)" : "";
+      const lbl = document.getElementById("attr-container-label");
+      if (lbl) lbl.textContent = plant.container ? "Container" : "Not in container";
+      showToast(plant.container ? "🪣 Marked as container grown" : "Container status removed");
+    });
+  }
+
   // Quantity inline edit
   const qtyAttr  = document.getElementById("attr-qty");
   const qtyLabel = document.getElementById("attr-qty-label");
@@ -2364,6 +2521,11 @@ function initCustomForm() {
     catSel.addEventListener("change", toggleGrowType);
     toggleGrowType();
   }
+  const contCheck = document.getElementById("cf-container");
+  const contDims  = document.getElementById("cf-container-dims");
+  if (contCheck && contDims) {
+    contCheck.addEventListener("change", () => { contDims.style.display = contCheck.checked ? "" : "none"; });
+  }
   const grid = document.getElementById("cf-emoji-grid");
   if (!grid || grid.children.length > 0) return;
   PLANT_EMOJIS.forEach(em => {
@@ -2406,7 +2568,10 @@ function resetForm() {
   const lig = document.getElementById("cf-light"); if(lig) lig.value = "Natural Sun";
   const noE = document.getElementById("cf-no-emoji"); if(noE) noE.checked = false;
   const orgEl = document.getElementById("cf-organic");  if(orgEl) orgEl.checked = false;
-  const gtEl  = document.getElementById("cf-growtype");   if(gtEl)  gtEl.value  = "";
+  const gtEl   = document.getElementById("cf-growtype");   if(gtEl)   gtEl.value   = "";
+  const contEl = document.getElementById("cf-container");  if(contEl) contEl.checked = false;
+  ["cf-cont-w","cf-cont-h","cf-cont-d"].forEach(id => { const el = document.getElementById(id); if(el) el.value = ""; });
+  const cdEl = document.getElementById("cf-container-dims"); if(cdEl) cdEl.style.display = "none";
   const hlmEl = document.getElementById("cf-heirloom"); if(hlmEl) hlmEl.checked = false;
   selectedEmoji = "🌿";
   const grid = document.getElementById("cf-emoji-grid");
@@ -2424,11 +2589,15 @@ function submitCustomPlant() {
 
   const name  = nameEl.value.trim();
   const cat   = catEl.value;
-  const water = parseInt(wEl.value);
-  const fert  = parseInt(fEl.value);
+  const water = wEl.value ? parseInt(wEl.value) : null;
+  const fert  = fEl.value ? parseInt(fEl.value) : null;
   const sun     = document.getElementById("cf-sun").value;
   const organic  = document.getElementById("cf-organic")?.checked  || false;
-  const growType = document.getElementById("cf-growtype")?.value || "";
+  const growType    = document.getElementById("cf-growtype")?.value || "";
+  const container   = document.getElementById("cf-container")?.checked || false;
+  const contWidth   = container ? (document.getElementById("cf-cont-w")?.value || "") : "";
+  const contHeight  = container ? (document.getElementById("cf-cont-h")?.value || "") : "";
+  const contDepth   = container ? (document.getElementById("cf-cont-d")?.value || "") : "";
   const heirloom = document.getElementById("cf-heirloom")?.checked || false;
   const notes   = document.getElementById("cf-notes").value.trim() || "A custom plant in your garden.";
   const location = document.getElementById("cf-location")?.value || "";
@@ -2442,8 +2611,8 @@ function submitCustomPlant() {
 
   if (!name)                             { showErr("cf-name-err",  true);  valid = false; } else showErr("cf-name-err",  false);
   if (!cat)                              { showErr("cf-cat-err",   true);  valid = false; } else showErr("cf-cat-err",   false);
-  if (!water || water < 1 || water > 90){ showErr("cf-water-err", true);  valid = false; } else showErr("cf-water-err", false);
-  if (!fert  || fert  < 1 || fert > 365){ showErr("cf-fert-err",  true);  valid = false; } else showErr("cf-fert-err",  false);
+  if (water && (water < 1 || water > 90)){ showErr("cf-water-err", true); valid = false; } else showErr("cf-water-err", false);
+  if (fert && (fert < 1 || fert > 365)){ showErr("cf-fert-err", true); valid = false; } else showErr("cf-fert-err", false);
 
   if (!valid) return;
 
@@ -2454,6 +2623,7 @@ function submitCustomPlant() {
     waterDays:water, fertilizeDays:fert,
     sunlight:sun, notes,
     location, humidity, light, variety, organic, heirloom, quantity, growType,
+    container, contWidth, contHeight, contDepth,
     custom: true,
     addedDate:now, lastWatered:now, lastFertilized:now
   };
@@ -2709,10 +2879,32 @@ function toggleMultiSelect() {
   renderDashboard();
 }
 
+function bulkMarkTask(taskType) {
+  if (selectedPlantIds.size === 0) return;
+  const now = new Date().toISOString();
+  let count = 0;
+  myPlants = myPlants.map(p => {
+    if (!selectedPlantIds.has(p.id)) return p;
+    count++;
+    if (taskType === "water")     return { ...p, lastWatered: now };
+    if (taskType === "fertilize") return { ...p, lastFertilized: now };
+    if (taskType === "both")      return { ...p, lastWatered: now, lastFertilized: now };
+    return p;
+  });
+  savePlants();
+  const label = taskType === "water" ? "watered" : taskType === "fertilize" ? "fed" : "watered & fed";
+  showToast(`✓ ${count} plant${count!==1?"s":""} marked as ${label}`);
+  selectedPlantIds.clear();
+  multiSelectMode = false;
+  renderDashboard();
+}
+
 function togglePlantSelect(plantId) {
   if (selectedPlantIds.has(plantId)) selectedPlantIds.delete(plantId);
   else selectedPlantIds.add(plantId);
   updateSelectBar();
+  const bulkBar = document.getElementById("bulk-task-bar");
+  if (bulkBar) bulkBar.classList.toggle("show", multiSelectMode && selectedPlantIds.size > 0);
   // update visual
   document.querySelectorAll("[data-plant-id]").forEach(el => {
     el.classList.toggle("selected", selectedPlantIds.has(parseInt(el.dataset.plantId)));
@@ -2903,10 +3095,24 @@ function renderGrowingTimeline(plantId, container) {
   // ── Calculate derived dates ──
   const baseDate = g.plantingDate || g.transplantDate;
 
-  const germEarlyDate  = baseDate && g.germMinDays  ? addDays(baseDate, parseInt(g.germMinDays))  : null;
-  const germLateDate   = baseDate && g.germMaxDays   ? addDays(baseDate, parseInt(g.germMaxDays))   : null;
-  const harvEarlyDate  = baseDate && g.harvestMinDays ? addDays(baseDate, parseInt(g.harvestMinDays)) : null;
-  const harvLateDate   = baseDate && g.harvestMaxDays ? addDays(baseDate, parseInt(g.harvestMaxDays)) : null;
+  const germEarlyDate = baseDate && g.germMinDays ? addDays(baseDate, parseInt(g.germMinDays)) : null;
+  const germLateDate  = baseDate && g.germMaxDays ? addDays(baseDate, parseInt(g.germMaxDays)) : null;
+
+  // Harvest base: use actual germination date if recorded,
+  // else use the estimated mid-germination date,
+  // else fall back to planting/transplant date.
+  const harvBase = g.actualGermDate
+    ? g.actualGermDate
+    : (germEarlyDate && germLateDate)
+      ? addDays(germEarlyDate, Math.round((parseInt(g.germMaxDays) - parseInt(g.germMinDays)) / 2))
+      : germEarlyDate || germLateDate || baseDate;
+
+  const harvEarlyDate = harvBase && g.harvestMinDays ? addDays(harvBase, parseInt(g.harvestMinDays)) : null;
+  const harvLateDate  = harvBase && g.harvestMaxDays ? addDays(harvBase, parseInt(g.harvestMaxDays)) : null;
+
+  const harvBaseLabel = g.actualGermDate ? "actual germination date"
+    : (germEarlyDate || germLateDate) ? "est. germination date"
+    : "planting date";
 
   function dateResult(early, late, actual, label) {
     if (actual) {
@@ -2961,14 +3167,15 @@ function renderGrowingTimeline(plantId, container) {
             <label class="gt-label">Temperature (°F)</label>
             <input class="gt-input" type="number" id="gt-temp" min="-20" max="130" placeholder="e.g. 65" value="${g.tempF || ""}">
           </div>
-          <div class="gt-field">
-            <label class="gt-label">Expected Height (in)</label>
-            <input class="gt-input" type="number" id="gt-height" min="1" max="500" placeholder="e.g. 36" value="${g.heightIn || ""}">
+          <div class="gt-field full">
+            <label class="gt-label">Expected Height (inches)</label>
+            <div class="gt-input-row">
+              <input class="gt-input" type="number" id="gt-height-min" min="1" max="500" placeholder="Min e.g. 24" value="${g.heightMinIn || g.heightIn || ""}" style="flex:1">
+              <span class="gt-input-sep">to</span>
+              <input class="gt-input" type="number" id="gt-height-max" min="1" max="500" placeholder="Max e.g. 48" value="${g.heightMaxIn || ""}" style="flex:1">
+            </div>
           </div>
-          <div class="gt-field">
-            <label class="gt-label">Expected Height (cm)</label>
-            <input class="gt-input" type="number" id="gt-height-cm" min="1" max="1000" placeholder="e.g. 90" value="${g.heightCm || ""}">
-          </div>
+
         </div>
         <div class="gt-save-row">
           <button class="btn-primary" id="gt-save-planting" style="font-size:13px;padding:8px 18px">Save</button>
@@ -3012,7 +3219,7 @@ function renderGrowingTimeline(plantId, container) {
       <div class="gt-card">
         <div class="gt-card-head">
           <span class="gt-card-title">🌾 Harvest</span>
-          <span class="gt-card-badge">From planting or transplant date</span>
+          <span class="gt-card-badge" id="harv-base-badge">From ${harvBaseLabel}</span>
         </div>
         <div class="gt-grid">
           <div class="gt-field">
@@ -3040,18 +3247,30 @@ function renderGrowingTimeline(plantId, container) {
             <textarea class="gt-input" id="gt-harv-cues" rows="2" placeholder="e.g. Skin turns deep red, easily pulls from vine, firm but gives slightly to pressure..." style="resize:vertical">${g.harvestCues || ""}</textarea>
           </div>
           ${(plant.category==="vegetable"||plant.category==="fruit"||plant.category==="tomato") ? `
-          <div class="gt-field">
+          <div class="gt-field full">
             <label class="gt-label">Produce size (inches)</label>
-            <input class="gt-input" type="text" id="gt-produce-size-in" placeholder='e.g. 3"' value="${g.produceSizeIn || ""}">
+            <div class="gt-input-row">
+              <input class="gt-input" type="text" id="gt-produce-size-min" placeholder='Min e.g. 2"' value="${g.produceSizeMin || g.produceSizeIn || ""}" style="flex:1">
+              <span class="gt-input-sep">to</span>
+              <input class="gt-input" type="text" id="gt-produce-size-max" placeholder='Max e.g. 4"' value="${g.produceSizeMax || ""}" style="flex:1">
+            </div>
           </div>
-          <div class="gt-field">
+          <div class="gt-field full">
             <label class="gt-label">Produce weight (lbs)</label>
-            <input class="gt-input" type="text" id="gt-produce-weight" placeholder="e.g. 0.5 lb" value="${g.produceWeightLbs || ""}">
+            <div class="gt-input-row">
+              <input class="gt-input" type="text" id="gt-produce-weight-min" placeholder="Min e.g. 0.25 lb" value="${g.produceWeightMin || g.produceWeightLbs || ""}" style="flex:1">
+              <span class="gt-input-sep">to</span>
+              <input class="gt-input" type="text" id="gt-produce-weight-max" placeholder="Max e.g. 1 lb" value="${g.produceWeightMax || ""}" style="flex:1">
+            </div>
           </div>` : ""}
           ${plant.category==="flower" ? `
-          <div class="gt-field">
+          <div class="gt-field full">
             <label class="gt-label">Bloom size (inches)</label>
-            <input class="gt-input" type="text" id="gt-bloom-size" placeholder='e.g. 2"' value="${g.bloomSizeIn || ""}">
+            <div class="gt-input-row">
+              <input class="gt-input" type="text" id="gt-bloom-size-min" placeholder='Min e.g. 2"' value="${g.bloomSizeMin || g.bloomSizeIn || ""}" style="flex:1">
+              <span class="gt-input-sep">to</span>
+              <input class="gt-input" type="text" id="gt-bloom-size-max" placeholder='Max e.g. 4"' value="${g.bloomSizeMax || ""}" style="flex:1">
+            </div>
           </div>` : ""}
         </div>
         <div class="gt-save-row">
@@ -3069,14 +3288,9 @@ function renderGrowingTimeline(plantId, container) {
     const transplantDate= document.getElementById("gt-transplant").value;
     const qtyPlanted    = document.getElementById("gt-qty-planted").value;
     const tempF         = document.getElementById("gt-temp").value;
-    const heightIn      = document.getElementById("gt-height").value;
-    const heightCm      = document.getElementById("gt-height-cm").value;
-    // Auto-convert height
-    const htInEl = document.getElementById("gt-height");
-    const htCmEl = document.getElementById("gt-height-cm");
-    if (htInEl) htInEl.addEventListener("input", () => { if (htInEl.value) htCmEl.value = Math.round(parseFloat(htInEl.value)*2.54); });
-    if (htCmEl) htCmEl.addEventListener("input", () => { if (htCmEl.value) htInEl.value = Math.round(parseFloat(htCmEl.value)/2.54); });
-    setGrowing(plantId, { plantingDate, transplantDate, qtyPlanted, tempF, heightIn, heightCm });
+    const heightMinIn = document.getElementById("gt-height-min")?.value || "";
+    const heightMaxIn = document.getElementById("gt-height-max")?.value || "";
+    setGrowing(plantId, { plantingDate, transplantDate, qtyPlanted, tempF, heightMinIn, heightMaxIn });
     showToast("Planting info saved");
     renderGrowTab(plantId);
   });
@@ -3098,26 +3312,22 @@ function renderGrowingTimeline(plantId, container) {
     const harvestMaxDays   = document.getElementById("gt-harv-max").value;
     const actualHarvestDate= document.getElementById("gt-harv-actual").value;
     const harvestCues      = document.getElementById("gt-harv-cues")?.value.trim() || "";
-    const produceSizeIn    = document.getElementById("gt-produce-size-in")?.value.trim() || "";
-    const produceWeightLbs = document.getElementById("gt-produce-weight")?.value.trim() || "";
-    const bloomSizeIn      = document.getElementById("gt-bloom-size")?.value.trim() || "";
+    const produceSizeMin   = document.getElementById("gt-produce-size-min")?.value.trim() || "";
+    const produceSizeMax   = document.getElementById("gt-produce-size-max")?.value.trim() || "";
+    const produceWeightMin = document.getElementById("gt-produce-weight-min")?.value.trim() || "";
+    const produceWeightMax = document.getElementById("gt-produce-weight-max")?.value.trim() || "";
+    const bloomSizeMin     = document.getElementById("gt-bloom-size-min")?.value.trim() || "";
+    const bloomSizeMax     = document.getElementById("gt-bloom-size-max")?.value.trim() || "";
     if (harvestMinDays && harvestMaxDays && parseInt(harvestMinDays) > parseInt(harvestMaxDays)) {
       showToast("Min days must be less than max days", "warn"); return;
     }
-    setGrowing(plantId, { harvestMinDays, harvestMaxDays, actualHarvestDate, harvestCues, produceSizeIn, produceWeightLbs, bloomSizeIn });
+    setGrowing(plantId, { harvestMinDays, harvestMaxDays, actualHarvestDate, harvestCues,
+      produceSizeMin, produceSizeMax, produceWeightMin, produceWeightMax, bloomSizeMin, bloomSizeMax });
     showToast("Harvest info saved");
     renderGrowTab(plantId);
   });
 
-  // Live unit conversion on height inputs
-  setTimeout(() => {
-    const htInEl = document.getElementById("gt-height");
-    const htCmEl = document.getElementById("gt-height-cm");
-    if (htInEl && htCmEl) {
-      htInEl.addEventListener("input", () => { if (htInEl.value) htCmEl.value = Math.round(parseFloat(htInEl.value)*2.54); });
-      htCmEl.addEventListener("input", () => { if (htCmEl.value) htInEl.value = Math.round(parseFloat(htCmEl.value)/2.54); });
-    }
-  }, 0);
+
 }
 
 // ══════════════════════════════════════════════════════
@@ -3830,7 +4040,13 @@ self.addEventListener("message", e => {
             if (daysLeft <= 3 && daysLeft >= -1) alerts.push((p.emoji||"🌿") + " " + p.name + " germination expected" + (daysLeft <= 0 ? " now" : " in " + daysLeft + "d"));
           }
           if (!g.actualHarvestDate && g.harvestMinDays) {
-            const harvT = baseT + parseInt(g.harvestMinDays) * MS;
+            // Use actual germ date if available, else estimated germ, else planting date
+            const germMinT = g.germMinDays ? baseT + parseInt(g.germMinDays) * MS : null;
+            const germMaxT = g.germMaxDays ? baseT + parseInt(g.germMaxDays) * MS : null;
+            const hBaseT = g.actualGermDate ? new Date(g.actualGermDate).getTime()
+              : (germMinT && germMaxT) ? germMinT + (germMaxT - germMinT) / 2
+              : germMinT || germMaxT || baseT;
+            const harvT = hBaseT + parseInt(g.harvestMinDays) * MS;
             const daysLeft = Math.ceil((harvT - now) / MS);
             if (daysLeft <= 7 && daysLeft >= -3) alerts.push((p.emoji||"🌾") + " " + p.name + " harvest window starting" + (daysLeft <= 0 ? " now" : " in " + daysLeft + "d"));
           }
@@ -4047,6 +4263,11 @@ const COL_MAP = {
   'notes / care tips': 'notes', 'description': 'notes', 'tips': 'notes',
   // Organic
   'organic': 'organic',
+  // Container
+  'container': 'container', 'container grown': 'container', 'potted': 'container', 'pot': 'container',
+  'container width': 'contWidth', 'contwidth': 'contWidth', 'width (in)': 'contWidth',
+  'container height': 'contHeight', 'contheight': 'contHeight', 'height (in)': 'contHeight',
+  'container depth': 'contDepth', 'contdepth': 'contDepth', 'depth (in)': 'contDepth',
   // Heirloom
   'heirloom': 'heirloom',
   // Quantity
@@ -4060,8 +4281,22 @@ const COL_MAP = {
   'germination min days': 'germMinDays', 'germ min days': 'germMinDays',
   'germination max days': 'germMaxDays', 'germ max days': 'germMaxDays',
   'actual germination date': 'actualGermDate', 'germination date': 'actualGermDate',
+  // Height range
+  'expected height (in)': 'heightMinIn', 'height min (in)': 'heightMinIn', 'heightminin': 'heightMinIn', 'heightin': 'heightMinIn',
+  'height max (in)': 'heightMaxIn', 'heightmaxin': 'heightMaxIn',
+
   'harvest min days': 'harvestMinDays', 'harvest max days': 'harvestMaxDays',
   'actual harvest date': 'actualHarvestDate', 'harvest date': 'actualHarvestDate',
+  // Produce/bloom size ranges
+  'produce size min': 'produceSizeMin', 'produce size (min)': 'produceSizeMin', 'producesizemin': 'produceSizeMin',
+  'produce size max': 'produceSizeMax', 'produce size (max)': 'produceSizeMax', 'producesizemax': 'produceSizeMax',
+  'produce size (in)': 'produceSizeMin', 'produce size': 'produceSizeMin',
+  'produce weight min': 'produceWeightMin', 'produce weight (min)': 'produceWeightMin', 'produceweightmin': 'produceWeightMin',
+  'produce weight max': 'produceWeightMax', 'produce weight (max)': 'produceWeightMax', 'produceweightmax': 'produceWeightMax',
+  'produce weight (lbs)': 'produceWeightMin', 'produce weight': 'produceWeightMin',
+  'bloom size min': 'bloomSizeMin', 'bloom size (min)': 'bloomSizeMin', 'bloomsizemin': 'bloomSizeMin',
+  'bloom size max': 'bloomSizeMax', 'bloom size (max)': 'bloomSizeMax', 'bloomsizemax': 'bloomSizeMax',
+  'bloom size (in)': 'bloomSizeMin', 'bloom size': 'bloomSizeMin',
   // Growing timeline — camelCase keys (for CSVs exported with JSON field names)
   'plantingdate': 'plantingDate', 'transplantdate': 'transplantDate',
   'spacingcm': 'spacingCm', 'spacingin': 'spacingIn',
@@ -4080,7 +4315,7 @@ const CATEGORY_MAP = {
   'herb': 'herb', 'herbs': 'herb', 'herbal': 'herb',
   'tomato': 'tomato', 'tomatoes': 'tomato',
   // Grow type
-  'grow type': 'growType', 'growtype': 'growType', 'type': 'growType',
+  'grow type': 'growType', 'growtype': 'growType', 'growType': 'growType', 'type': 'growType',
   'determinate': 'growType', 'indeterminate': 'growType',
 };
 
@@ -4242,6 +4477,11 @@ function parseSpreadsheet(file) {
           if (gt.includes("indet")) plant.growType = "Indeterminate";
           else if (gt.includes("det")) plant.growType = "Determinate";
           else plant.growType = "";
+        }
+        // Normalize container flag
+        if (plant.container) {
+          const cv = String(plant.container).toLowerCase().trim();
+          plant.container = (cv === "yes" || cv === "true" || cv === "1" || cv === "x");
         }
         // Normalize organic flag
         if (plant.organic) {
