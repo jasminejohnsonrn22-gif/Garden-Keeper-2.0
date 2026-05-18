@@ -2011,7 +2011,7 @@ function renderDetail() {
                 <h2 class="detail-title display" id="hero-name-display">${plant.name}</h2>
               ${plant.variety ? `<div style="font-size:13px;color:var(--ink-soft);font-style:italic;margin-top:1px" id="hero-variety-display">${plant.variety}</div>` : ""}
                 <div class="detail-meta">
-                  <span class="cat-badge" style="background:${meta.light};color:${meta.accent};padding:4px 12px;font-size:13px">${meta.icon} ${meta.label}</span>
+                  <span class="cat-badge" id="attr-cat-badge" style="background:${meta.light};color:${meta.accent};padding:4px 12px;font-size:13px">${meta.icon} ${meta.label}</span>
                   ${plant.location?`<span style="font-size:13px;color:var(--ink-soft)">⌂ ${getLocationMeta(plant.location).icon} ${getLocationMeta(plant.location).name}</span>`:""}
                 </div>
                 <div class="detail-edit-hint">✏️ Tap to edit name or emoji</div>
@@ -2037,6 +2037,12 @@ function renderDetail() {
         </div>
 
         <div class="detail-attr-row" id="detail-attr-row">
+          <div class="detail-attr" id="attr-cat" title="Tap to change category" style="cursor:pointer">
+            <span id="attr-cat-label">${meta.icon} ${meta.label}</span>
+            <div class="detail-attr-dropdown" id="dd-cat" style="min-width:180px">
+              ${[...BUILT_IN_CATS,...customCats].map(c=>`<div class="detail-attr-option${plant.category===c.id?" active":""}" data-val="${c.id}">${c.icon} ${c.label}</div>`).join("")}
+            </div>
+          </div>
           <div class="detail-attr" id="attr-sun" title="Click to edit sunlight hours">
             <span>${plant.light==="Grow Light"?"💡":plant.light==="Both"?"☀️💡":"☀️"}</span>
             <span class="detail-attr-label" id="attr-sun-label">${plant.sunlight ? plant.sunlight+"h/day" : "Add sun hrs"}</span>
@@ -2397,6 +2403,15 @@ function renderDetail() {
     });
   }
   wireAttrDropdown("attr-hum",  "dd-hum",  "humidity",   v => v + " humidity");
+
+  // Category dropdown
+  wireAttrDropdown("attr-cat", "dd-cat", "category", val => {
+    // Also update the hero badge
+    const newMeta = CAT_META[val] || CAT_META.houseplant;
+    const badge = document.getElementById("attr-cat-badge");
+    if (badge) { badge.textContent = newMeta.icon + " " + newMeta.label; badge.style.background = newMeta.light; badge.style.color = newMeta.accent; }
+    return newMeta.icon + " " + newMeta.label;
+  });
   if (plant.category === "tomato") {
     wireAttrDropdown("attr-growtype", "dd-growtype", "growType", null);
   }
