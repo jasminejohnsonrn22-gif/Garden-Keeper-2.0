@@ -1316,8 +1316,8 @@ function getGrowingNotifs() {
       const _gL = g.germMaxDays ? addDays(base, parseInt(g.germMaxDays)) : null;
       const _hBase = g.actualGermDate ? g.actualGermDate
         : (_gE && _gL) ? addDays(_gE, Math.round((parseInt(g.germMaxDays)-parseInt(g.germMinDays))/2))
-        : _gE || _gL || base;
-      const harvDate = g.harvestMinDays ? addDays(_hBase, parseInt(g.harvestMinDays)) : null;
+        : _gE || _gL || base || null;
+      const harvDate = (_hBase && g.harvestMinDays) ? addDays(_hBase, parseInt(g.harvestMinDays)) : null;
       if (harvDate) {
         const d = daysFromNow(harvDate);
         if (d <= 14) notifs.push({ plant:p, type:"harvest", days:d, date:harvDate,
@@ -3092,7 +3092,8 @@ function setGrowing(plantId, data) {
 function addDays(dateStr, days) {
   if (!dateStr || !days) return null;
   const d = new Date(dateStr);
-  d.setDate(d.getDate() + days);
+  if (isNaN(d.getTime())) return null;  // guard against Invalid Date
+  d.setDate(d.getDate() + parseInt(days));
   return d.toISOString().slice(0, 10);
 }
 
@@ -3133,7 +3134,7 @@ function renderGrowingTimeline(plantId, container) {
     ? g.actualGermDate
     : (germEarlyDate && germLateDate)
       ? addDays(germEarlyDate, Math.round((parseInt(g.germMaxDays) - parseInt(g.germMinDays)) / 2))
-      : germEarlyDate || germLateDate || baseDate;
+      : germEarlyDate || germLateDate || baseDate || null;
 
   const harvEarlyDate = harvBase && g.harvestMinDays ? addDays(harvBase, parseInt(g.harvestMinDays)) : null;
   const harvLateDate  = harvBase && g.harvestMaxDays ? addDays(harvBase, parseInt(g.harvestMaxDays)) : null;
