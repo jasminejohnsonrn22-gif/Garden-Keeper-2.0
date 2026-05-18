@@ -2105,9 +2105,9 @@ function renderDetail() {
           </div>
         </div>
 
-        <div class="detail-tabs">
+        <div class="detail-tabs" style="overflow-x:auto;white-space:nowrap;scrollbar-width:none">
           <button class="detail-tab active" data-tab="care">🌿 Care</button>
-          <button class="detail-tab" data-tab="grow">${isGrowingCategory(plant)?"🌾 Grow & Harvest":"🌱 Grow"}</button>
+          <button class="detail-tab" data-tab="grow">🌾 Grow & Harvest</button>
           <button class="detail-tab" data-tab="journal">📷 Journal</button>
         </div>
 
@@ -2537,8 +2537,8 @@ function renderDetail() {
       document.querySelectorAll(".detail-tab-panel").forEach(p => p.classList.remove("active"));
       tab.classList.add("active");
       document.getElementById(tab.dataset.tab + "-tab-panel").classList.add("active");
+      if (tab.dataset.tab === "grow")    renderGrowTab(plant.id);
       if (tab.dataset.tab === "journal") renderJournalTab(plant.id);
-      if (tab.dataset.tab === "grow") renderGrowTab(plant.id);
     });
   });
 
@@ -2824,10 +2824,23 @@ function renderLocations() {
     return;
   }
 
+  // Show manage button always at top
+  const manageRow = document.createElement("div");
+  manageRow.style.cssText = "display:flex;justify-content:flex-end;margin-bottom:16px";
+  manageRow.innerHTML = `<button class="btn-ghost" onclick="showManageLocations()" style="font-size:13px;padding:7px 14px">⚙️ Manage Locations</button>`;
+  content.appendChild(manageRow);
+
+  if (userLocations.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "empty-state";
+    empty.innerHTML = `<div class="empty-emoji">📍</div><p class="empty-title display">No locations yet</p><p class="empty-sub">Tap Manage Locations to add rooms or spots.</p>`;
+    content.appendChild(empty);
+    return;
+  }
+
   // Plants with locations
   userLocations.forEach(loc => {
     const plants = grouped[loc.id] || [];
-    if (plants.length === 0) return;
     const section = document.createElement("div");
     section.className = "location-grid-section";
     section.innerHTML = `
@@ -2843,7 +2856,7 @@ function renderLocations() {
       const fDays = getDaysUntil(plant.lastFertilized, plant.fertilizeDays);
       const uList = [getUrgency(wDays), getUrgency(fDays)];
       const topU = uList.includes("overdue")?"overdue":uList.includes("today")?"today":uList.includes("soon")?"soon":"ok";
-      const urg = URGENCY[topU], meta = CAT_META[plant.category];
+      const urg = URGENCY[topU], meta = CAT_META[plant.category] || {icon:"🌱",label:"Plant",accent:"#3d8361",light:"rgba(61,131,97,0.10)"};
       const card = document.createElement("div");
       card.className = "plant-card";
       card.innerHTML = `
@@ -2863,7 +2876,7 @@ function renderLocations() {
               <span class="cat-badge" style="background:${meta.light};color:${meta.accent}">${meta.icon} ${meta.label}</span>
             </div>
           </div>
-          <div class="card-sunlight">☀️ ${plant.sunlight}</div>
+          <div class="card-sunlight">${plant.sunlight ? "☀️ "+plant.sunlight+"h/day" : ""}</div>
           <div class="care-grid">
             ${[{icon:"💧",label:"Water",days:wDays,u:getUrgency(wDays)},{icon:"🌾",label:"Feed",days:fDays,u:getUrgency(fDays)}].map(item=>{
               const u=URGENCY[item.u];
@@ -2895,7 +2908,7 @@ function renderLocations() {
       const fDays = getDaysUntil(plant.lastFertilized, plant.fertilizeDays);
       const uList = [getUrgency(wDays), getUrgency(fDays)];
       const topU = uList.includes("overdue")?"overdue":uList.includes("today")?"today":uList.includes("soon")?"soon":"ok";
-      const urg = URGENCY[topU], meta = CAT_META[plant.category];
+      const urg = URGENCY[topU], meta = CAT_META[plant.category] || {icon:"🌱",label:"Plant",accent:"#3d8361",light:"rgba(61,131,97,0.10)"};
       const card = document.createElement("div");
       card.className = "plant-card";
       card.innerHTML = `
@@ -2915,7 +2928,7 @@ function renderLocations() {
               <span class="cat-badge" style="background:${meta.light};color:${meta.accent}">${meta.icon} ${meta.label}</span>
             </div>
           </div>
-          <div class="card-sunlight">☀️ ${plant.sunlight}</div>
+          <div class="card-sunlight">${plant.sunlight ? "☀️ "+plant.sunlight+"h/day" : ""}</div>
         </div>`;
       card.addEventListener("click", () => navigateTo("detail", plant.id));
       grid.appendChild(card);
@@ -2938,7 +2951,8 @@ function showManageLocationsModal() {
 
   body.innerHTML = `
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px" id="loc-manage-list"></div>
-    <div style="display:flex;gap:8px;margin-top:4px">
+    <div style="display:flex;gap:8px;margin-top:4px;align-items:center">
+      <button id="new-loc-emoji" type="button" style="font-size:22px;background:white;border:1.5px solid var(--rule);border-radius:7px;padding:5px 9px;cursor:pointer;flex-shrink:0">📍</button>
       <input class="form-input" id="new-loc-name" placeholder="New location name…" maxlength="30" style="flex:1">
       <button class="btn-primary" id="new-loc-add" style="padding:8px 14px;font-size:13px">+ Add</button>
     </div>`;
@@ -2969,15 +2983,23 @@ function showManageLocationsModal() {
   };
   renderLocList();
 
+  const locEmojiBtn = document.getElementById("new-loc-emoji");
+  if (locEmojiBtn) {
+    locEmojiBtn.addEventListener("click", e => {
+      e.stopPropagation();
+      showEmojiPicker(locEmojiBtn, em => { locEmojiBtn.textContent = em; });
+    });
+  }
+
   document.getElementById("new-loc-add").addEventListener("click", () => {
     const name = document.getElementById("new-loc-name").value.trim();
     if (!name) return;
-    const icons = ["🌿","🪟","🚪","🌸","⬛","🏠","🌿","🌱"];
-    const icon = icons[userLocations.length % icons.length];
+    const icon = (locEmojiBtn && locEmojiBtn.textContent !== "📍") ? locEmojiBtn.textContent : "📍";
     const id = name.toLowerCase().replace(/\s+/g,"-").replace(/[^a-z0-9-]/g,"") + "-" + Date.now();
     userLocations.push({ id, name, icon });
     saveLocations();
     document.getElementById("new-loc-name").value = "";
+    if (locEmojiBtn) locEmojiBtn.textContent = "📍";
     renderLocList();
   });
 
@@ -3535,258 +3557,193 @@ function renderGrowTab(plantId) {
   const container = document.getElementById("grow-tab-content");
   if (!container) return;
   container.innerHTML = "";
-
-  // ── Growing Timeline section (fruit & veg only) ──
   const plant = myPlants.find(p => p.id === plantId);
-  if (isGrowingCategory(plant)) {
-    renderGrowingTimeline(plantId, container);
-    // Add divider before propagation section
-    const divider = document.createElement("div");
-    divider.style.cssText = "border-top:1.5px solid var(--rule);margin:20px 0 16px;";
-    const divLabel = document.createElement("div");
-    divLabel.style.cssText = "font-family:var(--font-display);font-size:15px;font-weight:600;color:var(--ink);margin-bottom:14px;";
-    divLabel.textContent = "Propagation Tracking";
-    container.appendChild(divider);
-    container.appendChild(divLabel);
+  if (!plant) return;
+  const g = getGrowing(plantId);
+
+  // ── Helper: date result display ──
+  function dateResult(early, late, actual, label) {
+    if (actual) return '<div class="gt-result">Actual: '+formatDate(actual)+'</div>';
+    if (early && late) {
+      const dE = daysFromNow(early), dL = daysFromNow(late);
+      const cls = dE < 0 ? "overdue" : dE <= 7 ? "soon" : "";
+      const range = formatDate(early,{month:"short",day:"numeric"})+" – "+formatDate(late,{month:"short",day:"numeric",year:"numeric"});
+      const hint  = dE<=0&&dL<=0?" (window passed)" : dE<=0?" (~"+dL+"d left)" : " (in "+dE+"–"+dL+"d)";
+      return '<div class="gt-result '+cls+'">'+range+'<br><span style="font-size:11px;font-weight:400">'+hint+'</span></div>';
+    }
+    if (early) {
+      const d = daysFromNow(early);
+      const cls = d<0?"overdue":d<=7?"soon":"";
+      return '<div class="gt-result '+cls+'">'+formatDate(early)+(d>=0?" (in "+d+"d)":" (passed)")+'</div>';
+    }
+    return '<div class="gt-result empty">Enter dates above to calculate</div>';
   }
 
-  const entries = getPlantGrow(plantId);
+  // ── Calculated dates ──
+  const baseDate = g.plantingDate || g.transplantDate;
+  const germEarlyDate = baseDate && g.germMinDays ? addDays(baseDate, parseInt(g.germMinDays)) : null;
+  const germLateDate  = baseDate && g.germMaxDays ? addDays(baseDate, parseInt(g.germMaxDays)) : null;
+  const harvBase = g.actualGermDate ? g.actualGermDate
+    : (germEarlyDate && germLateDate) ? addDays(germEarlyDate, Math.round((parseInt(g.germMaxDays)-parseInt(g.germMinDays))/2))
+    : germEarlyDate || germLateDate || baseDate || null;
+  const harvEarlyDate = harvBase && g.harvestMinDays ? addDays(harvBase, parseInt(g.harvestMinDays)) : null;
+  const harvLateDate  = harvBase && g.harvestMaxDays ? addDays(harvBase, parseInt(g.harvestMaxDays)) : null;
+  const harvBaseLabel = g.actualGermDate ? "from actual germ." : (germEarlyDate||germLateDate) ? "from est. germ." : "from planting";
 
-  // ── Add new entry form ──
-  const formWrap = document.createElement("div");
-  formWrap.className = "germ-form";
-  formWrap.innerHTML = `
-    <div class="germ-form-title display" id="germ-form-toggle" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between">
-      <span>+ Start Germination or Propagation</span>
-      <span id="germ-chevron" style="font-size:12px;transition:transform 0.2s">${growFormOpen ? "▲" : "▼"}</span>
-    </div>
-    <div id="germ-form-body" style="display:${growFormOpen ? "block" : "none"}">
-      <div class="germ-grid" style="margin-top:14px">
-        <div class="germ-field">
-          <label class="germ-label">Method *</label>
-          <select class="germ-select" id="gf-method">
-            <option value="">Choose…</option>
-            ${GROW_METHODS.map(m => `<option value="${m.id}">${m.icon} ${m.label}</option>`).join("")}
-          </select>
-        </div>
-        <div class="germ-field">
-          <label class="germ-label">Start Date *</label>
-          <input class="germ-input" type="date" id="gf-startdate" value="${new Date().toISOString().slice(0,10)}">
-        </div>
-        <div class="germ-field">
-          <label class="germ-label">Expected days</label>
-          <input class="germ-input" type="number" id="gf-days" min="1" max="365" placeholder="e.g. 14">
-        </div>
-        <div class="germ-field">
-          <label class="germ-label">Initial note</label>
-          <input class="germ-input" type="text" id="gf-note" placeholder="Sowed 3 seeds in moist mix…" maxlength="120">
+  const section = document.createElement("div");
+  section.innerHTML = `
+    <!-- ══ PLANTING ══ -->
+    <div class="gt-card" style="margin-bottom:16px">
+      <div class="gt-card-head">
+        <span class="gt-card-title">🌱 Planting</span>
+        <span class="gt-card-badge">Base date for all calculations</span>
+      </div>
+      <div class="gt-grid">
+        <div class="gt-field"><label class="gt-label">Planting Date</label>
+          <input class="gt-input" type="date" id="gt-planting" value="${g.plantingDate||''}"></div>
+        <div class="gt-field"><label class="gt-label">Transplant Date</label>
+          <input class="gt-input" type="date" id="gt-transplant" value="${g.transplantDate||''}"></div>
+        <div class="gt-field"><label class="gt-label">Qty Planted</label>
+          <input class="gt-input" type="number" id="gt-qty-planted" min="1" max="9999" placeholder="e.g. 6" value="${g.qtyPlanted||''}"></div>
+        <div class="gt-field"><label class="gt-label">Temperature (°F)</label>
+          <input class="gt-input" type="number" id="gt-temp" min="-20" max="130" placeholder="e.g. 65" value="${g.tempF||''}"></div>
+        <div class="gt-field full"><label class="gt-label">Expected Height (in)</label>
+          <div class="gt-input-row">
+            <input class="gt-input" type="number" id="gt-height-min" min="1" max="500" placeholder="Min" value="${g.heightMinIn||''}" style="flex:1">
+            <span class="gt-input-sep">to</span>
+            <input class="gt-input" type="number" id="gt-height-max" min="1" max="500" placeholder="Max" value="${g.heightMaxIn||''}" style="flex:1">
+          </div>
         </div>
       </div>
-      <div class="germ-form-actions">
-        <button class="btn-ghost" id="gf-cancel">Cancel</button>
-        <button class="btn-primary" id="gf-submit">🌱 Start Tracking</button>
+      <div class="gt-save-row">
+        <button class="btn-primary" id="gt-save-planting" style="font-size:13px;padding:8px 18px">Save</button>
+      </div>
+    </div>
+
+    <!-- ══ GERMINATION ══ -->
+    <div class="gt-card" style="margin-bottom:16px">
+      <div class="gt-card-head">
+        <span class="gt-card-title">🌿 Germination</span>
+        <span class="gt-card-badge">Days from planting date</span>
+      </div>
+      <div class="gt-grid">
+        <div class="gt-field"><label class="gt-label">Min days</label>
+          <input class="gt-input" type="number" id="gt-germ-min" min="1" max="365" placeholder="e.g. 5" value="${g.germMinDays||''}"></div>
+        <div class="gt-field"><label class="gt-label">Max days</label>
+          <input class="gt-input" type="number" id="gt-germ-max" min="1" max="365" placeholder="e.g. 14" value="${g.germMaxDays||''}"></div>
+        <div class="gt-field full"><label class="gt-label">Expected window</label>
+          ${dateResult(germEarlyDate, germLateDate, null, "germination")}
+        </div>
+        <div class="gt-field"><label class="gt-label">Actual germination date</label>
+          <input class="gt-input" type="date" id="gt-germ-actual" value="${g.actualGermDate||''}"></div>
+        <div class="gt-field" style="justify-content:flex-end">
+          <label class="gt-label">&nbsp;</label>
+          ${g.actualGermDate ? '<div class="gt-result">Germinated '+formatDate(g.actualGermDate)+'</div>' : '<div class="gt-result empty">Not yet germinated</div>'}
+        </div>
+      </div>
+      <div class="gt-save-row">
+        <button class="btn-primary" id="gt-save-germ" style="font-size:13px;padding:8px 18px">Save</button>
+      </div>
+    </div>
+
+    <!-- ══ HARVEST ══ -->
+    <div class="gt-card" style="margin-bottom:16px">
+      <div class="gt-card-head">
+        <span class="gt-card-title">🌾 Harvest</span>
+        <span class="gt-card-badge" id="harv-base-badge">From ${harvBaseLabel}</span>
+      </div>
+      <div class="gt-grid">
+        <div class="gt-field"><label class="gt-label">Min days to harvest</label>
+          <input class="gt-input" type="number" id="gt-harv-min" min="1" max="730" placeholder="e.g. 60" value="${g.harvestMinDays||''}"></div>
+        <div class="gt-field"><label class="gt-label">Max days to harvest</label>
+          <input class="gt-input" type="number" id="gt-harv-max" min="1" max="730" placeholder="e.g. 80" value="${g.harvestMaxDays||''}"></div>
+        <div class="gt-field full"><label class="gt-label">Expected harvest window</label>
+          ${dateResult(harvEarlyDate, harvLateDate, null, "harvest")}
+        </div>
+        <div class="gt-field"><label class="gt-label">Actual harvest date</label>
+          <input class="gt-input" type="date" id="gt-harv-actual" value="${g.actualHarvestDate||''}"></div>
+        <div class="gt-field" style="justify-content:flex-end">
+          <label class="gt-label">&nbsp;</label>
+          ${g.actualHarvestDate ? '<div class="gt-result">Harvested '+formatDate(g.actualHarvestDate)+'</div>' : '<div class="gt-result empty">Not yet harvested</div>'}
+        </div>
+        <div class="gt-field full"><label class="gt-label">Harvest cues — how to know it is ready</label>
+          <textarea class="gt-input" id="gt-harv-cues" rows="2" placeholder="e.g. Turns deep red, easily pulls from vine…" style="resize:vertical">${g.harvestCues||''}</textarea>
+        </div>
+        <div class="gt-field full"><label class="gt-label">Produce size (in)</label>
+          <div class="gt-input-row">
+            <input class="gt-input" type="text" id="gt-produce-size-min" placeholder='Min' value="${g.produceSizeMin||''}" style="flex:1">
+            <span class="gt-input-sep">to</span>
+            <input class="gt-input" type="text" id="gt-produce-size-max" placeholder='Max' value="${g.produceSizeMax||''}" style="flex:1">
+          </div>
+        </div>
+        <div class="gt-field full"><label class="gt-label">Produce weight (lbs)</label>
+          <div class="gt-input-row">
+            <input class="gt-input" type="text" id="gt-produce-weight-min" placeholder="Min" value="${g.produceWeightMin||''}" style="flex:1">
+            <span class="gt-input-sep">to</span>
+            <input class="gt-input" type="text" id="gt-produce-weight-max" placeholder="Max" value="${g.produceWeightMax||''}" style="flex:1">
+          </div>
+        </div>
+        <div class="gt-field full"><label class="gt-label">Bloom size (in)</label>
+          <div class="gt-input-row">
+            <input class="gt-input" type="text" id="gt-bloom-size-min" placeholder='Min' value="${g.bloomSizeMin||''}" style="flex:1">
+            <span class="gt-input-sep">to</span>
+            <input class="gt-input" type="text" id="gt-bloom-size-max" placeholder='Max' value="${g.bloomSizeMax||''}" style="flex:1">
+          </div>
+        </div>
+      </div>
+      <div class="gt-save-row">
+        <button class="btn-primary" id="gt-save-harv" style="font-size:13px;padding:8px 18px">Save</button>
       </div>
     </div>`;
 
-  container.appendChild(formWrap);
+  container.appendChild(section);
 
-  // Toggle
-  document.getElementById("germ-form-toggle").addEventListener("click", () => {
-    growFormOpen = !growFormOpen;
-    document.getElementById("germ-form-body").style.display = growFormOpen ? "block" : "none";
-    document.getElementById("germ-chevron").textContent = growFormOpen ? "▲" : "▼";
-  });
-  document.getElementById("gf-cancel").addEventListener("click", () => {
-    growFormOpen = false;
-    document.getElementById("germ-form-body").style.display = "none";
-    document.getElementById("germ-chevron").textContent = "▼";
-  });
-  document.getElementById("gf-submit").addEventListener("click", () => {
-    const method = document.getElementById("gf-method").value;
-    const startDate = document.getElementById("gf-startdate").value;
-    const days = document.getElementById("gf-days").value;
-    const note = document.getElementById("gf-note").value.trim();
-    if (!method || !startDate) { showToast("Please choose a method and start date", "warn"); return; }
-    addGrowEntry(plantId, method, startDate, days, note);
-    growFormOpen = false;
-    showToast("🌱 Grow entry started!");
+  // ── Wire save: Planting ──
+  document.getElementById("gt-save-planting").addEventListener("click", () => {
+    setGrowing(plantId, {
+      plantingDate:  document.getElementById("gt-planting").value,
+      transplantDate:document.getElementById("gt-transplant").value,
+      qtyPlanted:    document.getElementById("gt-qty-planted").value,
+      tempF:         document.getElementById("gt-temp").value,
+      heightMinIn:   document.getElementById("gt-height-min").value,
+      heightMaxIn:   document.getElementById("gt-height-max").value,
+    });
+    showToast("Planting info saved");
     renderGrowTab(plantId);
   });
 
-  // ── Empty state ──
-  if (entries.length === 0) {
-    const empty = document.createElement("div");
-    empty.className = "germ-empty";
-    empty.innerHTML = `
-      <div class="germ-empty-icon">🌱</div>
-      <div class="germ-empty-title display">Nothing tracked yet</div>
-      <div class="germ-empty-sub">Record germination times, propagation attempts,<br>and note what works for this plant.</div>`;
-    container.appendChild(empty);
-    return;
-  }
+  // ── Wire save: Germination ──
+  document.getElementById("gt-save-germ").addEventListener("click", () => {
+    const gMin = document.getElementById("gt-germ-min").value;
+    const gMax = document.getElementById("gt-germ-max").value;
+    if (gMin && gMax && parseInt(gMin) > parseInt(gMax)) { showToast("Min must be less than max","warn"); return; }
+    setGrowing(plantId, { germMinDays:gMin, germMaxDays:gMax, actualGermDate:document.getElementById("gt-germ-actual").value });
+    showToast("Germination info saved");
+    renderGrowTab(plantId);
+  });
 
-  // ── Entry cards ──
-  entries.forEach(entry => {
-    const methodMeta = GROW_METHODS.find(m => m.id === entry.method) || { icon:"🌱", label: entry.method };
-    const start = new Date(entry.startDate);
-    const now = new Date();
-    const daysSince = Math.floor((now - start) / 86400000);
-    const expected = entry.expectedDays;
-    const pct = expected ? Math.min(100, Math.round((daysSince / expected) * 100)) : null;
-    const daysLeft = expected ? expected - daysSince : null;
-    const startStr = start.toLocaleDateString("en-US", { month:"long", day:"numeric", year:"numeric" });
-
-    // Outcome color
-    const outcomeColors = { success:"#3d8361", partial:"#d47c0f", failed:"#c0392b" };
-    const oc = entry.outcome ? outcomeColors[entry.outcome] : "var(--green)";
-    const progressColor = entry.outcome === "failed" ? "#c0392b"
-      : entry.outcome === "success" ? "#3d8361"
-      : pct >= 100 ? "#d47c0f" : "var(--green)";
-
-    const card = document.createElement("div");
-    card.className = "germ-card";
-    card.innerHTML = `
-      <div class="germ-card-head">
-        <div>
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <span class="germ-card-badge" style="background:rgba(61,131,97,0.1);color:var(--green)">${methodMeta.icon} ${methodMeta.label}</span>
-            ${entry.outcome ? `<span class="germ-card-badge" style="background:${oc}18;color:${oc}">${OUTCOME_OPTIONS.find(o=>o.id===entry.outcome)?.label||""}</span>` : ""}
-          </div>
-          <div class="germ-card-started">Started ${startStr} · ${daysSince} day${daysSince!==1?"s":""} ago</div>
-        </div>
-        <button class="germ-card-del" data-del="${entry.id}">🗑</button>
-      </div>`;
-
-    // Progress bar (only if expected days set)
-    if (expected) {
-      const progWrap = document.createElement("div");
-      progWrap.className = "germ-progress-wrap";
-      const daysLeftLabel = daysLeft > 0 ? `${daysLeft}d remaining` : daysLeft === 0 ? "Due today!" : `${Math.abs(daysLeft)}d overdue`;
-      progWrap.innerHTML = `
-        <div class="germ-progress-header">
-          <span class="germ-progress-label">Progress toward ${expected}-day target</span>
-          <span class="germ-progress-days">${daysLeftLabel}</span>
-        </div>
-        <div class="germ-progress-track">
-          <div class="germ-progress-fill" style="width:${pct}%;background:${progressColor}"></div>
-        </div>
-        <div class="germ-progress-milestones">
-          ${[25,50,75,100].map(m => {
-            const hit = pct >= m;
-            const d = Math.round(expected * m / 100);
-            return `<span class="germ-milestone${hit?" hit":""}">Day ${d} (${m}%)</span>`;
-          }).join('<span style="color:var(--rule)"> · </span>')}
-        </div>`;
-      card.appendChild(progWrap);
-    }
-
-    // Notes
-    const bodyDiv = document.createElement("div");
-    bodyDiv.className = "germ-body";
-
-    const notesDiv = document.createElement("div");
-    notesDiv.className = "germ-notes-section";
-    notesDiv.innerHTML = `<div class="germ-notes-title">📝 Progress Notes</div>`;
-
-    const noteList = document.createElement("div");
-    noteList.className = "germ-note-list";
-    noteList.id = `germ-notes-${entry.id}`;
-
-    const renderNotes = () => {
-      noteList.innerHTML = "";
-      if (entry.notes.length === 0) {
-        noteList.innerHTML = `<div style="font-size:13px;color:var(--ink-faint);font-style:italic">No notes yet — add your first observation below.</div>`;
-      } else {
-        [...entry.notes].sort((a,b) => new Date(b.date)-new Date(a.date)).forEach(note => {
-          const row = document.createElement("div");
-          row.className = "germ-note-row";
-          const dateStr = new Date(note.date).toLocaleDateString("en-US", {month:"short",day:"numeric",year:"numeric"});
-          row.innerHTML = `
-            <div class="germ-note-dot"></div>
-            <div style="flex:1;min-width:0">
-              <div class="germ-note-text">${note.text}</div>
-              <div class="germ-note-date">${dateStr}</div>
-            </div>
-            <button class="germ-note-del" data-note="${note.id}">✕</button>`;
-          row.querySelector(".germ-note-del").addEventListener("click", () => {
-            deleteGrowNote(plantId, entry.id, note.id);
-            entry.notes = entry.notes.filter(n => n.id !== note.id);
-            renderNotes();
-          });
-          noteList.appendChild(row);
-        });
-      }
-    };
-    renderNotes();
-    notesDiv.appendChild(noteList);
-
-    // Add note input
-    const addNoteRow = document.createElement("div");
-    addNoteRow.className = "germ-add-note";
-    addNoteRow.innerHTML = `
-      <input type="text" placeholder="Add an observation…" maxlength="150">
-      <button>+ Add</button>`;
-    const noteInput = addNoteRow.querySelector("input");
-    const noteBtn = addNoteRow.querySelector("button");
-    const submitNote = () => {
-      const text = noteInput.value.trim();
-      if (!text) return;
-      addGrowNote(plantId, entry.id, text);
-      entry.notes.push({ id: Date.now(), text, date: new Date().toISOString() });
-      noteInput.value = "";
-      renderNotes();
-    };
-    noteBtn.addEventListener("click", submitNote);
-    noteInput.addEventListener("keydown", e => { if (e.key === "Enter") submitNote(); });
-    notesDiv.appendChild(addNoteRow);
-
-    bodyDiv.appendChild(notesDiv);
-    card.appendChild(bodyDiv);
-
-    // Outcome row
-    const outcomeRow = document.createElement("div");
-    outcomeRow.className = "germ-outcome-row";
-    outcomeRow.innerHTML = `<span class="germ-outcome-label">Outcome:</span>`;
-    OUTCOME_OPTIONS.forEach(opt => {
-      const btn = document.createElement("button");
-      btn.className = "germ-outcome-btn" + (entry.outcome === opt.id ? " " + opt.cls : "");
-      btn.textContent = opt.label;
-      btn.addEventListener("click", () => {
-        setGrowOutcome(plantId, entry.id, opt.id);
-        entry.outcome = entry.outcome === opt.id ? null : opt.id;
-        // update button states
-        outcomeRow.querySelectorAll(".germ-outcome-btn").forEach(b => b.className = "germ-outcome-btn");
-        if (entry.outcome) btn.className = "germ-outcome-btn " + opt.cls;
-        // update badge in header
-        const badge = card.querySelector(".germ-card-head");
-        renderGrowTab(plantId); // re-render to update color + badge
-      });
-      outcomeRow.appendChild(btn);
+  // ── Wire save: Harvest ──
+  document.getElementById("gt-save-harv").addEventListener("click", () => {
+    const hMin = document.getElementById("gt-harv-min").value;
+    const hMax = document.getElementById("gt-harv-max").value;
+    if (hMin && hMax && parseInt(hMin) > parseInt(hMax)) { showToast("Min must be less than max","warn"); return; }
+    setGrowing(plantId, {
+      harvestMinDays:   hMin,
+      harvestMaxDays:   hMax,
+      actualHarvestDate:document.getElementById("gt-harv-actual").value,
+      harvestCues:      document.getElementById("gt-harv-cues").value.trim(),
+      produceSizeMin:   document.getElementById("gt-produce-size-min").value.trim(),
+      produceSizeMax:   document.getElementById("gt-produce-size-max").value.trim(),
+      produceWeightMin: document.getElementById("gt-produce-weight-min").value.trim(),
+      produceWeightMax: document.getElementById("gt-produce-weight-max").value.trim(),
+      bloomSizeMin:     document.getElementById("gt-bloom-size-min").value.trim(),
+      bloomSizeMax:     document.getElementById("gt-bloom-size-max").value.trim(),
     });
-    card.appendChild(outcomeRow);
-
-    // Delete entry
-    card.querySelector("[data-del]").addEventListener("click", () => {
-      if (confirm("Delete this grow entry?")) {
-        deleteGrowEntry(plantId, entry.id);
-        showToast("Entry deleted");
-        renderGrowTab(plantId);
-      }
-    });
-
-    container.appendChild(card);
+    showToast("Harvest info saved");
+    renderGrowTab(plantId);
   });
 }
 
-// ══════════════════════════════════════════════════════
-// END GERMINATION & PROPAGATION
-// ══════════════════════════════════════════════════════
-
-// ══════════════════════════════════════════════════════
-// JOURNAL / PHOTO SYSTEM
-// ══════════════════════════════════════════════════════
-
-const JOURNAL_KEY = "gardenkeeper_journal";
 
 function loadJournal() {
   try {
@@ -4699,11 +4656,21 @@ function parseSpreadsheet(file) {
           const hlmVal = String(plant.heirloom).toLowerCase().trim();
           plant.heirloom = (hlmVal === 'true' || hlmVal === 'yes' || hlmVal === '1' || hlmVal === 'x');
         }
-        // Normalize location - try to match to existing location by name
+        // Normalize location — match existing or create new
         if (plant.location) {
-          const locNorm = plant.location.toLowerCase().trim();
+          const locName = plant.location.trim();
+          const locNorm = locName.toLowerCase();
           const match = userLocations.find(l => l.name.toLowerCase() === locNorm || l.id === locNorm);
-          plant.location = match ? match.id : '';
+          if (match) {
+            plant.location = match.id;
+          } else {
+            // Create a new location entry for this name
+            const locIcons = ["🌿","🪟","🚪","🌸","🏠","🌱","☀️","🪴","🌳","⬛"];
+            const newId = locNorm.replace(/\s+/g,"-").replace(/[^a-z0-9-]/g,"") + "-" + Date.now().toString(36);
+            const newIcon = locIcons[userLocations.length % locIcons.length];
+            userLocations.push({ id: newId, name: locName, icon: newIcon });
+            plant.location = newId;
+          }
         }
 
         // Assign a unique ID
@@ -4753,6 +4720,7 @@ They will be added to your existing garden (existing plants kept).`;
 
       myPlants = [...myPlants, ...deduped];
       savePlants();
+      saveLocations();
       saveGrowing();
 
       const status = document.getElementById('backup-status');
@@ -4943,9 +4911,80 @@ function runAutoBackup() {
 // CATEGORY MANAGER
 // ══════════════════════════════════════════════════════
 
-const CAT_EMOJIS = ["🌱","🌿","🌾","🌻","🌹","🌷","🌸","💐","🌺","🌼","🪷","🍀","🍃","🍂","🍁",
-  "🎋","🎍","🌲","🌳","🌴","🌵","🪴","🪻","🫧","🍄","🥀","🌰","🍓","🍒","🍑","🍇","🍋","🍊","🍎",
-  "🥬","🥦","🥒","🌽","🍅","🫑","🫛","🧄","🧅","🌶️","🪻","💜","🤍","🖤","💛","🧡","❤️"];
+// ── Shared emoji library ──
+const ALL_EMOJIS = {
+  "Plants & Nature": ["🌱","🌿","🌾","🌻","🌹","🌷","🌸","💐","🌺","🌼","🪷","🍀","🍃","🍂","🍁","🎋","🎍","🌲","🌳","🌴","🌵","🪴","🪻","🥀","🌰","🍄"],
+  "Produce":  ["🍓","🍒","🍑","🍇","🍋","🍊","🍎","🥬","🥦","🥒","🌽","🍅","🫑","🫛","🧄","🧅","🌶️","🫐","🍈","🥝","🍆","🥕","🥑","🫒","🧅","🥔"],
+  "Garden":   ["🪣","🌡️","💧","☀️","🌤️","⛅","🌱","🌿","🌍","🏡","🪨","🪵","🌊","🌬️","❄️","🌈","🌙","⭐","🔆","🪜","🛖","🏕️"],
+  "Animals":  ["🐝","🦋","🐛","🪲","🐌","🐞","🦗","🐜","🦟","🕷️","🐦","🦜","🦚","🦢","🐸","🐇","🦔","🐿️"],
+  "Symbols":  ["⭐","✨","💫","🌟","💚","💛","🧡","❤️","💜","🤍","🖤","💙","🌈","☀️","🌙","⚡","🔥","💎","🏆","🎯","✅","🔔"],
+};
+
+const CAT_EMOJIS = Object.values(ALL_EMOJIS).flat();
+
+// Shared emoji picker — call with a button element and callback
+function showEmojiPicker(anchorEl, onPick) {
+  // Remove any existing picker
+  const existing = document.getElementById("shared-emoji-picker");
+  if (existing) { existing.remove(); if (existing._anchor === anchorEl) return; }
+
+  const picker = document.createElement("div");
+  picker.id = "_shared-emoji-picker";
+  picker.style.cssText = "position:fixed;z-index:9000;background:white;border:1.5px solid var(--rule);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.18);padding:12px;width:300px;max-height:340px;overflow-y:auto";
+  picker._anchor = anchorEl;
+
+  // Category tabs
+  const tabRow = document.createElement("div");
+  tabRow.style.cssText = "display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;border-bottom:1px solid var(--rule);padding-bottom:8px";
+  let activeGroup = Object.keys(ALL_EMOJIS)[0];
+
+  const grid = document.createElement("div");
+  grid.style.cssText = "display:grid;grid-template-columns:repeat(8,1fr);gap:3px";
+
+  function renderGroup(group) {
+    activeGroup = group;
+    grid.innerHTML = "";
+    tabRow.querySelectorAll("button").forEach(b => b.style.fontWeight = b.dataset.group === group ? "700" : "400");
+    ALL_EMOJIS[group].forEach(em => {
+      const btn = document.createElement("button");
+      btn.textContent = em;
+      btn.style.cssText = "background:none;border:none;font-size:20px;cursor:pointer;border-radius:5px;padding:4px;line-height:1;transition:background 0.1s";
+      btn.onmouseover = () => btn.style.background = "var(--parchment-dark)";
+      btn.onmouseout  = () => btn.style.background = "none";
+      btn.onclick = () => { onPick(em); picker.remove(); };
+      grid.appendChild(btn);
+    });
+  }
+
+  Object.keys(ALL_EMOJIS).forEach(group => {
+    const btn = document.createElement("button");
+    btn.textContent = group;
+    btn.dataset.group = group;
+    btn.style.cssText = "background:none;border:none;font-size:11px;cursor:pointer;color:var(--ink-mid);padding:3px 8px;border-radius:4px;white-space:nowrap";
+    btn.onclick = () => renderGroup(group);
+    tabRow.appendChild(btn);
+  });
+
+  picker.appendChild(tabRow);
+  picker.appendChild(grid);
+  renderGroup(activeGroup);
+  document.body.appendChild(picker);
+
+  // Position near anchor
+  const rect = anchorEl.getBoundingClientRect();
+  const top  = Math.min(rect.bottom + 6, window.innerHeight - 360);
+  const left = Math.max(6, Math.min(rect.left, window.innerWidth - 316));
+  picker.style.top  = top + "px";
+  picker.style.left = left + "px";
+
+  // Close on outside click
+  setTimeout(() => {
+    document.addEventListener("click", function close(e) {
+      if (!picker.contains(e.target) && e.target !== anchorEl) { picker.remove(); document.removeEventListener("click", close); }
+    });
+  }, 0);
+}
+const CAT_EMOJIS_LIST = CAT_EMOJIS;
 
 let catEditingId = null;
 
@@ -4963,21 +5002,11 @@ function initCategoryManager() {
   if (!listEl || listEl._catInited) return;
   listEl._catInited = true;
 
-  // ── Emoji picker ──
-  CAT_EMOJIS.forEach(em => {
-    const btn = document.createElement("button");
-    btn.textContent = em; btn.type = "button";
-    btn.addEventListener("click", () => {
-      emojiBtn.textContent = em;
-      emojiPop.style.display = "none";
-    });
-    emojiPop.appendChild(btn);
-  });
+  // ── Emoji picker (shared) ──
   emojiBtn.addEventListener("click", e => {
     e.stopPropagation();
-    emojiPop.style.display = emojiPop.style.display === "none" ? "grid" : "none";
+    showEmojiPicker(emojiBtn, em => { emojiBtn.textContent = em; });
   });
-  document.addEventListener("click", () => { emojiPop.style.display = "none"; });
 
   // ── Color picker ──
   colorIn.addEventListener("input", () => { colorSw.style.background = colorIn.value; });
