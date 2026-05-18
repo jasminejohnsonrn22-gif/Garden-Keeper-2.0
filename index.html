@@ -99,11 +99,11 @@
   .card-top-bar { height: 4px; }
   .card-body { padding: 10px 12px 12px; }
   .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; gap: 6px; }
-  .card-name-row { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; min-width: 0; flex: 1; }
+  .card-name-row { display: flex; flex-direction: column; align-items: flex-start; gap: 0; min-width: 0; flex: 1; }
   .card-emoji { font-size: 16px; line-height: 1; flex-shrink: 0; }
   .card-badges { text-align: right; flex-shrink: 0; }
   .card-name { font-family: var(--font-display); color: var(--ink); font-size: 14px; font-weight: 600; margin-bottom: 0; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .card-variety { font-size: 11px; color: var(--ink-soft); font-style: italic; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-variety { font-size: 11px; color: var(--ink-soft); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .card-sunlight { color: var(--ink-faint); font-size: 11px; margin-bottom: 8px; font-style: italic; }
 
   .urgency-badge { display: inline-block; border-radius: 3px; padding: 2px 7px; font-size: 10px; font-weight: 700; font-family: var(--font-body); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 3px; }
@@ -1016,9 +1016,9 @@ window.addEventListener('unhandledrejection', function(e) {
           <div class="form-field">
             <label class="form-label">Humidity needs</label>
             <select class="form-select" id="cf-humidity">
-              <option value="Low">Low (under 40%)</option>
-              <option value="Medium" selected>Medium (40–60%)</option>
-              <option value="High">High (60%+)</option>
+              <option value="Low">Low</option>
+              <option value="Low-Medium" selected>Low-Medium</option>
+              <option value="High">High</option>
             </select>
           </div>
           <div class="form-field">
@@ -1168,18 +1168,18 @@ const VERSION_KEY  = "gardenkeeper_version";
 const AUTOBAK_KEY  = "gardenkeeper_autobak_date";
 
 const PLANTS = [
-  { id:1,  name:"Basil",       emoji:"🌿", category:"vegetable",  waterDays:2,  fertilizeDays:14, sunlight:"Full Sun",        difficulty:"Easy",   notes:"Keep soil moist. Pinch flowers to encourage leaf growth." },
-  { id:2,  name:"Tomatoes",    emoji:"🍅", category:"vegetable",  waterDays:1,  fertilizeDays:7,  sunlight:"Full Sun",        difficulty:"Medium", notes:"Stake when tall. Water at base to prevent disease." },
-  { id:3,  name:"Lavender",    emoji:"💜", category:"flower",     waterDays:7,  fertilizeDays:30, sunlight:"Full Sun",        difficulty:"Easy",   notes:"Drought tolerant. Excellent for pollinators." },
-  { id:4,  name:"Mint",        emoji:"🌱", category:"vegetable",  waterDays:2,  fertilizeDays:21, sunlight:"Partial Shade",   difficulty:"Easy",   notes:"Grows aggressively. Best kept in containers." },
-  { id:5,  name:"Roses",       emoji:"🌹", category:"flower",     waterDays:3,  fertilizeDays:14, sunlight:"Full Sun",        difficulty:"Hard",   notes:"Prune in early spring. Watch for aphids." },
-  { id:6,  name:"Succulents",  emoji:"🪴", category:"houseplant", waterDays:14, fertilizeDays:60, sunlight:"Bright Indirect", difficulty:"Easy",   notes:"Allow soil to dry completely between waterings." },
-  { id:7,  name:"Pothos",      emoji:"🍃", category:"houseplant", waterDays:7,  fertilizeDays:30, sunlight:"Low Light",       difficulty:"Easy",   notes:"Extremely forgiving. Tolerates low light and irregular watering." },
-  { id:8,  name:"Peace Lily",  emoji:"🌼", category:"houseplant", waterDays:5,  fertilizeDays:21, sunlight:"Low Light",       difficulty:"Easy",   notes:"Droops when thirsty — great self-watering signal. Keep away from pets." },
-  { id:9,  name:"Sunflower",   emoji:"🌻", category:"flower",     waterDays:3,  fertilizeDays:14, sunlight:"Full Sun",        difficulty:"Easy",   notes:"Follow the sun when young. Deep water to encourage strong roots." },
-  { id:10, name:"Lettuce",     emoji:"🥬", category:"vegetable",  waterDays:1,  fertilizeDays:14, sunlight:"Partial Shade",   difficulty:"Easy",   notes:"Harvest outer leaves regularly. Bolt-resistant in cool weather." },
-  { id:11, name:"Orchid",      emoji:"🌸", category:"flower",     waterDays:7,  fertilizeDays:14, sunlight:"Bright Indirect", difficulty:"Hard",   notes:"Water by soaking roots, then drain fully. Needs high humidity." },
-  { id:12, name:"Snake Plant", emoji:"🌵", category:"houseplant", waterDays:14, fertilizeDays:60, sunlight:"Any Light",       difficulty:"Easy",   notes:"Nearly indestructible. Excellent air purifier. Avoid overwatering." },
+  { id:1,  name:"Basil",       emoji:"🌿", category:"vegetable",  waterDays:2,  fertilizeDays:14, sunlight:"8",        difficulty:"Easy",   notes:"Keep soil moist. Pinch flowers to encourage leaf growth." },
+  { id:2,  name:"Tomatoes",    emoji:"🍅", category:"vegetable",  waterDays:1,  fertilizeDays:7,  sunlight:"8",        difficulty:"Medium", notes:"Stake when tall. Water at base to prevent disease." },
+  { id:3,  name:"Lavender",    emoji:"💜", category:"flower",     waterDays:7,  fertilizeDays:30, sunlight:"8",        difficulty:"Easy",   notes:"Drought tolerant. Excellent for pollinators." },
+  { id:4,  name:"Mint",        emoji:"🌱", category:"vegetable",  waterDays:2,  fertilizeDays:21, sunlight:"4",   difficulty:"Easy",   notes:"Grows aggressively. Best kept in containers." },
+  { id:5,  name:"Roses",       emoji:"🌹", category:"flower",     waterDays:3,  fertilizeDays:14, sunlight:"8",        difficulty:"Hard",   notes:"Prune in early spring. Watch for aphids." },
+  { id:6,  name:"Succulents",  emoji:"🪴", category:"houseplant", waterDays:14, fertilizeDays:60, sunlight:"3", difficulty:"Easy",   notes:"Allow soil to dry completely between waterings." },
+  { id:7,  name:"Pothos",      emoji:"🍃", category:"houseplant", waterDays:7,  fertilizeDays:30, sunlight:"2",       difficulty:"Easy",   notes:"Extremely forgiving. Tolerates low light and irregular watering." },
+  { id:8,  name:"Peace Lily",  emoji:"🌼", category:"houseplant", waterDays:5,  fertilizeDays:21, sunlight:"2",       difficulty:"Easy",   notes:"Droops when thirsty — great self-watering signal. Keep away from pets." },
+  { id:9,  name:"Sunflower",   emoji:"🌻", category:"flower",     waterDays:3,  fertilizeDays:14, sunlight:"8",        difficulty:"Easy",   notes:"Follow the sun when young. Deep water to encourage strong roots." },
+  { id:10, name:"Lettuce",     emoji:"🥬", category:"vegetable",  waterDays:1,  fertilizeDays:14, sunlight:"4",   difficulty:"Easy",   notes:"Harvest outer leaves regularly. Bolt-resistant in cool weather." },
+  { id:11, name:"Orchid",      emoji:"🌸", category:"flower",     waterDays:7,  fertilizeDays:14, sunlight:"3", difficulty:"Hard",   notes:"Water by soaking roots, then drain fully. Needs high humidity." },
+  { id:12, name:"Snake Plant", emoji:"🌵", category:"houseplant", waterDays:14, fertilizeDays:60, sunlight:"4",       difficulty:"Easy",   notes:"Nearly indestructible. Excellent air purifier. Avoid overwatering." },
 ];
 
 const CATEGORIES = [
@@ -1460,8 +1460,7 @@ function renderGridView(filtered, content) {
     card.style.animationDelay = (idx*0.05)+"s";
     card.style.animationFillMode = "both";
     const emojiHtml   = plant.emoji ? '<span class="card-emoji">'+plant.emoji+'</span>' : "";
-    const varietyHtml  = plant.variety ? '<span class="card-variety">'+plant.variety+'</span>' : "";
-    const qtyHtml      = (plant.quantity && plant.quantity > 1) ? '<span class="card-variety" style="background:rgba(61,131,97,0.1);border-radius:3px;padding:0 5px;font-style:normal;font-weight:600;color:var(--green)">x'+plant.quantity+'</span>' : "";
+    const qtyHtml      = (plant.quantity && plant.quantity > 1) ? ' <span style="font-size:11px;font-style:normal;font-weight:600;color:var(--green)">x'+plant.quantity+'</span>' : "";
     const lightIcon    = plant.light==="Grow Light" ? "💡" : plant.light==="Both" ? "☀️💡" : "☀️";
     const sunDisplay   = plant.sunlight ? lightIcon+" "+plant.sunlight+"h/day" : lightIcon;
     const locHtml      = plant.location ? ' <span class="card-location">⌂ '+getLocationMeta(plant.location).name+'</span>' : "";
@@ -1485,9 +1484,12 @@ function renderGridView(filtered, content) {
           '<div class="card-name-row">'+
             '<div style="display:flex;align-items:center;gap:6px;width:100%;min-width:0">'+
               emojiHtml+
-              '<span class="card-name display">'+plant.name+'</span>'+
+              '<div style="min-width:0;overflow:hidden">'+
+                '<span class="card-name display">'+plant.name+'</span>'+
+                (plant.variety ? '<span class="card-variety"> '+plant.variety+'</span>' : '')+
+                qtyHtml+
+              '</div>'+
             '</div>'+
-            (varietyHtml || qtyHtml ? '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'+varietyHtml+qtyHtml+'</div>' : '')+
           '</div>'+
           '<div class="card-badges">'+
             '<span class="urgency-badge" style="background:'+urg.bg+';color:'+urg.color+'">'+urg.label+'</span><br>'+
@@ -1534,7 +1536,7 @@ function renderListView(filtered, content) {
       <span class="list-emoji">${plant.emoji || "🌿"}</span>
       <div class="list-main">
         <div class="list-name">${plant.name}</div>
-        <div class="list-meta">${meta.icon} ${meta.label}${plant.growType?" · "+plant.growType:""} · ☀️ ${plant.sunlight}${plant.quantity && plant.quantity>1?" · x"+plant.quantity:""}${plant.location?" · ⌂ "+plant.location:""}${plant.humidity?" · 💧 "+plant.humidity:""}${plant.organic?" · 🌿 organic":""}${plant.heirloom?" · 🌱 heirloom":""}</div>
+        <div class="list-meta">${meta.icon} ${meta.label}${plant.growType?" · "+plant.growType:""} ${plant.sunlight ? "· ☀️ "+plant.sunlight+"h/day" : ""}${plant.quantity && plant.quantity>1?" · x"+plant.quantity:""}${plant.location?" · ⌂ "+plant.location:""}${plant.humidity?" · 💧 "+plant.humidity:""}${plant.organic?" · 🌿 organic":""}${plant.heirloom?" · 🌱 heirloom":""}</div>
       </div>
       <div class="list-badges">
         <span class="list-pill" style="background:${urg.bg};color:${urg.color}">${urg.label}</span>
@@ -1875,7 +1877,7 @@ function renderDiscover() {
         <div class="discover-tags">
           <span class="tag tag-water">💧 ${plant.waterDays}d</span>
           <span class="tag tag-feed">🌾 ${plant.fertilizeDays}d</span>
-          <span class="tag tag-sun">☀️ ${plant.sunlight}</span>
+          <span class="tag tag-sun">☀️ ${plant.sunlight ? plant.sunlight+"h/day" : "–"}</span>
         </div>
         <p class="card-notes">${plant.notes}</p>
         <button style="width:100%;background:${owned?"transparent":"#3d8361"};color:${owned?"#b0a08a":"#f5f0e8"};border:${owned?"1.5px solid #d4c9b5":"none"};border-radius:5px;padding:10px;font-family:var(--font-body);font-size:14px;font-weight:600;cursor:${owned?"default":"pointer"};letter-spacing:0.3px;transition:all 0.2s" class="add-btn" data-id="${plant.id}" ${owned?"disabled":""}>
@@ -1914,7 +1916,7 @@ function renderDetail() {
               <span class="detail-emoji" id="hero-emoji-display">${plant.emoji || ""}</span>
               <div>
                 <h2 class="detail-title display" id="hero-name-display">${plant.name}</h2>
-              ${plant.variety ? `<div style="font-size:14px;color:var(--ink-soft);font-style:italic;margin-top:2px" id="hero-variety-display">${plant.variety}</div>` : ""}
+              ${plant.variety ? `<div style="font-size:13px;color:var(--ink-soft);font-style:italic;margin-top:1px" id="hero-variety-display">${plant.variety}</div>` : ""}
                 <div class="detail-meta">
                   <span class="cat-badge" style="background:${meta.light};color:${meta.accent};padding:4px 12px;font-size:13px">${meta.icon} ${meta.label}</span>
                   ${plant.location?`<span style="font-size:13px;color:var(--ink-soft)">⌂ ${getLocationMeta(plant.location).icon} ${getLocationMeta(plant.location).name}</span>`:""}
@@ -1958,16 +1960,16 @@ function renderDetail() {
             <span>💧</span>
             <span class="detail-attr-label">${plant.humidity||"Medium"} humidity</span>
             <div class="detail-attr-dropdown" id="dd-hum">
-              ${["Low","Medium","High"].map(v=>`<div class="detail-attr-option${(plant.humidity||"Medium")===v?" active":""}" data-val="${v}">${v}</div>`).join("")}
+              ${["Low","Low-Medium","High"].map(v=>`<div class="detail-attr-option${(plant.humidity||"Low-Medium")===v?" active":""}" data-val="${v}">${v}</div>`).join("")}
             </div>
           </div>
           <div class="detail-attr" id="attr-variety" title="Click to edit variety" style="${plant.variety?'':'opacity:0.5'}">
             <span>🌿</span>
             <span class="detail-attr-label" id="attr-variety-label">${plant.variety||"Add variety"}</span>
           </div>
-          <div class="detail-attr" id="attr-container" title="Toggle container grown" style="cursor:pointer;${plant.container?'background:rgba(61,131,97,0.08);border-color:var(--green)':''}">
+          <div class="detail-attr" id="attr-container" title="Toggle container grown" style="cursor:pointer;${plant.container?'background:rgba(61,131,97,0.08);border-color:var(--green)':'opacity:0.45'}">
             <span>🪣</span>
-            <span class="detail-attr-label" id="attr-container-label">${plant.container?(plant.contWidth||plant.contHeight?[plant.contWidth?plant.contWidth+'"':'',plant.contHeight?plant.contHeight+'"':'',plant.contDepth?plant.contDepth+'"':''].filter(Boolean).join("×")+" container":"Container"):"Not in container"}</span>
+            <span class="detail-attr-label" id="attr-container-label">${plant.container?(plant.contWidth||plant.contHeight?[plant.contWidth?plant.contWidth+'"':'',plant.contHeight?plant.contHeight+'"':'',plant.contDepth?plant.contDepth+'"':''].filter(Boolean).join("×")+" container":"🪣 Container"):""}</span>
           </div>
           <div class="detail-attr" id="attr-qty" title="Click to edit quantity">
             <span>🔢</span>
@@ -1982,13 +1984,13 @@ function renderDetail() {
               <div class="detail-attr-option${plant.growType==="Indeterminate"?" active":""}" data-val="Indeterminate">🔃 Indeterminate</div>
             </div>
           </div>` : ""}
-          <div class="detail-attr" id="attr-organic" title="Toggle organic" style="cursor:pointer;${plant.organic?'background:rgba(61,131,97,0.08);border-color:var(--green)':''}">
+          <div class="detail-attr" id="attr-organic" title="Toggle organic" style="cursor:pointer;${plant.organic?'background:rgba(61,131,97,0.08);border-color:var(--green)':'opacity:0.45'}">
             <span>🌿</span>
-            <span class="detail-attr-label" id="attr-organic-label">${plant.organic?"Organic":"Not organic"}</span>
+            <span class="detail-attr-label" id="attr-organic-label">${plant.organic?"🌿 Organic":""}</span>
           </div>
-          <div class="detail-attr" id="attr-heirloom" title="Toggle heirloom" style="cursor:pointer;${plant.heirloom?'background:rgba(192,87,43,0.08);border-color:#c0572b':''}">
+          <div class="detail-attr" id="attr-heirloom" title="Toggle heirloom" style="cursor:pointer;${plant.heirloom?'background:rgba(192,87,43,0.08);border-color:#c0572b':'opacity:0.45'}">
             <span>🌱</span>
-            <span class="detail-attr-label" id="attr-heirloom-label">${plant.heirloom?"Heirloom":"Not heirloom"}</span>
+            <span class="detail-attr-label" id="attr-heirloom-label">${plant.heirloom?"🌱 Heirloom":""}</span>
           </div>
         </div>
 
@@ -2288,6 +2290,8 @@ function renderDetail() {
       const save = () => {
         const val = parseFloat(inp.value);
         myPlants = myPlants.map(p => p.id !== plant.id ? p : { ...p, sunlight: isNaN(val) ? "" : String(val) });
+        // Refresh sun display on card
+        const sunLabelEl = document.getElementById("attr-sun-label"); if(sunLabelEl) sunLabelEl.textContent = isNaN(val) ? "Add sun hrs" : val+"h/day";
         savePlants(); plant.sunlight = isNaN(val) ? "" : String(val);
         const newLbl = document.createElement("span");
         newLbl.id = "attr-sun-label"; newLbl.className = "detail-attr-label";
@@ -2315,7 +2319,7 @@ function renderDetail() {
       contAttr.style.background = plant.container ? "rgba(61,131,97,0.08)" : "";
       contAttr.style.borderColor = plant.container ? "var(--green)" : "";
       const lbl = document.getElementById("attr-container-label");
-      if (lbl) lbl.textContent = plant.container ? "Container" : "Not in container";
+      if (lbl) { const dims = [plant.contWidth?plant.contWidth+'"':null,plant.contHeight?plant.contHeight+'"':null,plant.contDepth?plant.contDepth+'"':null].filter(Boolean).join("×"); lbl.textContent = plant.container ? (dims ? dims+" container" : "🪣 Container") : ""; }
       showToast(plant.container ? "🪣 Marked as container grown" : "Container status removed");
     });
   }
@@ -2356,7 +2360,7 @@ function renderDetail() {
       myPlants = myPlants.map(p => p.id !== plant.id ? p : { ...p, organic: plant.organic });
       savePlants();
       const lbl = document.getElementById("attr-organic-label");
-      if (lbl) lbl.textContent = plant.organic ? "Organic" : "Not organic";
+      if (lbl) lbl.textContent = plant.organic ? "🌿 Organic" : "";
       organicAttr.style.background = plant.organic ? "rgba(61,131,97,0.08)" : "";
       organicAttr.style.borderColor = plant.organic ? "var(--green)" : "";
       showToast(plant.organic ? "🌿 Marked as organic" : "Organic status removed");
@@ -2371,7 +2375,7 @@ function renderDetail() {
       myPlants = myPlants.map(p => p.id !== plant.id ? p : { ...p, heirloom: plant.heirloom });
       savePlants();
       const lbl = document.getElementById("attr-heirloom-label");
-      if (lbl) lbl.textContent = plant.heirloom ? "Heirloom" : "Not heirloom";
+      if (lbl) lbl.textContent = plant.heirloom ? "🌱 Heirloom" : "";
       heirloomAttr.style.background  = plant.heirloom ? "rgba(192,87,43,0.08)" : "";
       heirloomAttr.style.borderColor = plant.heirloom ? "#c0572b" : "";
       showToast(plant.heirloom ? "🌱 Marked as heirloom" : "Heirloom status removed");
@@ -2564,7 +2568,7 @@ function resetForm() {
   const loc = document.getElementById("cf-location"); if(loc) loc.value = "";
   const vari = document.getElementById("cf-variety"); if(vari) vari.value = "";
   const qty  = document.getElementById("cf-quantity");  if(qty)  qty.value  = "";
-  const hum = document.getElementById("cf-humidity"); if(hum) hum.value = "Medium";
+  const hum = document.getElementById("cf-humidity"); if(hum) hum.value = "Low-Medium";
   const lig = document.getElementById("cf-light"); if(lig) lig.value = "Natural Sun";
   const noE = document.getElementById("cf-no-emoji"); if(noE) noE.checked = false;
   const orgEl = document.getElementById("cf-organic");  if(orgEl) orgEl.checked = false;
@@ -2591,7 +2595,8 @@ function submitCustomPlant() {
   const cat   = catEl.value;
   const water = wEl.value ? parseInt(wEl.value) : null;
   const fert  = fEl.value ? parseInt(fEl.value) : null;
-  const sun     = document.getElementById("cf-sun").value;
+  const sunRaw  = document.getElementById("cf-sun").value;
+  const sun     = sunRaw && !isNaN(parseFloat(sunRaw)) ? String(parseFloat(sunRaw)) : "";
   const organic  = document.getElementById("cf-organic")?.checked  || false;
   const growType    = document.getElementById("cf-growtype")?.value || "";
   const container   = document.getElementById("cf-container")?.checked || false;
@@ -2737,9 +2742,10 @@ function renderLocations() {
             <div class="card-name-row">
               <div style="display:flex;align-items:center;gap:6px;width:100%;min-width:0">
                 ${plant.emoji ? `<span class="card-emoji">${plant.emoji}</span>` : ""}
-                <span class="card-name display">${plant.name}</span>
+                <div style="min-width:0;overflow:hidden">
+                  <span class="card-name display">${plant.name}</span>${plant.variety ? `<span class="card-variety"> ${plant.variety}</span>` : ""}
+                </div>
               </div>
-              ${plant.variety ? `<span class="card-variety">${plant.variety}</span>` : ""}
             </div>
             <div class="card-badges">
               <span class="urgency-badge" style="background:${urg.bg};color:${urg.color}">${urg.label}</span><br>
@@ -2788,9 +2794,10 @@ function renderLocations() {
             <div class="card-name-row">
               <div style="display:flex;align-items:center;gap:6px;width:100%;min-width:0">
                 ${plant.emoji ? `<span class="card-emoji">${plant.emoji}</span>` : ""}
-                <span class="card-name display">${plant.name}</span>
+                <div style="min-width:0;overflow:hidden">
+                  <span class="card-name display">${plant.name}</span>${plant.variety ? `<span class="card-variety"> ${plant.variety}</span>` : ""}
+                </div>
               </div>
-              ${plant.variety ? `<span class="card-variety">${plant.variety}</span>` : ""}
             </div>
             <div class="card-badges">
               <span class="urgency-badge" style="background:${urg.bg};color:${urg.color}">${urg.label}</span><br>
@@ -4462,8 +4469,9 @@ function parseSpreadsheet(file) {
         // Normalize humidity
         const humVal = (plant.humidity || '').toLowerCase();
         if (humVal.includes('high')) plant.humidity = 'High';
+        else if (humVal.includes('low-med') || humVal.includes('low med') || humVal.includes('medium') || humVal.includes('med')) plant.humidity = 'Low-Medium';
         else if (humVal.includes('low')) plant.humidity = 'Low';
-        else plant.humidity = 'Medium';
+        else plant.humidity = 'Low-Medium';
 
 
         // Normalize quantity
