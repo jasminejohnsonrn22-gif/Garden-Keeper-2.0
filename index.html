@@ -506,6 +506,29 @@
   .journal-edit-tag-chip.active { background:var(--forest); border-color:var(--forest); color:#d8eacc; }
   .journal-edit-actions { display:flex; gap:8px; }
 
+  /* ── Category manager ── */
+  .cat-manager-grid { display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+  .cat-manager-row { display:flex; align-items:center; gap:10px; background:white; border:1.5px solid var(--rule); border-radius:8px; padding:10px 14px; }
+  .cat-manager-icon { font-size:20px; flex-shrink:0; cursor:pointer; }
+  .cat-manager-name { flex:1; font-size:14px; color:var(--ink); font-weight:500; }
+  .cat-manager-swatch { width:18px; height:18px; border-radius:50%; flex-shrink:0; border:2px solid var(--rule); }
+  .cat-manager-edit { background:transparent; border:none; color:var(--ink-faint); cursor:pointer; font-size:14px; padding:3px 6px; border-radius:4px; }
+  .cat-manager-edit:hover { color:var(--green); }
+  .cat-manager-del { background:transparent; border:none; color:var(--ink-faint); cursor:pointer; font-size:14px; padding:3px 6px; border-radius:4px; }
+  .cat-manager-del:hover { color:#c0392b; }
+  .cat-manager-built-in { font-size:10px; color:var(--ink-faint); font-style:italic; margin-left:4px; }
+  .cat-add-form { background:var(--parchment-dark); border:1.5px solid var(--rule); border-radius:8px; padding:14px; margin-bottom:12px; display:flex; flex-direction:column; gap:10px; }
+  .cat-add-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .cat-emoji-pick { font-size:24px; cursor:pointer; padding:4px 8px; border-radius:6px; border:1.5px solid var(--rule); background:white; transition:border-color 0.2s; }
+  .cat-emoji-pick:hover { border-color:var(--green); }
+  .cat-color-pick { width:32px; height:32px; border-radius:6px; border:1.5px solid var(--rule); cursor:pointer; overflow:hidden; position:relative; flex-shrink:0; }
+  .cat-color-pick input { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+  .cat-name-input { flex:1; background:white; border:1.5px solid var(--rule); border-radius:6px; padding:8px 11px; font-family:var(--font-body); font-size:14px; color:var(--ink); outline:none; min-width:120px; transition:border-color 0.2s; }
+  .cat-name-input:focus { border-color:var(--green); }
+  .emoji-picker-popup { position:absolute; z-index:600; background:white; border:1.5px solid var(--rule); border-radius:10px; box-shadow:0 8px 32px rgba(0,0,0,0.15); padding:10px; display:grid; grid-template-columns:repeat(8,1fr); gap:4px; max-width:280px; }
+  .emoji-picker-popup button { background:transparent; border:none; font-size:20px; cursor:pointer; border-radius:5px; padding:4px; transition:background 0.12s; }
+  .emoji-picker-popup button:hover { background:var(--parchment-dark); }
+
   /* ── Push notification panel ── */
   .push-panel { background: white; border: 1.5px solid var(--card-border); border-radius: 10px; padding: 24px 28px; margin-bottom: 24px; }
   .push-panel-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
@@ -808,6 +831,33 @@ window.addEventListener('unhandledrejection', function(e) {
       </div>
     </div>
 
+    <!-- Categories -->
+    <div class="settings-section">
+      <div class="settings-label settings-collapsible" data-target="sect-cats">
+        <span>Manage Categories</span><span class="settings-chevron">▾</span>
+      </div>
+      <div id="sect-cats" class="settings-sect-body" style="display:none">
+        <div id="cat-manager-list" class="cat-manager-grid"></div>
+        <div class="cat-add-form" id="cat-add-form">
+          <div style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--ink)" id="cat-form-title">Add Category</div>
+          <div class="cat-add-row">
+            <div style="position:relative">
+              <button class="cat-emoji-pick" id="cat-emoji-btn" type="button">🌱</button>
+              <div class="emoji-picker-popup" id="cat-emoji-popup" style="display:none;top:44px;left:0"></div>
+            </div>
+            <input class="cat-name-input" id="cat-name-input" type="text" maxlength="20" placeholder="Category name…">
+            <div class="cat-color-pick" id="cat-color-swatch" style="background:#3d8361" title="Pick color">
+              <input type="color" id="cat-color-input" value="#3d8361">
+            </div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn-primary" id="cat-save-btn" style="font-size:13px;padding:8px 18px">Save</button>
+            <button class="btn-ghost" id="cat-cancel-btn" style="font-size:13px;padding:8px 14px;display:none">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Data Backup -->
     <div class="settings-section">
       <div class="settings-label settings-collapsible" data-target="sect-backup">
@@ -972,14 +1022,6 @@ window.addEventListener('unhandledrejection', function(e) {
             <label class="form-label">Category *</label>
             <select class="form-select" id="cf-category">
               <option value="">Choose one...</option>
-              <option value="houseplant">Houseplant</option>
-              <option value="flower">Flower</option>
-              <option value="vegetable">Vegetable / Herb</option>
-              <option value="fruit">Fruit</option>
-              <option value="herb">Herb</option>
-              <option value="tomato">Tomato</option>
-              <option value="dahlia">Dahlia</option>
-              <option value="peony">Peony</option>
             </select>
             <span class="form-error" id="cf-cat-err">Please choose a category</span>
           </div>
@@ -1197,28 +1239,60 @@ const PLANTS = [
   { id:12, name:"Snake Plant", emoji:"🌵", category:"houseplant", waterDays:14, fertilizeDays:60, sunlight:"4",       difficulty:"Easy",   notes:"Nearly indestructible. Excellent air purifier. Avoid overwatering." },
 ];
 
-const CATEGORIES = [
-  { id:"all",        label:"All",         icon:"✦" },
-  { id:"houseplant", label:"Houseplants", icon:"🏠" },
-  { id:"flower",     label:"Flowers",     icon:"🌸" },
-  { id:"vegetable",  label:"Vegetables",  icon:"🥬" },
-  { id:"fruit",      label:"Fruits",      icon:"🍎" },
-  { id:"herb",       label:"Herbs",       icon:"🌿" },
-  { id:"tomato",     label:"Tomatoes",    icon:"🍅" },
-  { id:"dahlia",     label:"Dahlias",     icon:"🌸" },
-  { id:"peony",      label:"Peonies",     icon:"🌺" },
+// ── Built-in categories (never modified) ──
+const BUILT_IN_CATS = [
+  { id:"houseplant", label:"Houseplants", icon:"🏠", accent:"#7fb069" },
+  { id:"flower",     label:"Flowers",     icon:"🌸", accent:"#e07a5f" },
+  { id:"vegetable",  label:"Vegetables",  icon:"🥬", accent:"#3d8361" },
+  { id:"fruit",      label:"Fruits",      icon:"🍎", accent:"#c0572b" },
+  { id:"herb",       label:"Herbs",       icon:"🌿", accent:"#5a8a52" },
+  { id:"tomato",     label:"Tomatoes",    icon:"🍅", accent:"#c0392b" },
+  { id:"dahlia",     label:"Dahlias",     icon:"🌸", accent:"#c06090" },
+  { id:"peony",      label:"Peonies",     icon:"🌺", accent:"#c05070" },
 ];
 
-const CAT_META = {
-  houseplant: { icon:"🏠", label:"Houseplant", accent:"#7fb069", light:"rgba(127,176,105,0.12)" },
-  flower:     { icon:"🌸", label:"Flower",     accent:"#e07a5f", light:"rgba(224,122,95,0.12)"  },
-  vegetable:  { icon:"🥬", label:"Vegetable",  accent:"#3d8361", light:"rgba(61,131,97,0.12)"   },
-  fruit:      { icon:"🍎", label:"Fruit",      accent:"#c0572b", light:"rgba(192,87,43,0.10)"   },
-  herb:       { icon:"🌿", label:"Herb",       accent:"#5a8a52", light:"rgba(90,138,82,0.10)"   },
-  tomato:     { icon:"🍅", label:"Tomato",     accent:"#c0392b", light:"rgba(192,57,43,0.10)"   },
-  dahlia:     { icon:"🌸", label:"Dahlia",     accent:"#c06090", light:"rgba(192,96,144,0.10)"  },
-  peony:      { icon:"🌺", label:"Peony",      accent:"#c05070", light:"rgba(192,80,112,0.10)"   },
-};
+const CUSTOM_CATS_KEY = "gardenkeeper_custom_cats";
+
+function loadCustomCats() {
+  try { const s = localStorage.getItem(CUSTOM_CATS_KEY); return s ? JSON.parse(s) : []; }
+  catch { return []; }
+}
+function saveCustomCats() {
+  try { localStorage.setItem(CUSTOM_CATS_KEY, JSON.stringify(customCats)); } catch {}
+}
+
+let customCats = loadCustomCats();
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return r+","+g+","+b;
+}
+
+function buildCatMeta() {
+  const meta = {};
+  [...BUILT_IN_CATS, ...customCats].forEach(c => {
+    const rgb = hexToRgb(c.accent || "#3d8361");
+    meta[c.id] = { icon:c.icon, label:c.label.replace(/s$/,""), accent:c.accent||"#3d8361", light:"rgba("+rgb+",0.10)" };
+  });
+  return meta;
+}
+
+function buildCategories() {
+  return [
+    { id:"all", label:"All", icon:"✦" },
+    ...BUILT_IN_CATS,
+    ...customCats,
+  ];
+}
+
+// Dynamic — rebuilt whenever custom cats change
+let CATEGORIES = buildCategories();
+let CAT_META    = buildCatMeta();
+
+function refreshCatData() {
+  CATEGORIES = buildCategories();
+  CAT_META   = buildCatMeta();
+}
 
 const URGENCY = {
   overdue: { color:"#c0392b", bg:"#fdf0ed", label:"Overdue" },
@@ -2535,6 +2609,7 @@ let selectedEmoji = "🌿";
 let customNextId = Math.max(1000, ...myPlants.filter(p=>p.custom).map(p=>p.id+1), 1000);
 
 function initCustomForm() {
+  rebuildCategorySelect();
   populateLocationSelect("cf-location", "");
   // Show/hide grow type field for tomato category
   const catSel = document.getElementById("cf-category");
@@ -2977,16 +3052,7 @@ function showBulkRecategorize() {
 
   let chosenCat = null;
   body.innerHTML = `<div class="bulk-cat-grid">${
-    [
-      {id:"houseplant",label:"Houseplant",icon:"🏠"},
-      {id:"flower",label:"Flower",icon:"🌸"},
-      {id:"vegetable",label:"Vegetable",icon:"🥬"},
-      {id:"fruit",label:"Fruit",icon:"🍎"},
-      {id:"herb",label:"Herb",icon:"🌿"},
-      {id:"tomato",label:"Tomato",icon:"🍅"},
-      {id:"dahlia",label:"Dahlia",icon:"🌸"},
-      {id:"peony",label:"Peony",icon:"🌺"}
-    ].map(c => `<div class="bulk-cat-btn" data-cat="${c.id}"><div class="bulk-cat-icon">${c.icon}</div><div class="bulk-cat-name">${c.label}</div></div>`).join("")
+    [...BUILT_IN_CATS, ...customCats].map(c => `<div class="bulk-cat-btn" data-cat="${c.id}"><div class="bulk-cat-icon">${c.icon}</div><div class="bulk-cat-name">${c.label}</div></div>`).join("")
   }</div>`;
 
   body.querySelectorAll(".bulk-cat-btn").forEach(btn => {
@@ -4740,6 +4806,7 @@ function buildBackupObject() {
     grow:       grow,
     growing:    growing,
     journal:    journal,
+    customCats: customCats,
     meta:       loadMeta(),
   };
 }
@@ -4854,6 +4921,185 @@ function runAutoBackup() {
 // END AUTO-BACKUP & VERSION MIGRATION
 // ══════════════════════════════════════════════════════
 
+
+// ══════════════════════════════════════════════════════
+// CATEGORY MANAGER
+// ══════════════════════════════════════════════════════
+
+const CAT_EMOJIS = ["🌱","🌿","🌾","🌻","🌹","🌷","🌸","💐","🌺","🌼","🪷","🍀","🍃","🍂","🍁",
+  "🎋","🎍","🌲","🌳","🌴","🌵","🪴","🪻","🫧","🍄","🥀","🌰","🍓","🍒","🍑","🍇","🍋","🍊","🍎",
+  "🥬","🥦","🥒","🌽","🍅","🫑","🫛","🧄","🧅","🌶️","🪻","💜","🤍","🖤","💛","🧡","❤️"];
+
+let catEditingId = null;
+
+function initCategoryManager() {
+  const listEl    = document.getElementById("cat-manager-list");
+  const nameInput = document.getElementById("cat-name-input");
+  const saveBtn   = document.getElementById("cat-save-btn");
+  const cancelBtn = document.getElementById("cat-cancel-btn");
+  const emojiBtn  = document.getElementById("cat-emoji-btn");
+  const emojiPop  = document.getElementById("cat-emoji-popup");
+  const colorIn   = document.getElementById("cat-color-input");
+  const colorSw   = document.getElementById("cat-color-swatch");
+  const formTitle = document.getElementById("cat-form-title");
+
+  if (!listEl || listEl._catInited) return;
+  listEl._catInited = true;
+
+  // ── Emoji picker ──
+  CAT_EMOJIS.forEach(em => {
+    const btn = document.createElement("button");
+    btn.textContent = em; btn.type = "button";
+    btn.addEventListener("click", () => {
+      emojiBtn.textContent = em;
+      emojiPop.style.display = "none";
+    });
+    emojiPop.appendChild(btn);
+  });
+  emojiBtn.addEventListener("click", e => {
+    e.stopPropagation();
+    emojiPop.style.display = emojiPop.style.display === "none" ? "grid" : "none";
+  });
+  document.addEventListener("click", () => { emojiPop.style.display = "none"; });
+
+  // ── Color picker ──
+  colorIn.addEventListener("input", () => { colorSw.style.background = colorIn.value; });
+
+  // ── Render list ──
+  function renderList() {
+    listEl.innerHTML = "";
+
+    // Built-in (read-only, can only edit label/icon/color but not delete)
+    BUILT_IN_CATS.forEach(cat => {
+      const row = document.createElement("div");
+      row.className = "cat-manager-row";
+      row.innerHTML = `
+        <span class="cat-manager-icon">${cat.icon}</span>
+        <span class="cat-manager-name">${cat.label}<span class="cat-manager-built-in">built-in</span></span>
+        <span class="cat-manager-swatch" style="background:${cat.accent}"></span>
+        <button class="cat-manager-edit" data-id="${cat.id}" title="Edit">✏️</button>`;
+      listEl.appendChild(row);
+    });
+
+    // Custom cats
+    customCats.forEach(cat => {
+      const row = document.createElement("div");
+      row.className = "cat-manager-row";
+      row.innerHTML = `
+        <span class="cat-manager-icon">${cat.icon}</span>
+        <span class="cat-manager-name">${cat.label}</span>
+        <span class="cat-manager-swatch" style="background:${cat.accent}"></span>
+        <button class="cat-manager-edit" data-id="${cat.id}" title="Edit">✏️</button>
+        <button class="cat-manager-del" data-id="${cat.id}" title="Delete">✕</button>`;
+      listEl.appendChild(row);
+    });
+
+    // Wire edit buttons
+    listEl.querySelectorAll(".cat-manager-edit").forEach(btn => {
+      btn.addEventListener("click", () => startEdit(btn.dataset.id));
+    });
+
+    // Wire delete buttons
+    listEl.querySelectorAll(".cat-manager-del").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.dataset.id;
+        const inUse = myPlants.some(p => p.category === id);
+        if (inUse) {
+          if (!confirm(`Plants are using "${id}" category. Delete it? Those plants will show as uncategorized.`)) return;
+          myPlants = myPlants.map(p => p.category === id ? { ...p, category: "houseplant" } : p);
+          savePlants();
+        } else {
+          if (!confirm(`Delete "${id}" category?`)) return;
+        }
+        customCats = customCats.filter(c => c.id !== id);
+        saveCustomCats();
+        refreshCatData();
+        renderList();
+        showToast("Category deleted");
+        renderDashboard();
+      });
+    });
+  }
+
+  function startEdit(id) {
+    catEditingId = id;
+    const cat = [...BUILT_IN_CATS, ...customCats].find(c => c.id === id);
+    if (!cat) return;
+    emojiBtn.textContent  = cat.icon;
+    nameInput.value       = cat.label;
+    colorIn.value         = cat.accent || "#3d8361";
+    colorSw.style.background = cat.accent || "#3d8361";
+    formTitle.textContent = "Edit Category";
+    cancelBtn.style.display = "";
+  }
+
+  function resetForm() {
+    catEditingId = null;
+    emojiBtn.textContent  = "🌱";
+    nameInput.value       = "";
+    colorIn.value         = "#3d8361";
+    colorSw.style.background = "#3d8361";
+    formTitle.textContent = "Add Category";
+    cancelBtn.style.display = "none";
+  }
+
+  cancelBtn.addEventListener("click", resetForm);
+
+  saveBtn.addEventListener("click", () => {
+    const name   = nameInput.value.trim();
+    const icon   = emojiBtn.textContent.trim();
+    const accent = colorIn.value;
+    if (!name) { showToast("Enter a category name", "warn"); return; }
+
+    if (catEditingId) {
+      // Edit built-in
+      const bi = BUILT_IN_CATS.find(c => c.id === catEditingId);
+      if (bi) { bi.label = name; bi.icon = icon; bi.accent = accent; }
+      // Edit custom
+      const ci = customCats.find(c => c.id === catEditingId);
+      if (ci) { ci.label = name; ci.icon = icon; ci.accent = accent; }
+      saveCustomCats();
+      showToast("Category updated ✓");
+    } else {
+      // Add new
+      const id = name.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-") + "-" + Date.now().toString(36);
+      if ([...BUILT_IN_CATS, ...customCats].some(c => c.id === id || c.label.toLowerCase() === name.toLowerCase())) {
+        showToast("A category with that name already exists", "warn"); return;
+      }
+      customCats.push({ id, label: name.endsWith("s") ? name : name + "s", icon, accent });
+      saveCustomCats();
+      showToast("Category added ✓");
+    }
+
+    refreshCatData();
+    renderList();
+    resetForm();
+    // Refresh dashboard filters + custom form select
+    renderDashboard();
+    rebuildCategorySelect();
+  });
+
+  renderList();
+}
+
+function rebuildCategorySelect() {
+  const sel = document.getElementById("cf-category");
+  if (!sel) return;
+  const current = sel.value;
+  sel.innerHTML = '<option value="">Choose one...</option>';
+  [...BUILT_IN_CATS, ...customCats].forEach(cat => {
+    const opt = document.createElement("option");
+    opt.value = cat.id;
+    opt.textContent = cat.icon + " " + cat.label;
+    if (cat.id === current) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// END CATEGORY MANAGER
+// ══════════════════════════════════════════════════════
+
 // ══════════════════════════════════════════════════════
 // BACKUP & RESTORE
 // ══════════════════════════════════════════════════════
@@ -4891,6 +5137,7 @@ function importGardenData(file) {
 
       // Restore all data
       myPlants       = backup.plants;
+      if (backup.customCats) { customCats = backup.customCats; saveCustomCats(); refreshCatData(); }
       userLocations  = backup.locations || userLocations;
       grow           = backup.grow      || {};
       growing        = backup.growing   || {};
@@ -5334,6 +5581,7 @@ function initSettings() {
   applyCustomColors(appearance.customColors);
   applyFontSizes(appearance.fontSizes);
   initBackup();
+  initCategoryManager();
 }
 
 // ── Mobile nav sync ──
