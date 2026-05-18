@@ -1953,7 +1953,7 @@ function renderDiscover() {
 
   filtered.forEach(plant => {
     const owned = !!myPlants.find(p=>p.id===plant.id);
-    const meta = CAT_META[plant.category];
+    const meta = CAT_META[plant.category] || { icon:"🌱", label:plant.category||"Unknown", accent:"#3d8361", light:"rgba(61,131,97,0.10)" };
     const card = document.createElement("div");
     card.className = "plant-card" + (owned?" owned":"");
     card.innerHTML = `
@@ -2037,8 +2037,10 @@ function renderDetail() {
         </div>
 
         <div class="detail-attr-row" id="detail-attr-row">
-          <div class="detail-attr" id="attr-cat" title="Tap to change category" style="cursor:pointer">
-            <span id="attr-cat-label">${meta.icon} ${meta.label}</span>
+          <div class="detail-attr" id="attr-cat" title="Tap to change category" style="cursor:pointer;background:${meta.light};border-color:${meta.accent}55">
+            <span>${meta.icon}</span>
+            <span class="detail-attr-label" id="attr-cat-label" style="color:${meta.accent};font-weight:600">${meta.label}</span>
+            <span style="font-size:10px;color:var(--ink-faint);margin-left:2px">▾</span>
             <div class="detail-attr-dropdown" id="dd-cat" style="min-width:180px">
               ${[...BUILT_IN_CATS,...customCats].map(c=>`<div class="detail-attr-option${plant.category===c.id?" active":""}" data-val="${c.id}">${c.icon} ${c.label}</div>`).join("")}
             </div>
