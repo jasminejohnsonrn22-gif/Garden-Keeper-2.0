@@ -2965,9 +2965,32 @@ function showManageLocationsModal() {
       const row = document.createElement("div");
       row.style.cssText = "display:flex;align-items:center;gap:8px;background:white;border:1.5px solid var(--rule);border-radius:7px;padding:8px 12px;";
       row.innerHTML = `
-        <span style="font-size:18px">${loc.icon}</span>
-        <span style="flex:1;font-size:14px;color:var(--ink)">${loc.name}</span>
-        <button style="background:transparent;border:none;color:var(--ink-faint);cursor:pointer;font-size:16px;padding:2px 6px;" data-del="${loc.id}">✕</button>`;
+        <button data-emoji="${loc.id}" style="font-size:20px;background:none;border:none;cursor:pointer;padding:2px 4px;border-radius:5px;line-height:1" title="Tap to change emoji">${loc.icon}</button>
+        <input data-name="${loc.id}" value="${loc.name}" style="flex:1;font-size:14px;color:var(--ink);border:none;outline:none;background:transparent;font-family:var(--font-body)" maxlength="30">
+        <button data-save="${loc.id}" style="background:transparent;border:none;color:var(--green);cursor:pointer;font-size:13px;padding:2px 6px;font-weight:600" title="Save">✓</button>
+        <button data-del="${loc.id}" style="background:transparent;border:none;color:var(--ink-faint);cursor:pointer;font-size:16px;padding:2px 6px;" title="Delete">✕</button>`;
+
+      // Emoji picker
+      row.querySelector("[data-emoji]").addEventListener("click", e => {
+        e.stopPropagation();
+        const emojiBtn = row.querySelector("[data-emoji]");
+        showEmojiPicker(emojiBtn, em => {
+          emojiBtn.textContent = em;
+          const locObj = userLocations.find(l => l.id === loc.id);
+          if (locObj) { locObj.icon = em; saveLocations(); renderLocations(); }
+        });
+      });
+
+      // Name edit + save
+      row.querySelector("[data-save]").addEventListener("click", () => {
+        const nameEl = row.querySelector("[data-name]");
+        const newName = nameEl.value.trim();
+        if (!newName) return;
+        const locObj = userLocations.find(l => l.id === loc.id);
+        if (locObj) { locObj.name = newName; saveLocations(); populateLocationSelect("cf-location", ""); showToast("Location updated"); }
+      });
+
+      // Delete
       row.querySelector("[data-del]").addEventListener("click", () => {
         if (myPlants.some(p => p.location === loc.id)) {
           if (!confirm(`Remove "${loc.name}"? Plants assigned here will become unlocated.`)) return;
@@ -2977,7 +3000,9 @@ function showManageLocationsModal() {
         userLocations = userLocations.filter(l => l.id !== loc.id);
         saveLocations();
         renderLocList();
+        renderLocations();
       });
+
       list.appendChild(row);
     });
   };
@@ -4912,43 +4937,94 @@ function runAutoBackup() {
 // ══════════════════════════════════════════════════════
 
 // ── Shared emoji library ──
+// ══════════════════════════════════════════════════════
+// FULL EMOJI PICKER
+// ══════════════════════════════════════════════════════
+
 const ALL_EMOJIS = {
-  "Plants & Nature": ["🌱","🌿","🌾","🌻","🌹","🌷","🌸","💐","🌺","🌼","🪷","🍀","🍃","🍂","🍁","🎋","🎍","🌲","🌳","🌴","🌵","🪴","🪻","🥀","🌰","🍄"],
-  "Produce":  ["🍓","🍒","🍑","🍇","🍋","🍊","🍎","🥬","🥦","🥒","🌽","🍅","🫑","🫛","🧄","🧅","🌶️","🫐","🍈","🥝","🍆","🥕","🥑","🫒","🧅","🥔"],
-  "Garden":   ["🪣","🌡️","💧","☀️","🌤️","⛅","🌱","🌿","🌍","🏡","🪨","🪵","🌊","🌬️","❄️","🌈","🌙","⭐","🔆","🪜","🛖","🏕️"],
-  "Animals":  ["🐝","🦋","🐛","🪲","🐌","🐞","🦗","🐜","🦟","🕷️","🐦","🦜","🦚","🦢","🐸","🐇","🦔","🐿️"],
-  "Symbols":  ["⭐","✨","💫","🌟","💚","💛","🧡","❤️","💜","🤍","🖤","💙","🌈","☀️","🌙","⚡","🔥","💎","🏆","🎯","✅","🔔"],
+  "🌿 Plants":    ["🌱","🌿","🌾","🌻","🌹","🌷","🌸","💐","🌺","🌼","🪷","🍀","🍃","🍂","🍁","🎋","🎍","🌲","🌳","🌴","🌵","🪴","🪻","🥀","🌰","🍄","🪸","🫧","🌍","🌎","🌏"],
+  "🍎 Produce":   ["🍓","🍒","🍑","🍇","🍋","🍊","🍎","🍏","🍐","🍌","🍉","🍈","🫐","🥭","🍍","🥥","🫒","🥝","🍆","🥕","🥔","🌽","🥦","🥬","🥒","🧄","🧅","🌶️","🫑","🫛","🥑","🫘","🥜","🌰","🍅"],
+  "🐝 Animals":   ["🐝","🦋","🐛","🪲","🐌","🐞","🦗","🐜","🦟","🕷️","🐦","🦜","🦚","🦢","🦩","🦉","🦅","🐸","🐇","🦔","🐿️","🦝","🦦","🐓","🦃","🦤","🪶","🐺","🦊","🐰","🐭","🐁","🦌","🐄","🐖","🐑","🐐","🦙","🦘","🦥","🦨","🦡"],
+  "☀️ Weather":   ["☀️","🌤️","⛅","🌥️","🌦️","🌧️","⛈️","🌩️","🌨️","❄️","🌬️","💨","🌊","🌈","🌙","🌛","🌜","⭐","🌟","💫","✨","⚡","🔥","💧","🌡️","🌍","🌱"],
+  "🏡 Places":    ["🏡","🏠","🏘️","🛖","🏕️","⛺","🪨","🪵","🌾","🚿","🪣","🪜","🏗️","🌉","🌄","🌅","🌆","🌇","🌃","🏙️","🛕","⛪","🕌","🕍"],
+  "💚 Symbols":   ["💚","💛","🧡","❤️","💜","🤍","🖤","💙","🩵","🩶","🩷","❤️‍🔥","💕","💞","💗","💓","💝","💘","💟","☮️","✡️","🔯","♾️","✅","❎","🔆","🔅","💎","🏆","🎯","🔔","🔕","⚡","🌈","🎀","🎁","🎊","🎉"],
+  "😀 Faces":     ["😀","😃","😄","😁","😆","😅","🤣","😂","🙂","🙃","😉","😊","😇","🥰","😍","🤩","😘","😗","😚","😙","🥲","😋","😛","😜","🤪","😝","🤑","🤗","🤭","🤫","🤔","🤐","🤨","😐","😑","😶","😏","😒","🙄","😬","🤥","😔","😪","🤤","😴","😷","🤒","🤕","🤢","🤮","🥵","🥶","🥴","😵","🤯","🤠","🥳","🥸","😎","🤓","🧐"],
+  "👋 People":    ["👋","🤚","🖐️","✋","🖖","👌","🤌","🤏","✌️","🤞","🫰","🤟","🤘","🤙","👈","👉","👆","🖕","👇","☝️","🫵","👍","👎","✊","👊","🤛","🤜","👏","🙌","🫶","👐","🤲","🤝","🙏","✍️","💅","🤳","💪","🦾","🦿","🦵","🦶","👂","🦻","👃","🫀","🫁","🧠","🦷","🦴","👀","👁️","👅","👄","🫦","💋"],
+  "🏃 Activities":["⚽","🏀","🏈","⚾","🥎","🎾","🏐","🏉","🥏","🎱","🪀","🏓","🏸","🏒","🥊","🥋","🥅","⛳","🏹","🎣","🤿","🎽","🎿","🛷","🥌","🎯","🪃","🥌","🎳","🎪","🎠","🎡","🎢","🎭","🎨","🖼️","🎰","🚂","✈️","🌋","🗻","🏔️","🎑","🏞️","🌠","🎆","🎇","🧨","🎐","🎏"],
+  "🍕 Food":      ["🍕","🍔","🍟","🌭","🌮","🌯","🫔","🥙","🥚","🍳","🥘","🍲","🫕","🥣","🥗","🍿","🧈","🥞","🧇","🥓","🥩","🍗","🍖","🌽","🥜","🍞","🥐","🥖","🥨","🥯","🧀","🥗","🍜","🍝","🍛","🍣","🍱","🍤","🍙","🍚","🍘","🍥","🥮","🍢","🧆","🥚","🍡","🥟","🍦","🍧","🍨","🍩","🍪","🎂","🍰","🧁","🥧","🍫","🍬","🍭","🍮","🍯"],
+  "📱 Objects":   ["📱","💻","🖥️","⌨️","🖱️","🖨️","📷","📸","📹","🎥","📽️","🎞️","📞","☎️","📟","📠","📺","📻","🧭","⏱️","⏰","🕰️","⌚","📡","🔋","🔌","💡","🔦","🕯️","🧯","🛢️","💰","💳","💵","💴","💶","💷","💸","💹","✉️","📧","📨","📩","📤","📥","📦","📫","📪","📬","📭","📮","🗳️","✏️","✒️","🖊️","🖋️","📝","📁","📂","🗂️","📅","📆","📇","📈","📉","📊","📋","📌","📍","✂️","🗃️","🗄️","🗑️","🔒","🔓","🔏","🔐","🔑","🗝️","🔨","🪓","⛏️","⚒️","🛠️","🗡️","⚔️","🛡️","🪚","🔧","🪛","🔩","⚙️","🗜️","⚖️","🦯","🔗","⛓️","🪝","🧲","🪜","🧰","🧲","🪤"],
 };
 
 const CAT_EMOJIS = Object.values(ALL_EMOJIS).flat();
 
-// Shared emoji picker — call with a button element and callback
 function showEmojiPicker(anchorEl, onPick) {
-  // Remove any existing picker
-  const existing = document.getElementById("shared-emoji-picker");
-  if (existing) { existing.remove(); if (existing._anchor === anchorEl) return; }
+  // Remove existing picker
+  const existingId = "_shared-emoji-picker";
+  const existing = document.getElementById(existingId);
+  if (existing) {
+    existing.remove();
+    if (existing._anchor === anchorEl) return; // toggle off
+  }
 
   const picker = document.createElement("div");
-  picker.id = "_shared-emoji-picker";
-  picker.style.cssText = "position:fixed;z-index:9000;background:white;border:1.5px solid var(--rule);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.18);padding:12px;width:300px;max-height:340px;overflow-y:auto";
+  picker.id = existingId;
   picker._anchor = anchorEl;
+  picker.style.cssText = [
+    "position:fixed;z-index:9999;background:white",
+    "border:1.5px solid var(--rule);border-radius:14px",
+    "box-shadow:0 16px 48px rgba(0,0,0,0.22)",
+    "padding:0;width:320px;max-height:420px",
+    "display:flex;flex-direction:column;overflow:hidden",
+  ].join(";");
 
-  // Category tabs
-  const tabRow = document.createElement("div");
-  tabRow.style.cssText = "display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;border-bottom:1px solid var(--rule);padding-bottom:8px";
-  let activeGroup = Object.keys(ALL_EMOJIS)[0];
+  // ── Search bar ──
+  const searchWrap = document.createElement("div");
+  searchWrap.style.cssText = "padding:10px 10px 6px;border-bottom:1px solid var(--rule);flex-shrink:0";
+  const searchRow = document.createElement("div");
+  searchRow.style.cssText = "display:flex;gap:6px;align-items:center";
+  const searchInput = document.createElement("input");
+  searchInput.placeholder = "Search or paste any emoji…";
+  searchInput.style.cssText = "flex:1;border:1.5px solid var(--rule);border-radius:6px;padding:6px 10px;font-size:13px;font-family:var(--font-body);outline:none;color:var(--ink)";
+  searchInput.addEventListener("focus", () => searchInput.style.borderColor = "var(--green)");
+  searchInput.addEventListener("blur",  () => searchInput.style.borderColor = "var(--rule)");
+  const useBtn = document.createElement("button");
+  useBtn.textContent = "Use";
+  useBtn.style.cssText = "background:var(--green);color:white;border:none;border-radius:6px;padding:6px 12px;font-size:13px;cursor:pointer;font-family:var(--font-body);font-weight:600;white-space:nowrap";
+  useBtn.onclick = () => {
+    const val = searchInput.value.trim();
+    if (val) { onPick(val); picker.remove(); }
+  };
+  searchInput.addEventListener("keydown", e => { if (e.key === "Enter" && searchInput.value.trim()) { onPick(searchInput.value.trim()); picker.remove(); } });
+  searchRow.appendChild(searchInput);
+  searchRow.appendChild(useBtn);
+  searchWrap.appendChild(searchRow);
+  picker.appendChild(searchWrap);
 
+  // ── Category tab bar ──
+  const groups = Object.keys(ALL_EMOJIS);
+  let activeGroup = groups[0];
+  const tabBar = document.createElement("div");
+  tabBar.style.cssText = "display:flex;overflow-x:auto;gap:2px;padding:6px 8px;border-bottom:1px solid var(--rule);flex-shrink:0;scrollbar-width:none";
+
+  // ── Emoji grid ──
   const grid = document.createElement("div");
-  grid.style.cssText = "display:grid;grid-template-columns:repeat(8,1fr);gap:3px";
+  grid.style.cssText = "display:grid;grid-template-columns:repeat(9,1fr);gap:2px;padding:8px;overflow-y:auto;flex:1";
 
-  function renderGroup(group) {
+  function renderGroup(group, searchTerm) {
     activeGroup = group;
     grid.innerHTML = "";
-    tabRow.querySelectorAll("button").forEach(b => b.style.fontWeight = b.dataset.group === group ? "700" : "400");
-    ALL_EMOJIS[group].forEach(em => {
+    tabBar.querySelectorAll("button").forEach(b => {
+      b.style.background   = b.dataset.g === group ? "var(--green)" : "transparent";
+      b.style.color        = b.dataset.g === group ? "white" : "var(--ink-soft)";
+    });
+    const emojis = searchTerm
+      ? Object.values(ALL_EMOJIS).flat().filter((e,i,a) => a.indexOf(e)===i) // dedupe
+      : ALL_EMOJIS[group];
+    emojis.forEach(em => {
       const btn = document.createElement("button");
       btn.textContent = em;
-      btn.style.cssText = "background:none;border:none;font-size:20px;cursor:pointer;border-radius:5px;padding:4px;line-height:1;transition:background 0.1s";
+      btn.title = em;
+      btn.style.cssText = "background:none;border:none;font-size:22px;cursor:pointer;border-radius:6px;padding:3px;line-height:1;transition:background 0.08s";
       btn.onmouseover = () => btn.style.background = "var(--parchment-dark)";
       btn.onmouseout  = () => btn.style.background = "none";
       btn.onclick = () => { onPick(em); picker.remove(); };
@@ -4956,35 +5032,66 @@ function showEmojiPicker(anchorEl, onPick) {
     });
   }
 
-  Object.keys(ALL_EMOJIS).forEach(group => {
-    const btn = document.createElement("button");
-    btn.textContent = group;
-    btn.dataset.group = group;
-    btn.style.cssText = "background:none;border:none;font-size:11px;cursor:pointer;color:var(--ink-mid);padding:3px 8px;border-radius:4px;white-space:nowrap";
-    btn.onclick = () => renderGroup(group);
-    tabRow.appendChild(btn);
+  // Search handler
+  searchInput.addEventListener("input", () => {
+    const term = searchInput.value.trim().toLowerCase();
+    if (!term) { renderGroup(activeGroup); return; }
+    // Simple substring search across all emoji (unicode name not available, just show all)
+    grid.innerHTML = "";
+    const all = [...new Set(Object.values(ALL_EMOJIS).flat())];
+    all.forEach(em => {
+      const btn = document.createElement("button");
+      btn.textContent = em;
+      btn.style.cssText = "background:none;border:none;font-size:22px;cursor:pointer;border-radius:6px;padding:3px;line-height:1";
+      btn.onmouseover = () => btn.style.background = "var(--parchment-dark)";
+      btn.onmouseout  = () => btn.style.background = "none";
+      btn.onclick = () => { onPick(em); picker.remove(); };
+      grid.appendChild(btn);
+    });
   });
 
-  picker.appendChild(tabRow);
+  groups.forEach(group => {
+    const btn = document.createElement("button");
+    btn.textContent = group.split(" ")[0]; // just the emoji part of group name
+    btn.dataset.g = group;
+    btn.title = group;
+    btn.style.cssText = "background:transparent;border:none;font-size:18px;cursor:pointer;border-radius:6px;padding:4px 6px;flex-shrink:0;transition:background 0.12s";
+    btn.onclick = () => { searchInput.value = ""; renderGroup(group); };
+    tabBar.appendChild(btn);
+  });
+
+  picker.appendChild(tabBar);
   picker.appendChild(grid);
   renderGroup(activeGroup);
   document.body.appendChild(picker);
 
   // Position near anchor
   const rect = anchorEl.getBoundingClientRect();
-  const top  = Math.min(rect.bottom + 6, window.innerHeight - 360);
-  const left = Math.max(6, Math.min(rect.left, window.innerWidth - 316));
+  const spaceBelow = window.innerHeight - rect.bottom;
+  const top = spaceBelow > 440 ? rect.bottom + 6 : Math.max(6, rect.top - 440);
+  const left = Math.max(6, Math.min(rect.left, window.innerWidth - 330));
   picker.style.top  = top + "px";
   picker.style.left = left + "px";
+
+  // Focus search
+  setTimeout(() => searchInput.focus(), 50);
 
   // Close on outside click
   setTimeout(() => {
     document.addEventListener("click", function close(e) {
-      if (!picker.contains(e.target) && e.target !== anchorEl) { picker.remove(); document.removeEventListener("click", close); }
+      if (!picker.contains(e.target) && e.target !== anchorEl) {
+        picker.remove();
+        document.removeEventListener("click", close);
+      }
     });
   }, 0);
 }
+
 const CAT_EMOJIS_LIST = CAT_EMOJIS;
+
+// ══════════════════════════════════════════════════════
+// END EMOJI PICKER
+// ══════════════════════════════════════════════════════
 
 let catEditingId = null;
 
