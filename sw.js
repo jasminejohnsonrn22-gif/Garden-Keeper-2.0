@@ -1,4 +1,4 @@
-const CACHE_NAME = 'garden-keeper-v3';
+const CACHE_NAME = 'garden-keeper-v5';
 
 // Files to cache for offline use
 const PRECACHE_URLS = [

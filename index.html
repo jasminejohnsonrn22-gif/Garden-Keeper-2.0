@@ -979,6 +979,7 @@ window.addEventListener('unhandledrejection', function(e) {
               <option value="herb">Herb</option>
               <option value="tomato">Tomato</option>
               <option value="dahlia">Dahlia</option>
+              <option value="peony">Peony</option>
             </select>
             <span class="form-error" id="cf-cat-err">Please choose a category</span>
           </div>
@@ -1205,6 +1206,7 @@ const CATEGORIES = [
   { id:"herb",       label:"Herbs",       icon:"🌿" },
   { id:"tomato",     label:"Tomatoes",    icon:"🍅" },
   { id:"dahlia",     label:"Dahlias",     icon:"🌸" },
+  { id:"peony",      label:"Peonies",     icon:"🌺" },
 ];
 
 const CAT_META = {
@@ -1215,6 +1217,7 @@ const CAT_META = {
   herb:       { icon:"🌿", label:"Herb",       accent:"#5a8a52", light:"rgba(90,138,82,0.10)"   },
   tomato:     { icon:"🍅", label:"Tomato",     accent:"#c0392b", light:"rgba(192,57,43,0.10)"   },
   dahlia:     { icon:"🌸", label:"Dahlia",     accent:"#c06090", light:"rgba(192,96,144,0.10)"  },
+  peony:      { icon:"🌺", label:"Peony",      accent:"#c05070", light:"rgba(192,80,112,0.10)"   },
 };
 
 const URGENCY = {
@@ -1640,7 +1643,7 @@ function renderChartView(content) {
   const catSection = document.createElement("div");
   catSection.className = "chart-section";
   catSection.innerHTML = `<div class="chart-title">Garden breakdown by category</div>`;
-  const catColors = { houseplant:"#7fb069", flower:"#e07a5f", vegetable:"#3d8361", fruit:"#c0572b", herb:"#5a8a52", tomato:"#c0392b", dahlia:"#c06090" };
+  const catColors = { houseplant:"#7fb069", flower:"#e07a5f", vegetable:"#3d8361", fruit:"#c0572b", herb:"#5a8a52", tomato:"#c0392b", dahlia:"#c06090", peony:"#c05070" };
   const catData = CATEGORIES.slice(1).map(c => ({
     id:c.id, label:c.label, icon:c.icon,
     count: allPlants.filter(p=>p.category===c.id).length,
@@ -2981,7 +2984,8 @@ function showBulkRecategorize() {
       {id:"fruit",label:"Fruit",icon:"🍎"},
       {id:"herb",label:"Herb",icon:"🌿"},
       {id:"tomato",label:"Tomato",icon:"🍅"},
-      {id:"dahlia",label:"Dahlia",icon:"🌸"}
+      {id:"dahlia",label:"Dahlia",icon:"🌸"},
+      {id:"peony",label:"Peony",icon:"🌺"}
     ].map(c => `<div class="bulk-cat-btn" data-cat="${c.id}"><div class="bulk-cat-icon">${c.icon}</div><div class="bulk-cat-name">${c.label}</div></div>`).join("")
   }</div>`;
 
@@ -3106,7 +3110,7 @@ function daysFromNow(dateStr) {
 
 // Determine if plant category supports growing timeline
 function isGrowingCategory(plant) {
-  return plant && (plant.category === "vegetable" || plant.category === "fruit" || plant.category === "herb" || plant.category === "tomato" || plant.category === "dahlia");
+  return plant && (plant.category === "vegetable" || plant.category === "fruit" || plant.category === "herb" || plant.category === "tomato" || plant.category === "dahlia" || plant.category === "peony");
 }
 
 // Render the growing timeline tab section inside the Grow tab
@@ -4428,6 +4432,9 @@ const CATEGORY_MAP = {
   'herb': 'herb', 'herbs': 'herb', 'herbal': 'herb',
   'tomato': 'tomato', 'tomatoes': 'tomato',
   'dahlia': 'dahlia', 'dahlias': 'dahlia',
+  'peony': 'peony', 'peonies': 'peony',
+  'dahlia': 'dahlia', 'dahlias': 'dahlia',
+  'peony': 'peony', 'peonies': 'peony',
   // Grow type
   'grow type': 'growType', 'growtype': 'growType', 'growType': 'growType', 'type': 'growType',
   'determinate': 'growType', 'indeterminate': 'growType',
