@@ -493,6 +493,19 @@
   /* ── Container badge ── */
   .container-badge { font-size:10px; color:var(--ink-soft); background:var(--parchment-dark); border-radius:3px; padding:1px 5px; border:1px solid var(--rule); white-space:nowrap; }
 
+  /* ── Journal entry inline edit ── */
+  .journal-entry-edit-btn { background:transparent; border:none; color:var(--ink-faint); cursor:pointer; font-size:13px; padding:3px 6px; border-radius:4px; transition:color 0.15s; }
+  .journal-entry-edit-btn:hover { color:var(--green); }
+  .journal-edit-form { background:var(--parchment); border:1.5px solid var(--green); border-radius:8px; padding:12px; margin-top:8px; display:flex; flex-direction:column; gap:8px; }
+  .journal-edit-label { font-size:11px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px; }
+  .journal-edit-input { background:white; border:1.5px solid var(--rule); border-radius:5px; padding:6px 10px; font-family:var(--font-body); font-size:13px; color:var(--ink); outline:none; width:100%; transition:border-color 0.2s; }
+  .journal-edit-input:focus { border-color:var(--green); }
+  .journal-edit-tag-row { display:flex; gap:5px; flex-wrap:wrap; }
+  .journal-edit-tag-chip { background:var(--parchment-dark); border:1.5px solid var(--rule); border-radius:100px; padding:4px 10px; font-size:12px; cursor:pointer; transition:all 0.15s; color:var(--ink-mid); }
+  .journal-edit-tag-chip:hover { border-color:var(--green); color:var(--green); }
+  .journal-edit-tag-chip.active { background:var(--forest); border-color:var(--forest); color:#d8eacc; }
+  .journal-edit-actions { display:flex; gap:8px; }
+
   /* ── Push notification panel ── */
   .push-panel { background: white; border: 1.5px solid var(--card-border); border-radius: 10px; padding: 24px 28px; margin-bottom: 24px; }
   .push-panel-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
@@ -3939,32 +3952,121 @@ function renderJournalTab(plantId) {
   photos.forEach((photo, idx) => {
     const entry = document.createElement("div");
     entry.className = "journal-entry";
-    const dateStr = new Date(photo.date).toLocaleDateString("en-US", {weekday:"short",month:"short",day:"numeric",year:"numeric"});
     const tagEmojis = {progress:"📈",bloom:"🌸",issue:"⚠️",harvest:"🌾",repot:"🪴",other:"📝"};
+    const photoTags = ["progress","bloom","issue","harvest","repot","other"];
+    const tagLabels = {progress:"📈 Progress",bloom:"🌸 Bloom",issue:"⚠️ Issue",harvest:"🌾 Harvest",repot:"🪴 Repot",other:"📝 Other"};
+
+    // Build entry HTML
+    const imgHtml = photo.dataUrl
+      ? `<img class="journal-entry-img" src="${photo.dataUrl}" alt="journal photo" style="cursor:zoom-in">`
+      : `<div class="journal-entry-img-placeholder">${(myPlants.find(p=>p.id===plantId)||{emoji:"🌿"}).emoji}</div>`;
+
+    const photoDateStr = new Date(photo.date).toLocaleDateString("en-US", {weekday:"short",month:"short",day:"numeric",year:"numeric"});
+
     entry.innerHTML = `
-      ${photo.dataUrl
-        ? `<img class="journal-entry-img" src="${photo.dataUrl}" alt="journal photo">`
-        : `<div class="journal-entry-img-placeholder">${(myPlants.find(p=>p.id===plantId)||{emoji:"🌿"}).emoji}</div>`}
+      ${imgHtml}
       <div class="journal-entry-body">
-        <div class="journal-entry-date">${dateStr}</div>
-        <div class="journal-entry-caption">${photo.caption || '<em style="color:var(--ink-faint)">No caption</em>'}</div>
-        <div class="journal-entry-tags">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:4px">
+          <div class="journal-entry-date" id="entry-date-${photo.id}">${photoDateStr}</div>
+          <button class="journal-entry-edit-btn" data-edit="${photo.id}" title="Edit">✏️</button>
+        </div>
+        <div class="journal-entry-caption" id="entry-caption-${photo.id}">${photo.caption || '<em style="color:var(--ink-faint)">No caption</em>'}</div>
+        <div class="journal-entry-tags" id="entry-tags-${photo.id}">
           <span class="journal-entry-tag">${tagEmojis[photo.tag]||"📝"} ${photo.tag}</span>
         </div>
+        <div class="journal-edit-form" id="entry-editform-${photo.id}" style="display:none"></div>
       </div>
       <button class="journal-entry-del" data-id="${photo.id}" title="Delete photo">🗑</button>`;
 
-    // click to open lightbox
+    // Lightbox on image click
     const imgEl = entry.querySelector(".journal-entry-img, .journal-entry-img-placeholder");
-    imgEl.style.cursor = "zoom-in";
-    imgEl.addEventListener("click", () => openLightbox(photos, idx));
+    if (imgEl) imgEl.addEventListener("click", () => openLightbox(photos, idx));
 
+    // Edit button
+    entry.querySelector(`[data-edit="${photo.id}"]`).addEventListener("click", e => {
+      e.stopPropagation();
+      const editForm = document.getElementById(`entry-editform-${photo.id}`);
+      const isOpen = editForm.style.display !== "none";
+      if (isOpen) { editForm.style.display = "none"; return; }
+
+      // Build edit form
+      const d = new Date(photo.date);
+      const dateVal = d.toISOString().slice(0,10);
+      editForm.innerHTML = `
+        <div>
+          <div class="journal-edit-label">Caption</div>
+          <input class="journal-edit-input" id="ec-caption-${photo.id}" type="text" maxlength="120" value="${(photo.caption||"").replace(/"/g,'&quot;')}" placeholder="Add a caption…">
+        </div>
+        <div>
+          <div class="journal-edit-label">Date</div>
+          <input class="journal-edit-input" id="ec-date-${photo.id}" type="date" value="${dateVal}">
+        </div>
+        <div>
+          <div class="journal-edit-label">Tag</div>
+          <div class="journal-edit-tag-row">
+            ${photoTags.map(t => `<span class="journal-edit-tag-chip${photo.tag===t?" active":""}" data-tag="${t}">${tagLabels[t]}</span>`).join("")}
+          </div>
+        </div>
+        <div class="journal-edit-actions">
+          <button class="btn-primary" id="ec-save-${photo.id}" style="font-size:12px;padding:6px 16px">Save</button>
+          <button class="btn-ghost" id="ec-cancel-${photo.id}" style="font-size:12px;padding:6px 14px">Cancel</button>
+        </div>`;
+
+      editForm.style.display = "flex";
+
+      // Tag chip selection
+      let editTag = photo.tag;
+      editForm.querySelectorAll(".journal-edit-tag-chip").forEach(chip => {
+        chip.addEventListener("click", () => {
+          editTag = chip.dataset.tag;
+          editForm.querySelectorAll(".journal-edit-tag-chip").forEach(c => c.classList.toggle("active", c === chip));
+        });
+      });
+
+      // Cancel
+      document.getElementById(`ec-cancel-${photo.id}`).addEventListener("click", () => {
+        editForm.style.display = "none";
+      });
+
+      // Save
+      document.getElementById(`ec-save-${photo.id}`).addEventListener("click", () => {
+        const newCaption = document.getElementById(`ec-caption-${photo.id}`).value.trim();
+        const newDateVal = document.getElementById(`ec-date-${photo.id}`).value;
+        const newDate    = newDateVal ? new Date(newDateVal + "T12:00:00").toISOString() : photo.date;
+
+        // Update in journal
+        if (!journal[plantId]) return;
+        const photoObj = journal[plantId].find(p => p.id === photo.id);
+        if (photoObj) {
+          photoObj.caption = newCaption;
+          photoObj.tag     = editTag;
+          photoObj.date    = newDate;
+          saveJournal(journal);
+          // Update displayed values without full re-render
+          photo.caption = newCaption;
+          photo.tag     = editTag;
+          photo.date    = newDate;
+          const capEl  = document.getElementById(`entry-caption-${photo.id}`);
+          const dateEl = document.getElementById(`entry-date-${photo.id}`);
+          const tagEl  = document.getElementById(`entry-tags-${photo.id}`);
+          if (capEl)  capEl.innerHTML  = newCaption || '<em style="color:var(--ink-faint)">No caption</em>';
+          if (dateEl) dateEl.textContent = new Date(newDate).toLocaleDateString("en-US", {weekday:"short",month:"short",day:"numeric",year:"numeric"});
+          if (tagEl)  tagEl.innerHTML  = `<span class="journal-entry-tag">${tagEmojis[editTag]||"📝"} ${editTag}</span>`;
+          editForm.style.display = "none";
+          // Refresh strip thumb date
+          const strip = document.getElementById("journal-photo-strip");
+          if (strip) buildPhotoStrip(plantId, strip);
+          showToast("Photo updated ✓");
+        }
+      });
+    });
+
+    // Delete
     entry.querySelector(".journal-entry-del").addEventListener("click", e => {
       e.stopPropagation();
       if (confirm("Delete this photo?")) {
         deletePhoto(plantId, photo.id);
         renderJournalTab(plantId);
-        // also refresh strip if care tab active
         const strip = document.getElementById("journal-photo-strip");
         if (strip) buildPhotoStrip(plantId, strip);
         showToast("Photo deleted");
