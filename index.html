@@ -2827,7 +2827,7 @@ function renderLocations() {
   // Show manage button always at top
   const manageRow = document.createElement("div");
   manageRow.style.cssText = "display:flex;justify-content:flex-end;margin-bottom:16px";
-  manageRow.innerHTML = `<button class="btn-ghost" onclick="showManageLocations()" style="font-size:13px;padding:7px 14px">⚙️ Manage Locations</button>`;
+  manageRow.innerHTML = `<button class="btn-ghost" onclick="showManageLocationsModal()" style="font-size:13px;padding:7px 14px">⚙️ Manage Locations</button>`;
   content.appendChild(manageRow);
 
   if (userLocations.length === 0) {
