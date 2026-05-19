@@ -1484,7 +1484,6 @@ function renderDashboard() {
   const catMeta = CAT_META[dashFilter];
   const headerEl = document.querySelector(".section-title.display") || document.querySelector(".section-title");
   if (headerEl) headerEl.textContent = dashFilter === "all" ? "My Garden" : (catMeta ? catMeta.label + "s" : dashFilter);
-  document.getElementById("dash-sub").textContent = filtered.length + " " + (filtered.length===1?"plant":"plants") + (dashFilter !== "all" ? "" : " in your care");
 
   // Wire sort dropdown
   const sortSel = document.getElementById("dash-sort");
@@ -1514,6 +1513,7 @@ function renderDashboard() {
   updateSelectBar();
 
   let filtered = dashFilter==="all" ? myPlants : myPlants.filter(p=>p.category===dashFilter);
+  document.getElementById("dash-sub").textContent = filtered.length + " " + (filtered.length===1?"plant":"plants") + (dashFilter !== "all" ? "" : " in your care");
 
   // Apply sort
   filtered = [...filtered].sort((a, b) => {
