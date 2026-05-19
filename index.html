@@ -1539,6 +1539,9 @@ function renderDashboard() {
     return topA - topB || a.name.localeCompare(b.name);
   });
 
+  const content = document.getElementById("dash-content");
+  content.innerHTML = "";
+
   // ── Harvest sort: render a special clean view ──
   if (dashSort === "harvest") {
     const hvList = document.createElement("div");
@@ -1581,8 +1584,6 @@ function renderDashboard() {
     content.appendChild(hvList);
     return;
   }
-  const content = document.getElementById("dash-content");
-
   if (filtered.length === 0 && dashViewMode !== "chart") {
     content.innerHTML = `<div class="empty-state"><div class="empty-emoji">${dashFilter==="all"?"🌱":(CAT_META[dashFilter]?.icon||"🌱")}</div><p class="empty-title display">Your garden awaits</p><p class="empty-sub">Start by adding some plants to tend</p><button class="btn-primary" onclick="discoverFilter='${dashFilter}';navigateTo('discover')">Browse Plants →</button></div>`;
     return;
