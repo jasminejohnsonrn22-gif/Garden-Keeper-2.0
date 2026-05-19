@@ -831,6 +831,17 @@ window.addEventListener('unhandledrejection', function(e) {
       </div>
     </div>
 
+    <!-- Card Display -->
+    <div class="settings-section">
+      <div class="settings-label settings-collapsible" data-target="sect-card-display">
+        <span>Card Display</span><span class="settings-chevron">▾</span>
+      </div>
+      <div id="sect-card-display" class="settings-sect-body" style="display:none">
+        <p style="font-size:12px;color:var(--ink-soft);margin-bottom:10px">Choose what appears on plant cards</p>
+        <div style="display:flex;flex-direction:column;gap:8px" id="card-display-toggles"></div>
+      </div>
+    </div>
+
     <!-- Categories -->
     <div class="settings-section">
       <div class="settings-label settings-collapsible" data-target="sect-cats">
@@ -1470,7 +1481,10 @@ function renderFilters(containerId, active, counts, onChange) {
 function renderDashboard() {
   const counts = { all:myPlants.length, ...Object.fromEntries(CATEGORIES.slice(1).map(c=>[c.id, myPlants.filter(p=>p.category===c.id).length])) };
   renderFilters("dash-filters", dashFilter, counts, id => { dashFilter=id; saveMeta({dashFilter, dashViewMode, dashSort}); renderDashboard(); });
-  document.getElementById("dash-sub").textContent = myPlants.length + " " + (myPlants.length===1?"plant":"plants") + " in your care";
+  const catMeta = CAT_META[dashFilter];
+  const headerEl = document.querySelector(".section-title.display") || document.querySelector(".section-title");
+  if (headerEl) headerEl.textContent = dashFilter === "all" ? "My Garden" : (catMeta ? catMeta.label + "s" : dashFilter);
+  document.getElementById("dash-sub").textContent = filtered.length + " " + (filtered.length===1?"plant":"plants") + (dashFilter !== "all" ? "" : " in your care");
 
   // Wire sort dropdown
   const sortSel = document.getElementById("dash-sort");
@@ -1524,6 +1538,49 @@ function renderDashboard() {
     const topB = Math.min(...uB.map(u => urgOrder[u]));
     return topA - topB || a.name.localeCompare(b.name);
   });
+
+  // ── Harvest sort: render a special clean view ──
+  if (dashSort === "harvest") {
+    const hvList = document.createElement("div");
+    hvList.style.cssText = "display:flex;flex-direction:column;gap:10px";
+    let hasAny = false;
+    filtered.forEach(plant => {
+      const g = getGrowing(plant.id);
+      const base = g ? (g.actualGermDate || g.plantingDate || g.transplantDate) : null;
+      const hEarly = base && g.harvestMinDays ? addDays(base, parseInt(g.harvestMinDays)) : null;
+      const hLate  = base && g.harvestMaxDays ? addDays(base, parseInt(g.harvestMaxDays)) : null;
+      const harvested = g && g.actualHarvestDate;
+      const meta2 = CAT_META[plant.category] || { icon:"🌱", accent:"#3d8361", light:"rgba(61,131,97,0.10)" };
+      const dE = hEarly ? daysFromNow(hEarly) : null;
+      const dL = hLate  ? daysFromNow(hLate)  : null;
+      const urgCls = harvested ? "#888" : dE !== null && dE <= 0 ? "#c0392b" : dE !== null && dE <= 14 ? "#d47c0f" : meta2.accent;
+      const dateStr = harvested
+        ? "Harvested " + formatDate(g.actualHarvestDate, {month:"short",day:"numeric",year:"numeric"})
+        : hEarly && hLate ? formatDate(hEarly,{month:"short",day:"numeric"}) + " – " + formatDate(hLate,{month:"short",day:"numeric",year:"numeric"}) + (dE!==null ? (dE<=0&&dL<=0?" (passed)":dE<=0?" (~"+dL+"d left)":" (in "+dE+"–"+dL+"d)") : "")
+        : hEarly ? formatDate(hEarly,{month:"short",day:"numeric",year:"numeric"}) + (dE!==null ? (dE<=0?" (passed)":" (in "+dE+"d)") : "")
+        : null;
+      if (!dateStr) return; // skip plants with no harvest data
+      hasAny = true;
+      const row = document.createElement("div");
+      row.style.cssText = "display:flex;align-items:center;gap:12px;background:white;border:1.5px solid var(--rule);border-radius:10px;padding:12px 16px;cursor:pointer";
+      row.innerHTML = `
+        <span style="font-size:24px">${plant.emoji || meta2.icon}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-family:var(--font-display);font-size:15px;font-weight:600;color:var(--ink)">${plant.name}${plant.variety ? ' <span style="font-size:12px;font-style:italic;color:var(--ink-soft)">'+plant.variety+'</span>' : ""}</div>
+          <div style="font-size:12px;color:var(--ink-soft);margin-top:1px">${meta2.icon} ${CAT_META[plant.category]?.label||plant.category}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:13px;font-weight:600;color:${urgCls}">${dateStr}</div>
+        </div>`;
+      row.addEventListener("click", () => navigateTo("detail", plant.id));
+      hvList.appendChild(row);
+    });
+    if (!hasAny) {
+      hvList.innerHTML = `<div class="empty-state"><div class="empty-emoji">🌾</div><p class="empty-title display">No harvest dates set</p><p class="empty-sub">Add harvest info in the Grow & Harvest tab</p></div>`;
+    }
+    content.appendChild(hvList);
+    return;
+  }
   const content = document.getElementById("dash-content");
 
   if (filtered.length === 0 && dashViewMode !== "chart") {
@@ -1562,7 +1619,11 @@ function renderGridView(filtered, content) {
     const contDimStr    = plant.container && (plant.contWidth||plant.contHeight||plant.contDepth)
       ? [plant.contWidth?plant.contWidth+'"':'',plant.contHeight?plant.contHeight+'"':'',plant.contDepth?plant.contDepth+'"':''].filter(Boolean).join("×")
       : "";
-    const containerHtml = plant.container ? ' <span class="container-badge">🪣'+(contDimStr?" "+contDimStr:"")+'</span>' : "";
+    const containerHtml = (cardDisplay.container && plant.container) ? ' <span class="container-badge">🪣'+(contDimStr?" "+contDimStr:"")+'</span>' : "";
+    const organicHtml2  = cardDisplay.organic  ? organicHtml  : "";
+    const heirloomHtml2 = cardDisplay.heirloom ? heirloomHtml : "";
+    const locHtml2      = cardDisplay.location  ? locHtml      : "";
+    const qtyHtml2      = cardDisplay.quantity  ? qtyHtml      : "";
     const careItems = [];
     if (plant.waterDays) careItems.push({icon:"💧",label:"Water",days:wDays,u:wU});
     if (plant.fertilizeDays) careItems.push({icon:"🌾",label:"Feed",days:fDays,u:fU});
@@ -1589,7 +1650,7 @@ function renderGridView(filtered, content) {
             '<span class="cat-badge" style="background:'+meta.light+';color:'+meta.accent+'">'+meta.icon+' '+meta.label+'</span>'+
           '</div>'+
         '</div>'+
-        '<div class="card-sunlight">'+sunDisplay+(plant.humidity?' · 💧 '+plant.humidity:'')+locHtml+organicHtml+heirloomHtml+containerHtml+'</div>'+
+        '<div class="card-sunlight">'+(cardDisplay.sunlight?sunDisplay:"")+(cardDisplay.humidity&&plant.humidity?' · 💧 '+plant.humidity:'')+locHtml2+organicHtml2+heirloomHtml2+containerHtml+'</div>'+
         '<div class="care-grid">'+careBoxes+'</div>'+
       '</div>';
     card.dataset.plantId = plant.id;
@@ -1629,7 +1690,7 @@ function renderListView(filtered, content) {
       <span class="list-emoji">${plant.emoji || "🌿"}</span>
       <div class="list-main">
         <div class="list-name">${plant.name}</div>
-        <div class="list-meta">${meta.icon} ${meta.label}${plant.growType?" · "+plant.growType:""} ${plant.sunlight ? "· ☀️ "+plant.sunlight+"h/day" : ""}${plant.quantity && plant.quantity>1?" · x"+plant.quantity:""}${plant.location?" · ⌂ "+plant.location:""}${plant.humidity?" · 💧 "+plant.humidity:""}${plant.organic?" · 🌿 organic":""}${plant.heirloom?" · 🌱 heirloom":""}</div>
+        <div class="list-meta">${meta.icon} ${meta.label}${plant.growType?" · "+plant.growType:""} ${plant.sunlight ? "· ☀️ "+plant.sunlight+"h/day" : ""}${plant.quantity && plant.quantity>1?" · x"+plant.quantity:""}${plant.location?" · ⌂ "+getLocationMeta(plant.location).name:""}${plant.humidity?" · 💧 "+plant.humidity:""}${plant.organic?" · 🌿 organic":""}${plant.heirloom?" · 🌱 heirloom":""}</div>
       </div>
       <div class="list-badges">
         <span class="list-pill" style="background:${urg.bg};color:${urg.color}">${urg.label}</span>
@@ -5253,6 +5314,55 @@ function rebuildCategorySelect() {
 // END CATEGORY MANAGER
 // ══════════════════════════════════════════════════════
 
+
+// ── Card display preferences ──
+const CARD_DISPLAY_KEY = "gardenkeeper_card_display";
+const CARD_DISPLAY_DEFAULTS = {
+  sunlight:  true,
+  humidity:  true,
+  location:  true,
+  organic:   true,
+  heirloom:  true,
+  container: true,
+  quantity:  true,
+};
+function loadCardDisplay() {
+  try { const s = localStorage.getItem(CARD_DISPLAY_KEY); return s ? { ...CARD_DISPLAY_DEFAULTS, ...JSON.parse(s) } : { ...CARD_DISPLAY_DEFAULTS }; }
+  catch { return { ...CARD_DISPLAY_DEFAULTS }; }
+}
+function saveCardDisplay() { try { localStorage.setItem(CARD_DISPLAY_KEY, JSON.stringify(cardDisplay)); } catch {} }
+let cardDisplay = loadCardDisplay();
+
+function initCardDisplay() {
+  const wrap = document.getElementById("card-display-toggles");
+  if (!wrap || wrap._inited) return;
+  wrap._inited = true;
+  const fields = [
+    { key:"sunlight",  label:"☀️ Sunlight hours" },
+    { key:"humidity",  label:"💧 Humidity" },
+    { key:"location",  label:"⌂ Location" },
+    { key:"organic",   label:"🌿 Organic badge" },
+    { key:"heirloom",  label:"🌱 Heirloom badge" },
+    { key:"container", label:"🪣 Container badge" },
+    { key:"quantity",  label:"🔢 Quantity badge" },
+  ];
+  fields.forEach(f => {
+    const row = document.createElement("label");
+    row.style.cssText = "display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink-mid);cursor:pointer;padding:4px 0";
+    const cb = document.createElement("input");
+    cb.type = "checkbox"; cb.checked = cardDisplay[f.key];
+    cb.style.cssText = "width:16px;height:16px;accent-color:var(--green)";
+    cb.addEventListener("change", () => {
+      cardDisplay[f.key] = cb.checked;
+      saveCardDisplay();
+      renderDashboard();
+    });
+    row.appendChild(cb);
+    row.appendChild(document.createTextNode(f.label));
+    wrap.appendChild(row);
+  });
+}
+
 // ══════════════════════════════════════════════════════
 // BACKUP & RESTORE
 // ══════════════════════════════════════════════════════
@@ -5735,6 +5845,7 @@ function initSettings() {
   applyFontSizes(appearance.fontSizes);
   initBackup();
   initCategoryManager();
+  initCardDisplay();
 }
 
 // ── Mobile nav sync ──
